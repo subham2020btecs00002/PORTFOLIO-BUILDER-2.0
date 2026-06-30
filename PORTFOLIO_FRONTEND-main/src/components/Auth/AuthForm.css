@@ -1,0 +1,109 @@
+/* Authentication Form Styles */
+.auth-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to right, #f9f9f9, #e0e0e0);
+}
+
+.auth-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.auth-form h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+    color: #333;
+}
+
+.auth-form p.intro-text {
+    font-size: 1em;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.auth-form input {
+    width: calc(100% - 22px);
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.auth-form button {
+    width: 100%;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.auth-form button:hover {
+    background-color: #45a049;
+}
+
+.auth-form p.redirect-message {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.auth-form p.redirect-message a {
+    color: #4caf50;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-form p.redirect-message a:hover {
+    text-decoration: underline;
+}
+
+/* Specific Styles for Register and Login Pages */
+.register-container .auth-form h2,
+.login-container .auth-form h2 {
+    color: #333;
+}
+
+.register-container .auth-form p.intro-text {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    color: #555;
+}
+
+.login-container .auth-form p.intro-text {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    color: #666;
+}
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border-left-color: #09f;
+    animation: spin 1s ease infinite;
+    display: inline-block;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .submit-btn:disabled {
+    background-color: #ccc; /* Change to a gray color for the disabled state */
+    cursor: not-allowed;
+  }
+  

@@ -1,0 +1,1 @@
+export const baseUrl = "https://portfolio-backend-one-wheat.vercel.app"

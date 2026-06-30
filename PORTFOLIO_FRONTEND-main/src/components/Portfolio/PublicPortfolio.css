@@ -1,0 +1,461 @@
+/* PublicPortfolio.css */
+
+/* Base Styles */
+body {
+    background-color: #f7f8fa;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.public-portfolio {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.portfolio-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.portfolio-header h1 {
+    font-size: 2.8em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.portfolio-header p {
+    font-size: 1.2em;
+    color: #7f8c8d;
+    margin-bottom: 0;
+}
+
+/* Content Styles */
+.portfolio-content h2 {
+    font-size: 2.2em;
+    margin-bottom: 20px;
+    color: #34495e;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+}
+.professional-history {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ecf0f1;
+    transition: transform 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.company-duration {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.company-name {
+    font-size: 1.8em;
+    color: #2980b9;
+    margin: 0;
+    flex: 1;
+}
+
+.duration {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin: 0;
+    text-align: right;
+}
+
+.position {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin: 10px 0;
+    
+}
+.position .label {
+    font-weight: bold; /* Makes the label bold */
+}
+
+.responsibility {
+    font-size: 1.1em;
+    color: #7f8c8d;
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.responsibility-label {
+    display: block; /* Ensures it's on a new line */
+    margin-bottom: 10px; /* Space between label and list */
+    font-weight: bold; /* Makes the label bold */
+}
+
+.responsibility-list {
+    margin-left: 20px; /* Indent for clarity */
+    padding-left: 0; /* Remove padding */
+}
+
+.responsibility-list p {
+    position: relative; /* Ensure pseudo-element is positioned relative to this element */
+    margin: 0; /* Remove default margins */
+    padding: 0 0 0 20px; /* Space for the bullet point */
+    font-size: 1.1em; /* Adjust font size if needed */
+}
+
+.responsibility-list p::before {
+    content: "•"; /* Bullet point */
+    position: absolute; /* Position it relative to the p element */
+    left: 0; /* Align to the left of the p element */
+    color: #00090f; /* Bullet color, adjust as needed */
+    font-size: 1.1em; /* Bullet size, adjust as needed */
+    line-height: 1.1em; /* Align bullet with text */
+}
+.professional-history, .education, .project {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ecf0f1;
+    transition: transform 0.2s ease-in-out;
+}
+.education .college-name {
+    flex: 1; /* Allow name to take up available space */
+}
+
+.education .duration {
+    text-align: right; /* Align date to the right */
+    font-size: 1.1em;
+    color: #7f8c8d;
+}
+
+.professional-history:hover, .education:hover, .project:hover {
+    transform: translateY(-5px);
+}
+
+.project h3, .education h3, .professional-history h3 {
+    font-size: 1.8em;
+    color: #2980b9;
+    margin-bottom: 10px;
+}
+
+.project p, .education p, .professional-history p {
+    font-size: 1.1em;
+    color: #7f8c8d;
+}
+
+.project-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.project-link:hover {
+    background-color: #2980b9;
+}
+
+.portfolio-links p {
+    font-size: 1.1em;
+    color: #2980b9;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ecf0f1;
+    transition: transform 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.portfolio-links a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.portfolio-links a:hover {
+    color: #2980b9;
+}
+
+/* Header (Navbar) Styles */
+/* Header styles */
+.header {
+  background: linear-gradient(90deg, #1dea07, #06a61e);
+  padding: 20px 40px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  margin-bottom: 40px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: right;
+  align-items: center;
+}
+
+/* Toggle button */
+.toggle-button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Navigation styles for large screens */
+.nav-right {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-right li {
+  margin: 0 20px;
+  cursor: pointer;
+}
+
+.nav-right li:hover {
+  text-decoration: underline;
+}
+
+.nav-right li a {
+  color: #fff;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: background 0.3s, border-radius 0.3s;
+}
+
+.nav-right li a:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Sidebar styles for small screens */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 250px;
+    height: 100%;
+    background: rgba(67, 185, 53, 0.482); /* Adjust the alpha value (0.5) for desired transparency */
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+    z-index: 1100;
+    padding: 20px;
+  }
+  
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  margin: 20px 0;
+  font-size: 1.2em;
+  cursor: pointer;
+  color: #fff;
+}
+
+.sidebar ul li:hover {
+  text-decoration: underline;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .toggle-button {
+    display: block;
+  }
+
+  .nav-right {
+    display: none;
+  }
+}
+
+/* Close button */
+.close-button {
+    align-self: flex-end; /* Aligns the button to the right */
+    background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
+    border: none;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff; /* Matches the sidebar's color scheme */
+    cursor: pointer;
+    border-radius: 50%; /* Makes the button circular */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.3s, transform 0.3s; /* Smooth hover effects */
+  }
+  
+  .close-button:hover {
+    background: rgba(255, 255, 255, 0.4); /* Lightens background on hover */
+    transform: scale(1.1); /* Slightly enlarges the button on hover */
+  }
+.resume-download-link {
+  text-decoration: none;
+}
+
+.download-button {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.download-button:hover {
+  background-color: #45a049;
+}
+
+/* Contact Form Styles */
+.contact-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ecf0f1;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+.contact-form .form-group {
+    margin-bottom: 15px;
+}
+
+.contact-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #34495e;
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.contact-form button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.contact-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive Design */
+.portfolio-links {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Spacing between each link item */
+    margin-left: 10px;
+  }
+  
+  .link-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 95%;
+  }
+  
+  .portfolio-icon {
+    width: 44px; /* Adjust size as needed */
+    height: 44px; /* Adjust size as needed */
+  }
+  
+  .link-icon {
+    width: 14px; /* Adjust size as needed */
+    height: 14px; /* Adjust size as needed */
+  }
+  /* Welcome Message Styles */
+.welcome-message {
+    position: fixed; /* Ensure it stays on top */
+    top: 50%;
+    left: 50%;
+    transform: translate(-20%, -20%);
+    background-color: rgba(30, 173, 20, 0.8);
+    color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000; /* Ensure it is above other content */
+    animation: fadeInOut 3s ease-in-out forwards; /* Animation to fade in and out */
+}
+
+/* Keyframes for Fade In and Out Animation */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -60%); /* Start position */
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%); /* End of fade in */
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%); /* End of visible state */
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -40%); /* End position */
+    }
+}
+
+.about-me{
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ecf0f1;
+    transition: transform 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    font-size: large;
+}
+
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+  }
+
+  

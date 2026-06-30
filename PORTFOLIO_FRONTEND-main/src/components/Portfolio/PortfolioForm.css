@@ -1,0 +1,168 @@
+/* General Form Container */
+.portfolio-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+.input-error {
+  border: 2px solid red;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.875em;
+  font-weight: bold;
+}
+
+/* Headings */
+.portfolio-form h2,
+.portfolio-form h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 20px; /* Increased margin for better spacing */
+}
+
+/* Form Group Label */
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px; /* Increased margin for better spacing */
+  font-size: 16px; /* Adjusted for readability */
+}
+
+/* Form Group Inputs and Textareas */
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px; /* Increased padding for a more spacious feel */
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition for focus states */
+}
+
+/* Focus State for Inputs and Textareas */
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #2196f3;
+  box-shadow: 0 0 5px rgba(33, 150, 243, 0.2);
+  outline: none;
+}
+
+/* Textarea Specific Styles */
+.form-group textarea {
+  resize: vertical; /* Allows resizing only vertically */
+  min-height: 100px; /* Ensure textarea has a minimum height */
+}
+
+
+.section-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+/* Project Group */
+.project-group,.education-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9; /* Slightly different background color */
+}
+.history-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9; /* Slightly different background color */
+}
+
+/* Button Styles */
+.add-btn,
+.remove-btn,
+.submit-btn {
+  display: block;
+  width: 100%;
+  background-color: #2196f3;
+  color: #fff;
+  border: none;
+  padding: 12px; /* Increased padding for a more comfortable click area */
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 16px; /* Consistent font size */
+  transition: background-color 0.3s; /* Smooth transition for hover effects */
+}
+
+/* Hover Effects for Buttons */
+.add-btn:hover,
+.remove-btn:hover,
+.submit-btn:hover {
+  background-color: #1976d2;
+}
+
+/* Specific Styles for Remove Button */
+.remove-btn {
+  background-color: #f44336;
+}
+
+.remove-btn:hover {
+  background-color: #d32f2f;
+}
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #007bff; /* Customize this color as needed */
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.submit-btn:disabled {
+  background-color: #ccc; /* Change to a gray color for the disabled state */
+  cursor: not-allowed;
+}
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+}
+
+.spinner-icon {
+  font-size: 3rem; /* Adjust size as needed */
+  color: #007bff; /* Adjust color as needed */
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
