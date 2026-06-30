@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import axios from "axios";
+import api from '../api';
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 import "./PortfolioForm.css";
-import { baseUrl } from '../url'
 import { FaSpinner } from 'react-icons/fa'; // Import the spinner icon
 
 
@@ -18,12 +17,7 @@ const CreatePortfolio = () => {
     // Debounced function to check if portfolio exists
     const checkPortfolioExists = debounce(async () => {
       try {
-        const { data } = await axios.get(
-          `${baseUrl}/api/portfolio/exists`,
-          {
-            headers: { "x-auth-token": localStorage.getItem("token") },
-          }
-        );
+        const { data } = await api.get('/api/portfolio/exists');
         setPortfolioExists(data.exists);
         if (data.exists) {
           navigate("/portfolio/edit");
@@ -527,12 +521,7 @@ const CreatePortfolioForm = () => {
       });
   
       // Make API request
-      const response = await axios.post(`${baseUrl}/api/portfolio`, formattedData, {
-        headers: {
-          "x-auth-token": localStorage.getItem("token"),
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await api.post('/api/portfolio', formattedData);
   
       setPortfolioId(response.data.user);
       setShowModal(true);

@@ -1,62 +1,35 @@
-import React, { createContext, useReducer, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { createContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
-import debounce from 'lodash/debounce';
-import {baseUrl} from '../url'
+import api from '../api';
 
 // Context
 const AuthContext = createContext();
 
 // Initial State
 const initialState = {
-  token: localStorage.getItem('token'),
   user: null,
   isAuthenticated: false,
   loading: true,
+  loginLoading: false,
+  registerLoading: false,
 };
 
 // Reducer
 const authReducer = (state, action) => {
   switch (action.type) {
     case 'USER_LOADED':
-      return {
-        ...state,
-        isAuthenticated: true,
-        loading: false,
-        user: action.payload,
-      };
-    case 'REGISTER_SUCCESS':
+      return { ...state, isAuthenticated: true, loading: false, user: action.payload };
     case 'LOGIN_SUCCESS':
-      localStorage.setItem('token', action.payload.token);
-      return {
-        ...state,
-        isAuthenticated: true,
-        loading: false,
-        token: action.payload.token,
-        user: action.payload.user,
-      };
-      case 'LOGIN_REQUEST': // Add this case
-      return {
-        ...state,
-        loginLoading: true,
-      };
-      case 'REGISTER_REQUEST': // Add this case
-      return {
-        ...state,
-        registerLoading: true,
-      };
+      return { ...state, isAuthenticated: true, loading: false, loginLoading: false, user: action.payload };
+    case 'LOGIN_REQUEST':
+      return { ...state, loginLoading: true };
+    case 'REGISTER_REQUEST':
+      return { ...state, registerLoading: true };
+    case 'REGISTER_SUCCESS':
+      return { ...state, registerLoading: false };
     case 'LOGOUT':
     case 'AUTH_ERROR':
-      localStorage.removeItem('token');
-      return {
-        ...state,
-        token: null,
-        isAuthenticated: false,
-        loading: false,
-        user: null,
-        loginLoading: false, // Ensure loading is set to false on error
-        registerLoading: false, // Ensure loading is set to false on error
-      };
+      return { ...state, isAuthenticated: false, loading: false, user: null, loginLoading: false, registerLoading: false };
     default:
       return state;
   }
@@ -65,78 +38,89 @@ const authReducer = (state, action) => {
 // Provider Component
 const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const dispatchRef = useRef(dispatch);
+  dispatchRef.current = dispatch;
 
-  // Load User
-  const loadUser = useCallback(
-    debounce(async () => {
-      if (localStorage.token && !state.user) {
-        try {
-          const res = await axios.get(`${baseUrl}/api/auth/user`, {
-            headers: {
-              'x-auth-token': localStorage.token,
-            },
-          });
-          dispatch({
-            type: 'USER_LOADED',
-            payload: res.data,
-          });
-        } catch (err) {
-          dispatch({ type: 'AUTH_ERROR' });
+  // Axios interceptor: silently refresh access token on 401, then retry the original request
+  useEffect(() => {
+    const interceptorId = api.interceptors.response.use(
+      (res) => res,
+      async (error) => {
+        const original = error.config;
+        if (
+          error.response?.status === 401 &&
+          !original._retry &&
+          !original.url?.includes('/api/auth/refresh') &&
+          !original.url?.includes('/api/auth/login')
+        ) {
+          original._retry = true;
+          try {
+            await api.post('/api/auth/refresh');
+            return api(original);
+          } catch {
+            dispatchRef.current({ type: 'AUTH_ERROR' });
+          }
         }
+        return Promise.reject(error);
       }
-    }, 500), // Adjust the debounce delay as needed
-    [state.user]
-  );
+    );
+    return () => api.interceptors.response.eject(interceptorId);
+  }, []);
 
-  // Register User
-  const register = async (formData) => {
-    dispatch({ type: 'REGISTER_REQUEST' }); // Dispatch register request action
+  const loadUser = useCallback(async () => {
     try {
-      await axios.post(`${baseUrl}/api/auth/register`, formData);
+      const res = await api.get('/api/auth/user');
+      dispatch({ type: 'USER_LOADED', payload: res.data });
+    } catch {
+      dispatch({ type: 'AUTH_ERROR' });
+    }
+  }, []);
+
+  const register = async (formData) => {
+    dispatch({ type: 'REGISTER_REQUEST' });
+    try {
+      await api.post('/api/auth/register', formData);
+      dispatch({ type: 'REGISTER_SUCCESS' });
       toast.success('Registration successful! Please login.', { containerId: 'global' });
     } catch (err) {
       dispatch({ type: 'AUTH_ERROR' });
-      toast.error('Registration failed!', { containerId: 'global' });
+      const message = err.response?.data?.message || 'Registration failed!';
+      toast.error(message, { containerId: 'global' });
     }
   };
 
-  // Login User
   const login = async (formData) => {
-    dispatch({ type: 'LOGIN_REQUEST' }); // Dispatch login request action
+    dispatch({ type: 'LOGIN_REQUEST' });
     try {
-      const res = await axios.post(`${baseUrl}/api/auth/login `, formData);
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: res.data,
-      });
-      loadUser(); // Load user after login
+      const res = await api.post('/api/auth/login', formData);
+      dispatch({ type: 'LOGIN_SUCCESS', payload: res.data.user });
       toast.success('Login successful!', { containerId: 'global' });
     } catch (err) {
       dispatch({ type: 'AUTH_ERROR' });
-      toast.error('Login failed!', { containerId: 'global' });
+      const message = err.response?.data?.message || 'Login failed!';
+      toast.error(message, { containerId: 'global' });
     }
   };
 
-  // Logout User
-  const logout = () => {
-    localStorage.removeItem('token');
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } finally {
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   useEffect(() => {
-    if (localStorage.token && !state.user) {
-      loadUser();
-    }
+    loadUser();
   }, [loadUser]);
 
   return (
     <AuthContext.Provider
       value={{
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
         loading: state.loading,
-        loginLoading: state.loginLoading, // Add this line
-        registerLoading: state.registerLoading, // Add this line
+        loginLoading: state.loginLoading,
+        registerLoading: state.registerLoading,
         user: state.user,
         register,
         login,

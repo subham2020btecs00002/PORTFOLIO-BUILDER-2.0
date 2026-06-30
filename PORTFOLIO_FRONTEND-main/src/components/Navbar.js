@@ -1,19 +1,13 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../components/context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout, loadUser } = useContext(AuthContext);
-
-  useEffect(() => {
-    if (localStorage.token && !user) {
-      loadUser();
-    }
-  }, [loadUser, user]);
+  const { isAuthenticated, user, logout } = useContext(AuthContext);
 
   const onLogout = (e) => {
-    e.preventDefault(); // Prevent default anchor behavior
+    e.preventDefault();
     logout();
   };
 

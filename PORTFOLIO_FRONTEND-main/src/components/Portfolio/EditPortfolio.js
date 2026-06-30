@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import api from '../api';
 import { AuthContext } from "../context/AuthContext";
 import "../Portfolio/PortfolioForm.css";
 import { toast } from "react-toastify";
@@ -302,12 +302,7 @@ const EditPortfolio = () => {
   useEffect(() => {
     const fetchPortfolio = debounce(async () => {
       try {
-        const { data } = await axios.get(
-          `${baseUrl}/api/portfolio`,
-          {
-            headers: { "x-auth-token": localStorage.getItem("token") },
-          }
-        );
+        const { data } = await api.get('/api/portfolio');
 
         // Transform date strings if necessary
         const transformData = (portfolio) => {
@@ -848,12 +843,7 @@ const EditPortfolio = () => {
       });
   
       // Send the data to the API
-      const response = await axios.put(`${baseUrl}/api/portfolio`, formattedData, {
-        headers: {
-          "x-auth-token": localStorage.getItem("token"),
-          "Content-Type": "multipart/form-data", // Important for FormData submission
-        },
-      });
+      const response = await api.put('/api/portfolio', formattedData);
   
       // Success message
       toast.success("Portfolio updated successfully!", { containerId: 'global' });
