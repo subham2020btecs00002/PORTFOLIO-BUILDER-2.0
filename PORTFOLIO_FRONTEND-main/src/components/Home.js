@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from './api';
 import { AuthContext } from '../components/context/AuthContext';
 import debounce from 'lodash/debounce';
 import { FaSpinner } from 'react-icons/fa'; // Import the spinner icon
 import './Home.css'; // Import the CSS file
-import { baseUrl } from './url';
 import backgroundImage from './images/joanna-kosinska-1_CMoFsPfso-unsplash.jpg';
 
 const Home = () => {
@@ -21,9 +20,7 @@ const Home = () => {
   const checkPortfolioExists = useCallback(
     debounce(async () => {
       try {
-        const { data } = await axios.get(`${baseUrl}/api/portfolio/exists`, {
-          headers: { 'x-auth-token': localStorage.getItem('token') },
-        });
+        const { data } = await api.get('/api/portfolio/exists');
         setPortfolioExists(data.exists);
       } catch (err) {
         console.error(err.response?.data || err.message);

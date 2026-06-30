@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,11 +17,15 @@ import { ContactModule } from './contact/contact.module';
         PORT: Joi.number().default(5000),
         MONGO_URI: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
+        JWT_REFRESH_SECRET: Joi.string().required(),
+        FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
         EMAIL: Joi.string().optional(),
         PASSWORD: Joi.string().optional(),
         RECEIVER_EMAIL: Joi.string().optional(),
       }),
     }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
