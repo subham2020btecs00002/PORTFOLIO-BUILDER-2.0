@@ -1,70 +1,80 @@
-import React, { useContext, useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from './api';
-import { AuthContext } from '../components/context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import debounce from 'lodash/debounce';
-import { FaSpinner } from 'react-icons/fa'; // Import the spinner icon
-import './Home.css'; // Import the CSS file
+import { FaSpinner } from 'react-icons/fa';
+import './Home.css';
 import backgroundImage from './images/joanna-kosinska-1_CMoFsPfso-unsplash.jpg';
 
-const Home = () => {
-  const { loadUser, isAuthenticated, user } = useContext(AuthContext);
-  const [portfolioExists, setPortfolioExists] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state added
+/**
+ * Landing / Home page.
+ * Checks whether the authenticated user already has a portfolio and shows
+ * context-appropriate action buttons (Create, Edit, View, or Register).
+ */
+const Home: React.FC = () => {
+  const { loadUser, isAuthenticated, user } = useAuth();
+  const [portfolioExists, setPortfolioExists] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadUser();
+    void loadUser();
   }, [loadUser]);
 
   const checkPortfolioExists = useCallback(
-    debounce(async () => {
+    debounce(async (): Promise<void> => {
       try {
-        const { data } = await api.get('/api/portfolio/exists');
+        const { data } = await api.get<{ exists: boolean }>('/api/portfolio/exists');
         setPortfolioExists(data.exists);
-      } catch (err) {
-        console.error(err.response?.data || err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error(err.message);
+        }
       } finally {
-        setLoading(false); // Set loading to false after checking
+        setLoading(false);
       }
-    }, 500), // Adjust the debounce delay as needed
-    []
+    }, 500),
+    [], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
     if (isAuthenticated) {
-      checkPortfolioExists();
+      void checkPortfolioExists();
     } else {
-      setLoading(false); // Set loading to false if not authenticated
+      setLoading(false);
     }
   }, [isAuthenticated, checkPortfolioExists]);
-
-  const navigateToCreatePortfolio = () => {
-    navigate('/portfolio');
-  };
-
-  const navigateToEditPortfolio = () => {
-    navigate('/portfolio/edit');
-  };
-
-  const navigateToRegister = () => {
-    navigate('/register');
-  };
-
-  const navigateToViewPortfolio = () => {
-    if (user) {
-      navigate(`/portfolio/public/${user._id}`);
-    }
-  };
 
   // Progressive background image loading
   useEffect(() => {
     const img = new Image();
-    img.src = backgroundImage;
+    img.src = backgroundImage as string;
     img.onload = () => {
-      document.querySelector('.home-container').style.backgroundImage = `url(${img.src})`;
+      const container = document.querySelector<HTMLDivElement>('.home-container');
+      if (container) {
+        container.style.backgroundImage = `url(${img.src})`;
+      }
     };
   }, []);
+
+  const navigateToCreatePortfolio = (): void => {
+    navigate('/portfolio');
+  };
+
+  const navigateToEditPortfolio = (): void => {
+    navigate('/portfolio/edit');
+  };
+
+  const navigateToRegister = (): void => {
+    navigate('/register');
+  };
+
+  const navigateToViewPortfolio = (): void => {
+    if (user) {
+      navigate(`/portfolio/public/${user._id}`);
+    }
+  };
 
   return (
     <div className="home-container">
@@ -75,7 +85,7 @@ const Home = () => {
           {loading ? (
             <div className="spinner-container">
               <FaSpinner className="spinner-icon" />
-            </div> // Display a loading spinner while checking
+            </div>
           ) : (
             <>
               {portfolioExists ? (
@@ -83,7 +93,10 @@ const Home = () => {
                   <button className="cta-button" onClick={navigateToEditPortfolio}>
                     Edit your Portfolio
                   </button>
-                  <button className="view-portfolio-button" onClick={navigateToViewPortfolio}>
+                  <button
+                    className="view-portfolio-button"
+                    onClick={navigateToViewPortfolio}
+                  >
                     View Your Portfolio
                   </button>
                 </>

@@ -1,8 +1,9 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import "./Navbar.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './Navbar.css';
 
-const Navbar = () => {
+/** Lightweight navigation bar used within the portfolio form pages. */
+const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
