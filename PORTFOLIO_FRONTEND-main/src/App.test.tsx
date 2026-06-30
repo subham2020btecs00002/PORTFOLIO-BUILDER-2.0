@@ -1,3 +1,4 @@
+// React is not needed with the new JSX transform
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
