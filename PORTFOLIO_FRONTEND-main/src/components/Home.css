@@ -1,137 +1,219 @@
-.home-container {
-    background-color:rgb(242, 187, 1); /* Fallback color */
-    background-size: cover;
-    background-position: center;
-    color: #ffffff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    padding: 20px;
-    text-align: center;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+.home-hero-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 40px;
+  overflow: hidden;
 }
 
-.home-container h1 {
-    font-size: 3em; /* Larger font size for the heading */
-    margin-bottom: 10px; /* Reduced space between heading and paragraph */
-    animation: fadeInDown 1s ease-in-out;
+/* Background gradient spheres */
+.home-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
-.home-container p {
-    font-size: 1.5em; /* Larger font size for the paragraph */
-    max-width: 800px; /* Limit the width of the paragraph */
-    margin-bottom: 40px; /* Space between paragraph and CTA section */
-    animation: fadeInUp 1s ease-in-out;
+.gradient-sphere {
+  position: absolute;
+  border-radius: var(--radius-full);
+  filter: blur(120px);
+  opacity: 0.15;
 }
 
-.cta-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center the buttons and message */
+.sphere-1 {
+  top: -10%;
+  left: 10%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.sphere-2 {
+  bottom: 10%;
+  right: 10%;
+  width: 35vw;
+  height: 35vw;
+  background: radial-gradient(circle, #ec4899 0%, #8b5cf6 100%);
+}
+
+.home-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.badge-promo {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--accent-color);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.home-hero-content h1 {
+  font-size: 3.5rem;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  background: linear-gradient(to right, #ffffff, #9ca3af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-lead {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+/* Button variants */
+.btn-primary, .btn-secondary, .btn-outline, .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--text-muted);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--text-secondary);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.btn-large {
+  padding: 16px 36px;
+  font-size: 1.125rem;
+}
+
+.cta-buttons-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
 }
 
 .register-message {
-    font-size: 1.2em; /* Slightly larger font size for emphasis */
-    margin-bottom: 20px; /* Space between message and button */
-    color: #ffffff; /* White text color */
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
 }
 
-.cta-button {
-    background-color: #ff5722; /* Vibrant orange color */
-    color: #ffffff; /* White text color */
-    border: none;
-    padding: 15px 30px;
-    border-radius: 5px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.3s;
+/* Features grid styling */
+.home-features-section {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: 40px;
 }
 
-.cta-button:hover {
-    background-color: #e64a19; /* Darker orange on hover */
-    transform: scale(1.05); /* Slight zoom effect */
+.home-features-section h2 {
+  font-size: 2.25rem;
+  text-align: center;
+  margin-bottom: 40px;
 }
 
-/* Animations */
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.feature-card {
+  padding: 32px;
+  text-align: left;
+  transition: var(--transition-smooth);
 }
 
-/* Responsive Design */
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+
+.feature-card p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Mobile responsive fixes */
 @media (max-width: 768px) {
-    .home-container h1 {
-        font-size: 2.5em; /* Smaller font size for tablets */
-    }
-
-    .home-container p {
-        font-size: 1.2em; /* Smaller font size for tablets */
-    }
+  .home-hero-content h1 {
+    font-size: 2.5rem;
+  }
 }
-
-@media (max-width: 480px) {
-    .home-container h1 {
-        font-size: 2em; /* Smaller font size for mobile devices */
-    }
-
-    .home-container p {
-        font-size: 1em; /* Smaller font size for mobile devices */
-    }
-}
-.view-portfolio-button {
-    background-color: #2e8b57;
-    color: white;
-    color: #ffffff; /* White text color */
-    border: none;
-    padding: 14px 30px;
-    border-radius: 5px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.3s;
-    margin-top: 20px;
-  }
-  
-  .view-portfolio-button:hover {
-    background-color: #08582a;
-    transform: scale(1.05);
-  }
-  
-  .spinner-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50px; /* Adjust as needed */
-  }
-  
-  .spinner-icon {
-    font-size: 2rem; /* Adjust size as needed */
-    color: #007bff; /* Adjust color as needed */
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  

@@ -14,6 +14,10 @@ export class User extends Document {
 
   @Prop({ default: null })
   refreshTokenHash?: string;
+
+  /** Custom public URL slug — e.g. "john-doe" → /p/john-doe */
+  @Prop({ unique: true, sparse: true, default: null })
+  username?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

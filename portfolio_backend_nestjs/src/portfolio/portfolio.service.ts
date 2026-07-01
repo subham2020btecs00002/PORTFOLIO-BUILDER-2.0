@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Portfolio } from './schemas/portfolio.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
 
@@ -41,15 +41,24 @@ export class PortfolioService {
         }))
       : [];
 
+    const skills = dto.skills
+      ? dto.skills.map((skill) => ({
+          name: skill.name,
+          level: skill.level || 'Intermediate',
+          category: skill.category || '',
+        }))
+      : [];
+
     const portfolioLinks = dto.portfolioLinks
       ? {
           github: dto.portfolioLinks.github || '',
           leetcode: dto.portfolioLinks.leetcode || '',
           gfg: dto.portfolioLinks.gfg || '',
+          linkedin: dto.portfolioLinks.linkedin || '',
         }
-      : { github: '', leetcode: '', gfg: '' };
+      : { github: '', leetcode: '', gfg: '', linkedin: '' };
 
-    return { education, professionalHistory, projects, portfolioLinks };
+    return { education, professionalHistory, projects, portfolioLinks, skills };
   }
 
   async create(userId: string, dto: CreatePortfolioDto, file?: Express.Multer.File): Promise<Portfolio> {
@@ -58,23 +67,22 @@ export class PortfolioService {
       throw new BadRequestException('Portfolio already exists');
     }
 
-    const { education, professionalHistory, projects, portfolioLinks } = this.mapDtoFields(dto);
+    const { education, professionalHistory, projects, portfolioLinks, skills } = this.mapDtoFields(dto);
 
     const pdf = file
-      ? {
-          data: file.buffer,
-          contentType: file.mimetype,
-        }
+      ? { data: file.buffer, contentType: file.mimetype }
       : null;
 
     const portfolio = new this.portfolioModel({
       user: userId,
       title: dto.title,
       description: dto.description || '',
+      templateId: dto.templateId || 'classic-green',
       projects,
       portfolioLinks,
       education,
       professionalHistory,
+      skills,
       pdf,
     });
 
@@ -87,27 +95,29 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio not found');
     }
 
-    const { education, professionalHistory, projects, portfolioLinks } = this.mapDtoFields(dto);
+    const { education, professionalHistory, projects, portfolioLinks, skills } = this.mapDtoFields(dto);
 
     const pdf = file
-      ? {
-          data: file.buffer,
-          contentType: file.mimetype,
-        }
+      ? { data: file.buffer, contentType: file.mimetype }
       : portfolio.pdf;
 
     portfolio.title = dto.title;
     portfolio.description = dto.description || '';
+    portfolio.templateId = dto.templateId || portfolio.templateId || 'classic-green';
     portfolio.projects = projects;
-    portfolio.portfolioLinks = portfolioLinks;
+    portfolio.portfolioLinks = portfolioLinks as any;
     portfolio.education = education as any;
     portfolio.professionalHistory = professionalHistory as any;
+    portfolio.skills = skills as any;
     portfolio.pdf = pdf;
 
     return portfolio.save();
   }
 
   async getPdf(id: string): Promise<{ data: Buffer; contentType: string }> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('PDF not found');
+    }
     const portfolio = await this.portfolioModel.findById(id);
     if (!portfolio || !portfolio.pdf) {
       throw new NotFoundException('PDF not found');
@@ -131,14 +141,69 @@ export class PortfolioService {
     return { exists: !!portfolio };
   }
 
+  /** Fetch portfolio by MongoDB user ID — increments view count */
   async getPublic(userId: string): Promise<Portfolio> {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new NotFoundException('Portfolio not found');
+    }
     const portfolio = await this.portfolioModel
-      .findOne({ user: userId })
-      .populate('user', 'name');
+      .findOneAndUpdate(
+        { user: userId },
+        {
+          $inc: { 'analytics.views': 1 },
+          $set: { 'analytics.lastVisited': new Date() },
+        },
+        { new: true },
+      )
+      .populate('user', 'name username');
 
     if (!portfolio) {
       throw new NotFoundException('Portfolio not found');
     }
     return portfolio;
+  }
+
+  /** Fetch portfolio by custom username slug — increments view count */
+  async getPublicByUsername(username: string): Promise<Portfolio> {
+    const userModel = this.portfolioModel.db.model('User');
+    const user = await userModel.findOne({ username: username.toLowerCase().trim() });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const portfolio = await this.portfolioModel
+      .findOneAndUpdate(
+        { user: user._id },
+        {
+          $inc: { 'analytics.views': 1 },
+          $set: { 'analytics.lastVisited': new Date() },
+        },
+        { new: true },
+      )
+      .populate('user', 'name username');
+
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+    return portfolio;
+  }
+
+  async getAnalytics(userId: string): Promise<{ views: number; contactCount: number; lastVisited: Date | null }> {
+    const portfolio = await this.portfolioModel.findOne({ user: userId }).select('analytics');
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+    return {
+      views: portfolio.analytics?.views ?? 0,
+      contactCount: portfolio.analytics?.contactCount ?? 0,
+      lastVisited: portfolio.analytics?.lastVisited ?? null,
+    };
+  }
+
+  async incrementContactCount(userId: string): Promise<void> {
+    await this.portfolioModel.findOneAndUpdate(
+      { user: userId },
+      { $inc: { 'analytics.contactCount': 1 } },
+    );
   }
 }

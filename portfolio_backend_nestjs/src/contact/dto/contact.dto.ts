@@ -16,4 +16,8 @@ export class ContactDto {
   @IsString()
   @IsNotEmpty()
   reason: string;
+
+  @IsString()
+  @IsOptional()
+  userId?: string;
 }

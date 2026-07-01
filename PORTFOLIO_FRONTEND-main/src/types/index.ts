@@ -11,8 +11,10 @@
 /** Represents a logged-in user returned from the API. */
 export interface User {
   _id: string;
+  id?: string;
   name: string;
   email: string;
+  username?: string;
 }
 
 /** Shape of the auth reducer state. */
@@ -45,6 +47,7 @@ export interface AuthContextType {
   login: (formData: LoginFormData) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  updateUsername: (username: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +75,12 @@ export interface ContactFormData {
 // ---------------------------------------------------------------------------
 // Portfolio domain models
 // ---------------------------------------------------------------------------
+
+export interface Skill {
+  name: string;
+  level: 'Beginner' | 'Intermediate' | 'Expert';
+  category: string;
+}
 
 export interface Project {
   title: string;
@@ -101,6 +110,13 @@ export interface PortfolioLinks {
   github: string;
   leetcode: string;
   gfg: string;
+  linkedin: string;
+}
+
+export interface AnalyticsData {
+  views: number;
+  contactCount: number;
+  lastVisited: string | null;
 }
 
 /** Full portfolio document as returned from the API. */
@@ -113,6 +129,10 @@ export interface Portfolio {
   education: Education[];
   professionalHistory: ProfessionalHistory[];
   portfolioLinks: PortfolioLinks;
+  skills: Skill[];
+  templateId: string;
+  analytics?: AnalyticsData;
+  pdf?: { contentType: string } | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -127,6 +147,8 @@ export interface PortfolioFormData {
   education: Education[];
   professionalHistory: ProfessionalHistory[];
   portfolioLinks: PortfolioLinks;
+  skills: Skill[];
+  templateId: string;
   /** File selected for resume upload; null when no file chosen. */
   pdf: File | null;
 }

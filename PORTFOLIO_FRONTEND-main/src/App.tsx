@@ -8,21 +8,22 @@ import CreatePortfolio from './components/Portfolio/CreatePortfolio';
 import EditPortfolio from './components/Portfolio/EditPortfolio';
 import PrivateRoute from './components/PrivateRoute';
 import PublicPortfolio from './components/Portfolio/PublicPortfolio';
-import { AuthProvider } from './components/context/AuthContext';
+import AnalyticsDashboard from './components/Dashboard/AnalyticsDashboard';
+import ProfileSettings from './components/Profile/ProfileSettings';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <MainApp />
-      </Router>
-    </AuthProvider>
+    <Router>
+      <MainApp />
+    </Router>
   );
 };
 
 const MainApp: React.FC = () => {
   const location = useLocation();
-  const isPublicPortfolio = location.pathname.startsWith('/portfolio/public/');
+  const isPublicPortfolio =
+    location.pathname.startsWith('/p/') ||
+    location.pathname.startsWith('/portfolio/public/');
 
   return (
     <>
@@ -39,6 +40,15 @@ const MainApp: React.FC = () => {
           path="/portfolio/edit"
           element={<PrivateRoute element={<EditPortfolio />} />}
         />
+        <Route
+          path="/dashboard"
+          element={<PrivateRoute element={<AnalyticsDashboard />} />}
+        />
+        <Route
+          path="/settings"
+          element={<PrivateRoute element={<ProfileSettings />} />}
+        />
+        <Route path="/p/:username" element={<PublicPortfolio />} />
         <Route path="/portfolio/public/:userId" element={<PublicPortfolio />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

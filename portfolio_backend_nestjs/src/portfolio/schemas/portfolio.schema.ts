@@ -3,6 +3,20 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../auth/schemas/user.schema';
 
 @Schema()
+export class Skill {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ default: 'Intermediate', enum: ['Beginner', 'Intermediate', 'Expert'] })
+  level: string;
+
+  @Prop({ default: '' })
+  category: string;
+}
+
+const SkillSchema = SchemaFactory.createForClass(Skill);
+
+@Schema()
 export class Project {
   @Prop()
   title: string;
@@ -72,6 +86,9 @@ export class PortfolioLinks {
 
   @Prop()
   gfg: string;
+
+  @Prop()
+  linkedin: string;
 }
 
 const PortfolioLinksSchema = SchemaFactory.createForClass(PortfolioLinks);
@@ -86,6 +103,20 @@ export class PdfData {
 }
 
 const PdfDataSchema = SchemaFactory.createForClass(PdfData);
+
+@Schema()
+export class Analytics {
+  @Prop({ default: 0 })
+  views: number;
+
+  @Prop({ default: 0 })
+  contactCount: number;
+
+  @Prop({ default: null })
+  lastVisited: Date;
+}
+
+const AnalyticsSchema = SchemaFactory.createForClass(Analytics);
 
 @Schema({ timestamps: true })
 export class Portfolio extends Document {
@@ -110,8 +141,18 @@ export class Portfolio extends Document {
   @Prop({ type: PortfolioLinksSchema })
   portfolioLinks: PortfolioLinks;
 
+  @Prop({ type: [SkillSchema], default: [] })
+  skills: Skill[];
+
+  /** Template identifier: 'classic-green' | 'dark-pro' | 'creative' */
+  @Prop({ default: 'classic-green' })
+  templateId: string;
+
   @Prop({ type: PdfDataSchema })
   pdf: PdfData;
+
+  @Prop({ type: AnalyticsSchema, default: () => ({}) })
+  analytics: Analytics;
 }
 
 export const PortfolioSchema = SchemaFactory.createForClass(Portfolio);

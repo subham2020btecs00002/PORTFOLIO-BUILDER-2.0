@@ -1,6 +1,20 @@
 import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class SkillDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  level?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+}
+
 export class ProjectDto {
   @IsString()
   @IsNotEmpty()
@@ -73,6 +87,10 @@ export class PortfolioLinksDto {
   @IsString()
   @IsOptional()
   gfg?: string;
+
+  @IsString()
+  @IsOptional()
+  linkedin?: string;
 }
 
 export class CreatePortfolioDto {
@@ -83,6 +101,16 @@ export class CreatePortfolioDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  templateId?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SkillDto)
+  skills?: SkillDto[];
 
   @IsArray()
   @IsOptional()
