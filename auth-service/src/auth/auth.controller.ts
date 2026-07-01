@@ -1,24 +1,42 @@
-import { Controller, Post, Get, Patch, Body, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  UseGuards,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { CurrentUser } from './decorators/current-user.decorator';
 
-@UseGuards(ThrottlerGuard)
+/**
+ * Auth Controller — migrated from monolith.
+ *
+ * Key changes from the monolith version:
+ *  - ThrottlerGuard removed (rate limiting is now in the API Gateway)
+ *  - @Throttle decorators removed (gateway enforces rate limits centrally)
+ *
+ * JWT guards (@UseGuards(AuthGuard('jwt'))) are kept on endpoints that need
+ * them *within* the auth service (logout, getUser, updateUsername) because
+ * those endpoints require a valid user context, and the auth service can
+ * validate its own tokens via JwtStrategy.
+ */
 @Controller('api/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
@@ -63,4 +81,3 @@ export class AuthController {
     return this.authService.updateUsername(user.id, username);
   }
 }
-

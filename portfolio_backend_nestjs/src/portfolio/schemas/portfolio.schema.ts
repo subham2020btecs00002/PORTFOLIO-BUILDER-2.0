@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { User } from '../../auth/schemas/user.schema';
 
 @Schema()
 export class Skill {
@@ -120,8 +119,9 @@ const AnalyticsSchema = SchemaFactory.createForClass(Analytics);
 
 @Schema({ timestamps: true })
 export class Portfolio extends Document {
+  /** Reference to the User document in auth-service's users collection */
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  user: User | string;
+  user: MongooseSchema.Types.ObjectId | string;
 
   @Prop({ required: true })
   title: string;
