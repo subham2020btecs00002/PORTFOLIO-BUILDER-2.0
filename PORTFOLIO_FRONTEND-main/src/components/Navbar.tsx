@@ -1,60 +1,60 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { FaLaptopCode, FaSignOutAlt, FaUser, FaChartBar } from 'react-icons/fa';
 import './Navbar.css';
 
-/**
- * Application-level navigation bar.
- * Shows authenticated links (Portfolio, logout) or guest links (Register, Login)
- * based on the current auth state.
- */
 const Navbar: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const onLogout: React.MouseEventHandler<HTMLButtonElement> = (e) => {
-    e.preventDefault();
-    void logout();
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <nav className="navbar">
-      <div className="navbar-content">
-        <h1>
-          <Link to="/" className="navbar-logo">
-            Portfolio Builder
-          </Link>
-        </h1>
-        <ul className="navbar-menu">
-          {isAuthenticated ? (
-            <>
-              <li>
-                <Link to="/portfolio" className="navbar-link">
-                  Portfolio
-                </Link>
-              </li>
-              <li className="navbar-user">Hello, {user?.name ?? 'User'}</li>
-              <li>
-                <button onClick={onLogout} className="navbar-logout-btn">
-                  {/* FontAwesome logout icon */}
-                  <i className="fas fa-sign-out-alt" />
-                </button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li>
-                <Link to="/register" className="navbar-link">
-                  Register
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="navbar-link">
-                  Login
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
+    <nav className="global-navbar card-glass">
+      <div className="nav-brand" onClick={() => navigate('/')}>
+        <FaLaptopCode className="brand-icon" />
+        <span>PortfolioBuilder</span>
+      </div>
+
+      <div className="nav-links">
+        {isAuthenticated ? (
+          <>
+            <button
+              className={`nav-link-btn ${isActive('/dashboard') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard')}
+            >
+              <FaChartBar /> Dashboard
+            </button>
+            <button
+              className={`nav-link-btn ${isActive('/settings') ? 'active' : ''}`}
+              onClick={() => navigate('/settings')}
+            >
+              <FaUser /> Profile
+            </button>
+            <button className="nav-logout-btn" onClick={handleLogout}>
+              <FaSignOutAlt /> Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className={`nav-link-btn ${isActive('/login') ? 'active' : ''}`}
+              onClick={() => navigate('/login')}
+            >
+              Login
+            </button>
+            <button className="nav-register-btn" onClick={() => navigate('/register')}>
+              Register
+            </button>
+          </>
+        )}
       </div>
     </nav>
   );

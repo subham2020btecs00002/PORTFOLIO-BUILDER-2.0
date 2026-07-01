@@ -51,10 +51,10 @@ export class PortfolioController {
     res.send(pdf.data);
   }
 
-  @Get()
+  @Get('analytics')
   @UseGuards(AuthGuard('jwt'))
-  async getPortfolio(@CurrentUser() user: { id: string }) {
-    return this.portfolioService.getPortfolio(user.id);
+  async getAnalytics(@CurrentUser() user: { id: string }) {
+    return this.portfolioService.getAnalytics(user.id);
   }
 
   @Get('exists')
@@ -63,6 +63,19 @@ export class PortfolioController {
     return this.portfolioService.checkExists(user.id);
   }
 
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  async getPortfolio(@CurrentUser() user: { id: string }) {
+    return this.portfolioService.getPortfolio(user.id);
+  }
+
+  /** Public portfolio by custom username slug — /api/portfolio/public/by-username/:username */
+  @Get('public/by-username/:username')
+  async getPublicByUsername(@Param('username') username: string) {
+    return this.portfolioService.getPublicByUsername(username);
+  }
+
+  /** Public portfolio by MongoDB user ID (kept for internal use) */
   @Get('public/:userId')
   async getPublic(@Param('userId') userId: string) {
     return this.portfolioService.getPublic(userId);

@@ -1,109 +1,117 @@
-/* Authentication Form Styles */
-.auth-form-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(to right, #f9f9f9, #e0e0e0);
+.login-container, .register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 100px);
+  padding: 24px;
+  position: relative;
 }
 
 .auth-form {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 30px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  animation: fadeIn 0.5s ease;
 }
 
 .auth-form h2 {
-    margin-bottom: 20px;
-    font-size: 2em;
-    color: #333;
+  font-size: 2.25rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #d1d5db 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .auth-form p.intro-text {
-    font-size: 1em;
-    margin-bottom: 20px;
-    color: #666;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  line-height: 1.5;
 }
 
 .auth-form input {
-    width: calc(100% - 22px);
-    padding: 15px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1em;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 14px 18px;
+  font-size: 1rem;
+  margin-bottom: 18px;
+  transition: var(--transition-smooth);
+  width: 100%;
 }
 
-.auth-form button {
-    width: 100%;
-    background-color: #4caf50;
-    color: #fff;
-    border: none;
-    padding: 15px;
-    border-radius: 5px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
-.auth-form button:hover {
-    background-color: #45a049;
+.auth-form button.submit-btn {
+  background: var(--accent-gradient);
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.auth-form button.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+
+.auth-form button.submit-btn:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 .auth-form p.redirect-message {
-    margin-top: 15px;
-    font-size: 0.9em;
-    color: #333;
+  margin-top: 24px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .auth-form p.redirect-message a {
-    color: #4caf50;
-    text-decoration: none;
-    font-weight: bold;
+  color: var(--accent-color);
+  font-weight: 600;
 }
 
 .auth-form p.redirect-message a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
-/* Specific Styles for Register and Login Pages */
-.register-container .auth-form h2,
-.login-container .auth-form h2 {
-    color: #333;
-}
-
-.register-container .auth-form p.intro-text {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    color: #555;
-}
-
-.login-container .auth-form p.intro-text {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    color: #666;
-}
+/* Spinner inside button */
 .loading-spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border-left-color: #09f;
-    animation: spin 1s ease infinite;
-    display: inline-block;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border-left-color: #fff;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@media (max-width: 480px) {
+  .auth-form {
+    padding: 30px 20px;
   }
-  
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  .submit-btn:disabled {
-    background-color: #ccc; /* Change to a gray color for the disabled state */
-    cursor: not-allowed;
-  }
-  
+}

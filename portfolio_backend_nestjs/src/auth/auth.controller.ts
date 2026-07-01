@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -53,4 +53,14 @@ export class AuthController {
   async getUser(@CurrentUser() user: { id: string }) {
     return this.authService.getUser(user.id);
   }
+
+  @Patch('username')
+  @UseGuards(AuthGuard('jwt'))
+  async updateUsername(
+    @CurrentUser() user: { id: string },
+    @Body('username') username: string,
+  ) {
+    return this.authService.updateUsername(user.id, username);
+  }
 }
+

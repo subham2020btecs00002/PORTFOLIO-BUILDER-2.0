@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -64,7 +64,7 @@ export class AuthService {
     return { message: 'Registration successful' };
   }
 
-  async login(loginDto: LoginDto, res: Response): Promise<{ user: { id: string; name: string; email: string } }> {
+  async login(loginDto: LoginDto, res: Response): Promise<{ user: { id: string; _id: string; name: string; email: string; username?: string } }> {
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ email });
@@ -82,7 +82,15 @@ export class AuthService {
     await user.save();
 
     this.setAuthCookies(res, accessToken, refreshToken);
-    return { user: { id: user.id, name: user.name, email: user.email } };
+    return {
+      user: {
+        id: user.id,
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+      },
+    };
   }
 
   async refresh(rawRefreshToken: string, res: Response): Promise<{ refreshed: boolean }> {
@@ -130,4 +138,26 @@ export class AuthService {
     }
     return user;
   }
+
+  async updateUsername(userId: string, username: string): Promise<User> {
+    const trimmedUsername = username.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+      throw new BadRequestException('Username can only contain alphanumeric characters, underscores, and hyphens');
+    }
+
+    const existingUser = await this.userModel.findOne({ username: trimmedUsername });
+    if (existingUser && existingUser.id !== userId) {
+      throw new BadRequestException('Username is already taken');
+    }
+
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.username = trimmedUsername;
+    await user.save();
+    return this.getUser(userId);
+  }
 }
+

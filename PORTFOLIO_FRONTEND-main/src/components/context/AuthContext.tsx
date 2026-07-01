@@ -179,6 +179,24 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUsername = async (username: string): Promise<void> => {
+    try {
+      const res = await api.patch<User>('/api/auth/username', { username });
+      dispatch({ type: 'USER_LOADED', payload: res.data });
+      toast.success('Username updated successfully!', { containerId: 'global' });
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+      const message =
+        typeof axiosError.response?.data?.message === 'string'
+          ? axiosError.response.data.message
+          : typeof axiosError.response?.data?.message === 'object' && Array.isArray(axiosError.response?.data?.message)
+          ? axiosError.response.data.message.join(', ')
+          : 'Failed to update username';
+      toast.error(message, { containerId: 'global' });
+      throw err;
+    }
+  };
+
   useEffect(() => {
     void loadUser();
   }, [loadUser]);
@@ -193,6 +211,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     loadUser,
+    updateUsername,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
