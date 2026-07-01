@@ -2,13 +2,17 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Portfolio } from './schemas/portfolio.schema';
+import { User } from '../common/schemas/user.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
+
 
 @Injectable()
 export class PortfolioService {
   constructor(
     @InjectModel(Portfolio.name) private portfolioModel: Model<Portfolio>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
+
 
   private mapDtoFields(dto: CreatePortfolioDto) {
     const education = dto.education
@@ -146,7 +150,7 @@ export class PortfolioService {
     if (!Types.ObjectId.isValid(userId)) {
       throw new NotFoundException('Portfolio not found');
     }
-    const portfolio = await this.portfolioModel
+    const portfolio = (await this.portfolioModel
       .findOneAndUpdate(
         { user: userId },
         {
@@ -155,7 +159,7 @@ export class PortfolioService {
         },
         { new: true },
       )
-      .populate('user', 'name username');
+      .populate('user', 'name username')) as unknown as Portfolio | null;
 
     if (!portfolio) {
       throw new NotFoundException('Portfolio not found');
@@ -165,22 +169,23 @@ export class PortfolioService {
 
   /** Fetch portfolio by custom username slug — increments view count */
   async getPublicByUsername(username: string): Promise<Portfolio> {
-    const userModel = this.portfolioModel.db.model('User');
-    const user = await userModel.findOne({ username: username.toLowerCase().trim() });
+    const user = await this.userModel.findOne({
+      username: username.toLowerCase().trim(),
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const portfolio = await this.portfolioModel
+    const portfolio = (await this.portfolioModel
       .findOneAndUpdate(
-        { user: user._id },
+        { user: user._id.toString() },
         {
           $inc: { 'analytics.views': 1 },
           $set: { 'analytics.lastVisited': new Date() },
         },
         { new: true },
       )
-      .populate('user', 'name username');
+      .populate('user', 'name username')) as unknown as Portfolio | null;
 
     if (!portfolio) {
       throw new NotFoundException('Portfolio not found');

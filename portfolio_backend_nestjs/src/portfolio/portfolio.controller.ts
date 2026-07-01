@@ -5,17 +5,16 @@ import {
   Get,
   Param,
   Body,
-  UseGuards,
   UseInterceptors,
   UploadedFile,
   Res,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+
 import { NestedFieldsInterceptor } from '../common/interceptors/nested-fields.interceptor';
 
 @Controller('api/portfolio')
@@ -23,7 +22,6 @@ export class PortfolioController {
   constructor(private portfolioService: PortfolioService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('pdf'), NestedFieldsInterceptor)
   async create(
     @CurrentUser() user: { id: string },
@@ -34,7 +32,6 @@ export class PortfolioController {
   }
 
   @Put()
-  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('pdf'), NestedFieldsInterceptor)
   async update(
     @CurrentUser() user: { id: string },
@@ -52,19 +49,16 @@ export class PortfolioController {
   }
 
   @Get('analytics')
-  @UseGuards(AuthGuard('jwt'))
   async getAnalytics(@CurrentUser() user: { id: string }) {
     return this.portfolioService.getAnalytics(user.id);
   }
 
   @Get('exists')
-  @UseGuards(AuthGuard('jwt'))
   async checkExists(@CurrentUser() user: { id: string }) {
     return this.portfolioService.checkExists(user.id);
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   async getPortfolio(@CurrentUser() user: { id: string }) {
     return this.portfolioService.getPortfolio(user.id);
   }

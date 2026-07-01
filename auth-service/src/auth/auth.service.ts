@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
@@ -9,6 +14,13 @@ import { User } from './schemas/user.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
+/**
+ * AuthService — migrated verbatim from the monolith.
+ *
+ * This is the ONLY service that signs JWTs (using JWT_SECRET and
+ * JWT_REFRESH_SECRET). The API Gateway only *verifies* tokens — it
+ * never signs them.
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -17,7 +29,10 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  private issueTokens(userId: string): { accessToken: string; refreshToken: string } {
+  private issueTokens(userId: string): {
+    accessToken: string;
+    refreshToken: string;
+  } {
     const payload = { sub: userId };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, {
@@ -27,8 +42,13 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
-    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ): void {
+    const isProd =
+      this.configService.get<string>('NODE_ENV') === 'production';
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
@@ -64,7 +84,18 @@ export class AuthService {
     return { message: 'Registration successful' };
   }
 
-  async login(loginDto: LoginDto, res: Response): Promise<{ user: { id: string; _id: string; name: string; email: string; username?: string } }> {
+  async login(
+    loginDto: LoginDto,
+    res: Response,
+  ): Promise<{
+    user: {
+      id: string;
+      _id: string;
+      name: string;
+      email: string;
+      username?: string;
+    };
+  }> {
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ email });
@@ -93,7 +124,10 @@ export class AuthService {
     };
   }
 
-  async refresh(rawRefreshToken: string, res: Response): Promise<{ refreshed: boolean }> {
+  async refresh(
+    rawRefreshToken: string,
+    res: Response,
+  ): Promise<{ refreshed: boolean }> {
     let payload: { sub: string };
     try {
       payload = this.jwtService.verify(rawRefreshToken, {
@@ -108,12 +142,17 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token revoked');
     }
 
-    const tokenMatches = await bcrypt.compare(rawRefreshToken, user.refreshTokenHash);
+    const tokenMatches = await bcrypt.compare(
+      rawRefreshToken,
+      user.refreshTokenHash,
+    );
     if (!tokenMatches) {
       throw new UnauthorizedException('Refresh token mismatch');
     }
 
-    const { accessToken, refreshToken: newRefreshToken } = this.issueTokens(user.id);
+    const { accessToken, refreshToken: newRefreshToken } = this.issueTokens(
+      user.id,
+    );
     user.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
     await user.save();
 
@@ -122,17 +161,32 @@ export class AuthService {
   }
 
   async logout(userId: string, res: Response): Promise<{ message: string }> {
-    await this.userModel.findByIdAndUpdate(userId, { refreshTokenHash: null });
+    await this.userModel.findByIdAndUpdate(userId, {
+      refreshTokenHash: null,
+    });
 
-    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
-    res.clearCookie('access_token', { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/' });
-    res.clearCookie('refresh_token', { httpOnly: true, secure: isProd, sameSite: 'lax', path: '/api/auth' });
+    const isProd =
+      this.configService.get<string>('NODE_ENV') === 'production';
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+    });
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/api/auth',
+    });
 
     return { message: 'Logged out successfully' };
   }
 
   async getUser(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).select('-password -refreshTokenHash');
+    const user = await this.userModel
+      .findById(id)
+      .select('-password -refreshTokenHash');
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -142,10 +196,14 @@ export class AuthService {
   async updateUsername(userId: string, username: string): Promise<User> {
     const trimmedUsername = username.trim().toLowerCase();
     if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
-      throw new BadRequestException('Username can only contain alphanumeric characters, underscores, and hyphens');
+      throw new BadRequestException(
+        'Username can only contain alphanumeric characters, underscores, and hyphens',
+      );
     }
 
-    const existingUser = await this.userModel.findOne({ username: trimmedUsername });
+    const existingUser = await this.userModel.findOne({
+      username: trimmedUsername,
+    });
     if (existingUser && existingUser.id !== userId) {
       throw new BadRequestException('Username is already taken');
     }
@@ -160,4 +218,3 @@ export class AuthService {
     return this.getUser(userId);
   }
 }
-

@@ -4,6 +4,13 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
+/**
+ * JWT Strategy for the Auth Service.
+ *
+ * Note: In Phase 2+ this strategy is mainly used for the logout and getUser
+ * endpoints within the auth service itself. The gateway handles token
+ * verification for all other upstream services.
+ */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
