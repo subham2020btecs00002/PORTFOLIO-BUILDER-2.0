@@ -1,20 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner, FaBars, FaPalette, FaFont, FaShapes, FaTshirt } from 'react-icons/fa';
 import api from '../api';
 import { usePortfolioForm } from '../../hooks/usePortfolioForm';
-import type { PortfolioFormData } from '../../types';
+import { useAuth } from '../context/AuthContext';
+import type { Portfolio } from '../../types';
+import ComboBox from '../common/ComboBox';
+import {
+  HEADLINE_SUGGESTIONS,
+  SKILL_SUGGESTIONS,
+  SKILL_CATEGORY_SUGGESTIONS,
+  DEGREE_SUGGESTIONS,
+  BRANCH_SUGGESTIONS,
+  POSITION_SUGGESTIONS,
+} from '../../data/formSuggestions';
 import './PortfolioForm.css';
+
+// Import templates
+import { ClassicGreen } from './templates/ClassicGreen';
+import { DarkPro } from './templates/DarkPro';
+import { Creative } from './templates/Creative';
+import { Minimalist } from './templates/Minimalist';
+import { Cyberpunk } from './templates/Cyberpunk';
+import { Neobrutalism } from './templates/Neobrutalism';
+import './templates/templates.css';
 
 interface PortfolioFormShellProps {
   mode: 'create' | 'edit';
-  initialData?: PortfolioFormData;
+  initialData?: any;
 }
 
 const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialData }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const [nextBtnShake, setNextBtnShake] = useState(false);
+  const [saveBtnShake, setSaveBtnShake] = useState(false);
+  
   const {
     formData,
     errors,
@@ -35,10 +58,58 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
+  // Utility: scroll to the first field-error in the current step
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const firstError = document.querySelector('.field-error-msg');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 80);
+  };
+
+  // Utility: trigger shake on a button
+  const triggerShake = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
+    setter(true);
+    setTimeout(() => setter(false), 600);
+  };
+
+  const STEP_NAMES = ['Details', 'Skills', 'Projects', 'Education', 'Experience', 'Links & PDF', 'Theme & Layout'];
+
+  // Drag and Drop Section Reordering State
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const sections = [...formData.sectionOrder];
+    const draggedItem = sections[draggedIndex];
+    sections.splice(draggedIndex, 1);
+    sections.splice(index, 0, draggedItem);
+    
+    handlers.handleSectionOrderChange(sections);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid()) {
-      toast.error('Please fix errors in the form before submitting.');
+    const { valid, firstFailingStep } = isFormValid();
+    if (!valid) {
+      triggerShake(setSaveBtnShake);
+      const stepName = STEP_NAMES[firstFailingStep - 1] || 'a previous step';
+      toast.error(`Please fix the errors in step ${firstFailingStep}: "${stepName}" before saving.`);
+      // Navigate back to the first failing step so the user sees the errors
+      setStep(firstFailingStep);
+      scrollToFirstError();
       return;
     }
 
@@ -48,6 +119,14 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
       payload.append('title', formData.title);
       payload.append('description', formData.description);
       payload.append('templateId', formData.templateId);
+      payload.append('themeColor', formData.themeColor);
+      payload.append('fontFamily', formData.fontFamily);
+      payload.append('borderRadius', formData.borderRadius);
+      
+      formData.sectionOrder.forEach((section, index) => {
+        payload.append(`sectionOrder[${index}]`, section);
+      });
+
       if (formData.pdf) {
         payload.append('pdf', formData.pdf);
       }
@@ -131,19 +210,92 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     }
   };
 
-  // Render helpers
+  // Render Live Preview template inside mini browser
+  const renderLivePreview = () => {
+    const mockUser = {
+      _id: 'preview-user-id',
+      name: user?.name || 'Your Name',
+      email: user?.email || 'name@example.com',
+      username: user?.username || 'username',
+    };
+
+    const previewPortfolio: Portfolio = {
+      _id: 'preview-id',
+      user: mockUser,
+      title: formData.title || 'Portfolio Title',
+      description: formData.description || 'Fill out the details on the left, and watch your portfolio build in real-time!',
+      projects: formData.projects.filter(p => p.title.trim()),
+      education: formData.education.filter(e => e.collegeName.trim()),
+      professionalHistory: formData.professionalHistory.filter(h => h.companyName.trim()),
+      portfolioLinks: formData.portfolioLinks,
+      skills: formData.skills.filter(s => s.name.trim()),
+      templateId: formData.templateId,
+      sectionOrder: formData.sectionOrder,
+      themeColor: formData.themeColor,
+      fontFamily: formData.fontFamily,
+      borderRadius: formData.borderRadius,
+    };
+
+    const contactProps = {
+      portfolio: previewPortfolio,
+      contactForm: { name: '', email: '', phone: '', reason: '' },
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      handleInputChange: () => {},
+      handleSubmit: (e: React.FormEvent) => e.preventDefault(),
+      handleScrollTo: (sectionId: string) => {
+        const element = document.getElementById(`preview-${sectionId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      },
+      isPreview: true,
+    };
+
+    switch (formData.templateId) {
+      case 'dark-pro':
+        return <DarkPro {...contactProps} />;
+      case 'creative':
+        return <Creative {...contactProps} />;
+      case 'minimalist':
+        return <Minimalist {...contactProps} />;
+      case 'cyberpunk':
+        return <Cyberpunk {...contactProps} />;
+      case 'neobrutalism':
+        return <Neobrutalism {...contactProps} />;
+      case 'classic-green':
+      default:
+        return <ClassicGreen {...contactProps} />;
+    }
+  };
+
+  // Step Indicators
   const renderStepIndicator = () => {
-    const steps = ['Details', 'Skills', 'Projects', 'Education', 'Experience', 'Links & PDF', 'Template'];
+    const steps = ['Details', 'Skills', 'Projects', 'Education', 'Experience', 'Links & PDF', 'Theme & Layout'];
+
+    // Determine which steps have active errors (so we can mark them red)
+    const stepHasAnyError = (stepNum: number): boolean => {
+      switch (stepNum) {
+        case 1: return !!errors.title || !!errors.description;
+        case 2: return errors.skills.some(s => !!s.name);
+        case 3: return errors.projects.some(p => !!p.title || !!p.description || !!p.link);
+        case 4: return errors.education.some(e => Object.values(e).some(Boolean));
+        case 5: return errors.professionalHistory.some(h => Object.values(h).some(Boolean));
+        case 6: return Object.values(errors.portfolioLinks).some(Boolean);
+        default: return false;
+      }
+    };
+
     return (
       <div className="step-indicator-container">
         {steps.map((stepName, index) => {
           const stepNum = index + 1;
           const isActive = currentStep === stepNum;
           const isCompleted = currentStep > stepNum;
+          const hasError = !isActive && stepHasAnyError(stepNum);
           return (
-            <div key={stepNum} className={`step-dot-wrapper ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
+            <div key={stepNum} className={`step-dot-wrapper ${isActive ? 'active' : ''} ${isCompleted && !hasError ? 'completed' : ''} ${hasError ? 'has-error' : ''}`}>
               <div className="step-dot" onClick={() => setStep(stepNum)}>
-                {isCompleted ? <FaCheck size={12} /> : stepNum}
+                {isCompleted && !hasError ? <FaCheck size={12} /> : stepNum}
               </div>
               <span className="step-label">{stepName}</span>
             </div>
@@ -153,539 +305,664 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     );
   };
 
+  const sectionLabels: Record<string, string> = {
+    about: 'About Me & Education',
+    skills: 'Technical Skills',
+    experience: 'Work Experience',
+    projects: 'Personal Projects',
+    contact: 'Contact Form & Email',
+  };
+
+  const colorOptions = [
+    { value: 'default', label: 'Theme Default' },
+    { value: 'cyberpink', label: 'Cyberpink' },
+    { value: 'emerald', label: 'Emerald Green' },
+    { value: 'indigo', label: 'Indigo Blue' },
+    { value: 'amber', label: 'Amber Orange' },
+    { value: 'slate', label: 'Slate Grey' },
+  ];
+
+  const fontOptions = [
+    { value: 'default', label: 'Theme Default' },
+    { value: 'sans', label: 'Modern Sans' },
+    { value: 'serif', label: 'Elegant Serif' },
+    { value: 'grotesk', label: 'Space Grotesk' },
+    { value: 'mono', label: 'Terminal Mono' },
+  ];
+
+  const radiusOptions = [
+    { value: 'default', label: 'Theme Default' },
+    { value: 'sharp', label: 'Sharp Corners' },
+    { value: 'rounded', label: 'Soft Rounded' },
+    { value: 'pill', label: 'Pill Shape' },
+  ];
+
   return (
-    <div className="portfolio-wizard-container">
-      {renderStepIndicator()}
-
-      <form onSubmit={handleSubmit} className="portfolio-wizard-form card-glass">
-        {/* STEP 1: BASIC INFO */}
-        {currentStep === 1 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Basic Information</h2>
-            <p className="step-subtitle">Introduce yourself in a few sentences. This will be the main highlight on your hero section.</p>
+    <div className="portfolio-builder-split-container">
+      {/* LEFT COLUMN: BUILDER FORM */}
+      <div className="builder-left-form-pane">
+        <div className="portfolio-wizard-container">
+          {renderStepIndicator()}
+          
+          <form onSubmit={handleSubmit} className="portfolio-wizard-form card-glass">
             
-            <div className="form-group">
-              <label htmlFor="title">Professional Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handlers.handleChange}
-                placeholder="e.g. Senior Full Stack Developer"
-                className={errors.title ? 'input-error' : ''}
-                required
-              />
-              {errors.title && <span className="field-error-msg">{errors.title}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">About Me / Bio *</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handlers.handleChange}
-                placeholder="Write a brief professional bio. Each point must start with a capital letter and end with a period."
-                className={errors.description ? 'input-error' : ''}
-                rows={5}
-                required
-              />
-              {errors.description && <span className="field-error-msg">{errors.description}</span>}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: SKILLS */}
-        {currentStep === 2 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Skills & Technologies</h2>
-            <p className="step-subtitle">Add technical skills, programming languages, libraries, and frameworks you know.</p>
-
-            <div className="dynamic-items-list">
-              {formData.skills.map((skill, index) => (
-                <div key={index} className="wizard-item-card glass-card">
-                  <div className="wizard-item-header">
-                    <h4>Skill #{index + 1}</h4>
-                    {formData.skills.length > 1 && (
-                      <button type="button" onClick={() => handlers.removeSkill(index)} className="btn-icon btn-remove">
-                        <FaTrash />
-                      </button>
-                    )}
-                  </div>
-                  <div className="wizard-card-grid">
-                    <div className="form-group">
-                      <label>Skill Name *</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={skill.name}
-                        onChange={(e) => handlers.handleSkillChange(e, index)}
-                        placeholder="e.g. React"
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Level</label>
-                      <select
-                        name="level"
-                        value={skill.level}
-                        onChange={(e) => handlers.handleSkillChange(e, index)}
-                      >
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Expert">Expert</option>
-                      </select>
-                    </div>
-                    <div className="form-group select-span-2">
-                      <label>Category (Optional)</label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={skill.category}
-                        onChange={(e) => handlers.handleSkillChange(e, index)}
-                        placeholder="e.g. Frontend, Database, Language"
-                      />
-                    </div>
-                  </div>
+            {/* STEP 1: BASIC INFO */}
+            {currentStep === 1 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Basic Portfolio Details</h2>
+                <p className="step-subtitle">Introduce yourself with a professional title and summary.</p>
+                
+                <div className="form-group">
+                  <label htmlFor="title">Headline Title *</label>
+                  <ComboBox
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handlers.handleChange}
+                    suggestions={HEADLINE_SUGGESTIONS}
+                    placeholder="e.g. Full Stack Developer"
+                    required
+                  />
+                  {errors.title && <span className="field-error-msg">{errors.title}</span>}
                 </div>
-              ))}
-            </div>
-            <button type="button" onClick={handlers.addSkill} className="btn-add-item">
-              <FaPlus /> Add Another Skill
-            </button>
-          </div>
-        )}
 
-        {/* STEP 3: PROJECTS */}
-        {currentStep === 3 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Projects</h2>
-            <p className="step-subtitle">Display your best personal or professional projects to show off your capabilities.</p>
+                <div className="form-group">
+                  <label htmlFor="description">Professional Summary *</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handlers.handleChange}
+                    placeholder="Write a concise paragraph detailing your domain expertise, passions, and achievements. Each sentence/point must start with capital letter and end with a period."
+                    rows={6}
+                    required
+                  />
+                  {errors.description && <span className="field-error-msg">{errors.description}</span>}
+                </div>
+              </div>
+            )}
 
-            <div className="dynamic-items-list">
-              {formData.projects.map((project, index) => (
-                <div key={index} className="wizard-item-card glass-card">
-                  <div className="wizard-item-header">
-                    <h4>Project #{index + 1}</h4>
-                    {formData.projects.length > 1 && (
-                      <button type="button" onClick={() => handlers.removeProject(index)} className="btn-icon btn-remove">
-                        <FaTrash />
-                      </button>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label>Project Title *</label>
+            {/* STEP 2: SKILLS */}
+            {currentStep === 2 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Technical Skills</h2>
+                <p className="step-subtitle">Add technical skills and group them in categories.</p>
+
+                <div className="dynamic-items-list">
+                  {formData.skills.map((skill, index) => (
+                    <div key={index} className="wizard-item-card glass-card">
+                      <div className="wizard-item-header">
+                        <h4>Skill #{index + 1}</h4>
+                        {formData.skills.length > 1 && (
+                          <button type="button" onClick={() => handlers.removeSkill(index)} className="btn-icon btn-remove">
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                      <div className="wizard-card-grid">
+                        <div className="form-group">
+                          <label>Skill Name *</label>
+                          <ComboBox
+                            name="name"
+                            value={skill.name}
+                            onChange={(e) => handlers.handleSkillChange(e, index)}
+                            suggestions={SKILL_SUGGESTIONS}
+                            placeholder="e.g. React, Python, Docker…"
+                            required
+                          />
+                          {errors.skills[index]?.name && <span className="field-error-msg">{errors.skills[index].name}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Skill Category</label>
+                          <ComboBox
+                            name="category"
+                            value={skill.category}
+                            onChange={(e) => handlers.handleSkillChange(e, index)}
+                            suggestions={SKILL_CATEGORY_SUGGESTIONS}
+                            placeholder="e.g. Frontend, DevOps…"
+                          />
+                        </div>
+                        <div className="form-group select-span-2">
+                          <label>Expertise Level</label>
+                          <select
+                            name="level"
+                            value={skill.level}
+                            onChange={(e) => handlers.handleSkillChange(e, index)}
+                          >
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Expert">Expert</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={handlers.addSkill} className="btn-add-item">
+                  <FaPlus /> Add Skill
+                </button>
+              </div>
+            )}
+
+            {/* STEP 3: PROJECTS */}
+            {currentStep === 3 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Personal Projects</h2>
+                <p className="step-subtitle">Feature your best code projects and case studies.</p>
+
+                <div className="dynamic-items-list">
+                  {formData.projects.map((proj, index) => (
+                    <div key={index} className="wizard-item-card glass-card">
+                      <div className="wizard-item-header">
+                        <h4>Project #{index + 1}</h4>
+                        {formData.projects.length > 1 && (
+                          <button type="button" onClick={() => handlers.removeProject(index)} className="btn-icon btn-remove">
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                      <div className="wizard-card-grid">
+                        <div className="form-group select-span-2">
+                          <label>Project Title *</label>
+                          <input
+                            type="text"
+                            name="title"
+                            value={proj.title}
+                            onChange={(e) => handlers.handleProjectChange(e, index)}
+                            placeholder="e.g. Portfolio Builder Website"
+                            required
+                          />
+                          {errors.projects[index]?.title && <span className="field-error-msg">{errors.projects[index].title}</span>}
+                        </div>
+                        <div className="form-group select-span-2">
+                          <label>Description *</label>
+                          <textarea
+                            name="description"
+                            value={proj.description}
+                            onChange={(e) => handlers.handleProjectChange(e, index)}
+                            placeholder="Detail your roles, tech stack, and achievements. Each sentence/point must start with capital letter and end with a period."
+                            rows={3}
+                            required
+                          />
+                          {errors.projects[index]?.description && <span className="field-error-msg">{errors.projects[index].description}</span>}
+                        </div>
+                        <div className="form-group select-span-2">
+                          <label>GitHub / Live Deployment URL</label>
+                          <input
+                            type="text"
+                            name="link"
+                            value={proj.link}
+                            onChange={(e) => handlers.handleProjectChange(e, index)}
+                            placeholder="e.g. https://github.com/..."
+                          />
+                          {errors.projects[index]?.link && <span className="field-error-msg">{errors.projects[index].link}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={handlers.addProject} className="btn-add-item">
+                  <FaPlus /> Add Project
+                </button>
+              </div>
+            )}
+
+            {/* STEP 4: EDUCATION */}
+            {currentStep === 4 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Academic Credentials</h2>
+                <p className="step-subtitle">Your college, high school, or bootcamp degrees.</p>
+
+                <div className="dynamic-items-list">
+                  {formData.education.map((edu, index) => (
+                    <div key={index} className="wizard-item-card glass-card">
+                      <div className="wizard-item-header">
+                        <h4>Education #{index + 1}</h4>
+                        {formData.education.length > 1 && (
+                          <button type="button" onClick={() => handlers.removeEducation(index)} className="btn-icon btn-remove">
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                      <div className="wizard-card-grid">
+                        <div className="form-group select-span-2">
+                          <label>College / School Name *</label>
+                          <input
+                            type="text"
+                            name="collegeName"
+                            value={edu.collegeName}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            placeholder="e.g. Stanford University"
+                            required
+                          />
+                          {errors.education[index]?.collegeName && <span className="field-error-msg">{errors.education[index].collegeName}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Degree *</label>
+                          <ComboBox
+                            name="degree"
+                            value={edu.degree}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            onBlur={(e) => handlers.handleEducationBlur(e, index)}
+                            suggestions={DEGREE_SUGGESTIONS}
+                            placeholder="e.g. B.Tech, M.Sc, MBA…"
+                            required
+                          />
+                          {errors.education[index]?.degree && <span className="field-error-msg">{errors.education[index].degree}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Branch / Major *</label>
+                          <ComboBox
+                            name="branch"
+                            value={edu.branch}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            onBlur={(e) => handlers.handleEducationBlur(e, index)}
+                            suggestions={BRANCH_SUGGESTIONS}
+                            placeholder="e.g. Computer Science & Engineering…"
+                            required
+                          />
+                          {errors.education[index]?.branch && <span className="field-error-msg">{errors.education[index].branch}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>CGPA or Percentage *</label>
+                          <input
+                            type="text"
+                            name="cgpaOrPercentage"
+                            value={edu.cgpaOrPercentage}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            placeholder="e.g. 8.5 or 85%"
+                            required
+                          />
+                          {errors.education[index]?.cgpaOrPercentage && <span className="field-error-msg">{errors.education[index].cgpaOrPercentage}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Year of Joining *</label>
+                          <input
+                            type="date"
+                            name="yearOfJoining"
+                            value={edu.yearOfJoining}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            required
+                          />
+                          {errors.education[index]?.yearOfJoining && <span className="field-error-msg">{errors.education[index].yearOfJoining}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Year of Passing *</label>
+                          <input
+                            type="date"
+                            name="yearOfPassing"
+                            value={edu.yearOfPassing}
+                            onChange={(e) => handlers.handleEducationChange(e, index)}
+                            required
+                          />
+                          {errors.education[index]?.yearOfPassing && <span className="field-error-msg">{errors.education[index].yearOfPassing}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={handlers.addEducation} className="btn-add-item">
+                  <FaPlus /> Add Another Education
+                </button>
+              </div>
+            )}
+
+            {/* STEP 5: EXPERIENCE */}
+            {currentStep === 5 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Professional Experience</h2>
+                <p className="step-subtitle">Your job history, internships, and work details.</p>
+
+                <div className="dynamic-items-list">
+                  {formData.professionalHistory.map((history, index) => (
+                    <div key={index} className="wizard-item-card glass-card">
+                      <div className="wizard-item-header">
+                        <h4>Work Experience #{index + 1}</h4>
+                        {formData.professionalHistory.length > 1 && (
+                          <button type="button" onClick={() => handlers.removeProfessionalHistory(index)} className="btn-icon btn-remove">
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                      <div className="wizard-card-grid">
+                        <div className="form-group">
+                          <label>Company Name *</label>
+                          <input
+                            type="text"
+                            name="companyName"
+                            value={history.companyName}
+                            onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            placeholder="e.g. Google"
+                            required
+                          />
+                          {errors.professionalHistory[index]?.companyName && <span className="field-error-msg">{errors.professionalHistory[index].companyName}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Position / Role *</label>
+                          <ComboBox
+                            name="position"
+                            value={history.position}
+                            onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            suggestions={POSITION_SUGGESTIONS}
+                            placeholder="e.g. Software Engineer, SDE-1…"
+                            required
+                          />
+                          {errors.professionalHistory[index]?.position && <span className="field-error-msg">{errors.professionalHistory[index].position}</span>}
+                        </div>
+                        <div className="form-group select-span-2">
+                          <label>Responsibility *</label>
+                          <textarea
+                            name="responsibility"
+                            value={history.responsibility}
+                            onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            placeholder="Detail your roles/responsibilities. Each sentence/point must start with capital letter and end with a period."
+                            rows={3}
+                            required
+                          />
+                          {errors.professionalHistory[index]?.responsibility && <span className="field-error-msg">{errors.professionalHistory[index].responsibility}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Year of Joining *</label>
+                          <input
+                            type="date"
+                            name="yearOfJoining"
+                            value={history.yearOfJoining}
+                            onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            required
+                          />
+                          {errors.professionalHistory[index]?.yearOfJoining && <span className="field-error-msg">{errors.professionalHistory[index].yearOfJoining}</span>}
+                        </div>
+                        <div className="form-group">
+                          <label>Year of Leaving</label>
+                          <input
+                            type="date"
+                            name="yearOfLeaving"
+                            value={history.isCurrentEmployee ? '' : (history.yearOfLeaving ?? '')}
+                            onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            disabled={history.isCurrentEmployee}
+                            required={!history.isCurrentEmployee}
+                          />
+                          {errors.professionalHistory[index]?.yearOfLeaving && <span className="field-error-msg">{errors.professionalHistory[index].yearOfLeaving}</span>}
+                        </div>
+                        <div className="form-group checkbox-group select-span-2">
+                          <label className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              name="isCurrentEmployee"
+                              checked={history.isCurrentEmployee}
+                              onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
+                            />
+                            Presently working here?
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={handlers.addProfessionalHistory} className="btn-add-item">
+                  <FaPlus /> Add Another Job Experience
+                </button>
+              </div>
+            )}
+
+            {/* STEP 6: LINKS & PDF */}
+            {currentStep === 6 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Social Links & Resume File</h2>
+                <p className="step-subtitle">Provide your public profile links and upload an optional resume PDF.</p>
+
+                <div className="form-group">
+                  <label htmlFor="github">GitHub Profile URL (Optional)</label>
+                  <input
+                    type="text"
+                    id="github"
+                    name="github"
+                    value={formData.portfolioLinks.github}
+                    onChange={handlers.handlePortfolioLinksChange}
+                    onBlur={handlers.handlePortfolioLinksBlur}
+                    placeholder="e.g. https://github.com/username"
+                  />
+                  {errors.portfolioLinks?.github && <span className="field-error-msg">{errors.portfolioLinks.github}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="leetcode">LeetCode Profile URL (Optional)</label>
+                  <input
+                    type="text"
+                    id="leetcode"
+                    name="leetcode"
+                    value={formData.portfolioLinks.leetcode}
+                    onChange={handlers.handlePortfolioLinksChange}
+                    onBlur={handlers.handlePortfolioLinksBlur}
+                    placeholder="e.g. https://leetcode.com/username"
+                  />
+                  {errors.portfolioLinks?.leetcode && <span className="field-error-msg">{errors.portfolioLinks.leetcode}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="gfg">GeeksforGeeks Profile URL (Optional)</label>
+                  <input
+                    type="text"
+                    id="gfg"
+                    name="gfg"
+                    value={formData.portfolioLinks.gfg}
+                    onChange={handlers.handlePortfolioLinksChange}
+                    onBlur={handlers.handlePortfolioLinksBlur}
+                    placeholder="e.g. https://geeksforgeeks.org/user/username"
+                  />
+                  {errors.portfolioLinks?.gfg && <span className="field-error-msg">{errors.portfolioLinks.gfg}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="linkedin">LinkedIn Profile URL (Optional)</label>
+                  <input
+                    type="text"
+                    id="linkedin"
+                    name="linkedin"
+                    value={formData.portfolioLinks.linkedin || ''}
+                    onChange={handlers.handlePortfolioLinksChange}
+                    onBlur={handlers.handlePortfolioLinksBlur}
+                    placeholder="e.g. https://linkedin.com/in/username"
+                  />
+                  {errors.portfolioLinks?.linkedin && <span className="field-error-msg">{errors.portfolioLinks.linkedin}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="pdf-upload">Upload Custom CV PDF (Optional, defaults to dynamic PDF generator)</label>
+                  <div className="file-input-wrapper">
                     <input
-                      type="text"
-                      name="title"
-                      value={project.title}
-                      onChange={(e) => handlers.handleProjectChange(e, index)}
-                      placeholder="e.g. Portfolio Builder"
-                      required
+                      type="file"
+                      id="pdf-upload"
+                      name="pdf"
+                      onChange={handlers.handleFileChange}
+                      accept="application/pdf"
                     />
-                    {errors.projects[index]?.title && <span className="field-error-msg">{errors.projects[index].title}</span>}
-                  </div>
-                  <div className="form-group">
-                    <label>Description *</label>
-                    <textarea
-                      name="description"
-                      value={project.description}
-                      onChange={(e) => handlers.handleProjectChange(e, index)}
-                      placeholder="Explain what the project does and technologies used."
-                      rows={3}
-                      required
-                    />
-                    {errors.projects[index]?.description && <span className="field-error-msg">{errors.projects[index].description}</span>}
-                  </div>
-                  <div className="form-group">
-                    <label>Project Live Link / GitHub Link (Optional)</label>
-                    <input
-                      type="text"
-                      name="link"
-                      value={project.link || ''}
-                      onChange={(e) => handlers.handleProjectChange(e, index)}
-                      placeholder="e.g. https://github.com/user/project"
-                    />
-                    {errors.projects[index]?.link && <span className="field-error-msg">{errors.projects[index].link}</span>}
+                    <span className="file-input-info">
+                      {formData.pdf ? `Selected: ${formData.pdf.name}` : 'Choose a PDF file...'}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-            <button type="button" onClick={handlers.addProject} className="btn-add-item">
-              <FaPlus /> Add Another Project
-            </button>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* STEP 4: EDUCATION */}
-        {currentStep === 4 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Education Details</h2>
-            <p className="step-subtitle">Your educational qualifications and credentials.</p>
+            {/* STEP 7: THEME & LAYOUT CUSTOMIZER */}
+            {currentStep === 7 && (
+              <div className="wizard-step-section animated fade-in">
+                <h2>Theme & Custom Layout Builder</h2>
+                <p className="step-subtitle">Configure design styling presets and drag sections to reorder them.</p>
 
-            <div className="dynamic-items-list">
-              {formData.education.map((edu, index) => (
-                <div key={index} className="wizard-item-card glass-card">
-                  <div className="wizard-item-header">
-                    <h4>Education #{index + 1}</h4>
-                    {formData.education.length > 1 && (
-                      <button type="button" onClick={() => handlers.removeEducation(index)} className="btn-icon btn-remove">
-                        <FaTrash />
-                      </button>
-                    )}
-                  </div>
-                  <div className="wizard-card-grid">
-                    <div className="form-group select-span-2">
-                      <label>College / School Name *</label>
-                      <input
-                        type="text"
-                        name="collegeName"
-                        value={edu.collegeName}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        placeholder="e.g. Harvard University"
-                        required
-                      />
-                      {errors.education[index]?.collegeName && <span className="field-error-msg">{errors.education[index].collegeName}</span>}
+                {/* TEMPLATE PICKER */}
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 600 }}><FaTshirt /> Select Base Template</h4>
+                  <div className="template-picker-grid" style={{ marginTop: '12px' }}>
+                    <div className={`template-select-card ${formData.templateId === 'classic-green' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('classic-green')}>
+                      <div className="template-preview-bar classic-green-bar"></div>
+                      <div className="template-info"><h3>Classic Green</h3><p>Original professional clean layout.</p></div>
                     </div>
-                    <div className="form-group">
-                      <label>Degree *</label>
-                      <select
-                        name="degree"
-                        value={edu.degree}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        required
+                    <div className={`template-select-card ${formData.templateId === 'dark-pro' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('dark-pro')}>
+                      <div className="template-preview-bar dark-pro-bar"></div>
+                      <div className="template-info"><h3>Dark Pro</h3><p>Sleek dark design with neon cards.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'creative' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('creative')}>
+                      <div className="template-preview-bar creative-bar"></div>
+                      <div className="template-info"><h3>Creative Gradient</h3><p>Vibrant colors and animations.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'minimalist' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('minimalist')}>
+                      <div className="template-preview-bar minimalist-bar"></div>
+                      <div className="template-info"><h3>Minimalist</h3><p>Sleek, high whitespace, clean serif.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'cyberpunk' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('cyberpunk')}>
+                      <div className="template-preview-bar cyberpunk-bar"></div>
+                      <div className="template-info"><h3>Cyberpunk</h3><p>Neon hacking terminal monospace.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'neobrutalism' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('neobrutalism')}>
+                      <div className="template-preview-bar neobrutalism-bar"></div>
+                      <div className="template-info"><h3>Neobrutalism</h3><p>Bold outlines and retro flat shadows.</p></div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr style={{ border: '0', borderTop: '1px solid var(--border-color)', margin: '30px 0' }} />
+
+                {/* STYLE ACCENTS OVERRIDES */}
+                <div className="style-customizer-section">
+                  <div className="style-control-group">
+                    <h4><FaPalette /> Color Accent</h4>
+                    <div className="style-options-grid">
+                      {colorOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`style-option-btn ${formData.themeColor === opt.value ? 'selected' : ''}`}
+                          onClick={() => handlers.handleStyleChange('themeColor', opt.value)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="style-control-group">
+                    <h4><FaFont /> Typography Style</h4>
+                    <div className="style-options-grid">
+                      {fontOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`style-option-btn ${formData.fontFamily === opt.value ? 'selected' : ''}`}
+                          onClick={() => handlers.handleStyleChange('fontFamily', opt.value)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="style-control-group">
+                    <h4><FaShapes /> Accent Corners</h4>
+                    <div className="style-options-grid">
+                      {radiusOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`style-option-btn ${formData.borderRadius === opt.value ? 'selected' : ''}`}
+                          onClick={() => handlers.handleStyleChange('borderRadius', opt.value)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <hr style={{ border: '0', borderTop: '1px solid var(--border-color)', margin: '30px 0' }} />
+
+                {/* DRAG AND DROP REORDER LIST */}
+                <div className="style-control-group">
+                  <h4><FaBars /> Reorder Layout Sections</h4>
+                  <p className="step-subtitle">Drag and drop sections to rearrange the layout order of your public portfolio page.</p>
+                  
+                  <div className="reorder-list-container">
+                    {formData.sectionOrder.map((sectionId, idx) => (
+                      <div
+                        key={sectionId}
+                        className={`reorder-item-card ${draggedIndex === idx ? 'dragging' : ''}`}
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDragEnd={handleDragEnd}
                       >
-                        <option value="">Select Degree</option>
-                        <option value="Btech">Btech</option>
-                        <option value="Mtech">Mtech</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="B.Sc">B.Sc</option>
-                        <option value="M.Sc">M.Sc</option>
-                        <option value="BCA">BCA</option>
-                        <option value="MCA">MCA</option>
-                        <option value="Other">Other</option>
-                      </select>
-                      {errors.education[index]?.degree && <span className="field-error-msg">{errors.education[index].degree}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Branch / Major *</label>
-                      <select
-                        name="branch"
-                        value={edu.branch}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        required
-                      >
-                        <option value="">Select Branch</option>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Information Technology">Information Technology</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Electronics Engineering">Electronics Engineering</option>
-                        <option value="Electrical Engineering">Electrical Engineering</option>
-                        <option value="Science">Science</option>
-                        <option value="Commerce">Commerce</option>
-                        <option value="Arts">Arts</option>
-                        <option value="Other">Other</option>
-                      </select>
-                      {errors.education[index]?.branch && <span className="field-error-msg">{errors.education[index].branch}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>CGPA / Percentage *</label>
-                      <input
-                        type="text"
-                        name="cgpaOrPercentage"
-                        value={edu.cgpaOrPercentage}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        placeholder="e.g. 8.5 or 85%"
-                        required
-                      />
-                      {errors.education[index]?.cgpaOrPercentage && <span className="field-error-msg">{errors.education[index].cgpaOrPercentage}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Year of Joining *</label>
-                      <input
-                        type="date"
-                        name="yearOfJoining"
-                        value={edu.yearOfJoining}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        required
-                      />
-                      {errors.education[index]?.yearOfJoining && <span className="field-error-msg">{errors.education[index].yearOfJoining}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Year of Passing *</label>
-                      <input
-                        type="date"
-                        name="yearOfPassing"
-                        value={edu.yearOfPassing}
-                        onChange={(e) => handlers.handleEducationChange(e, index)}
-                        onBlur={(e) => handlers.handleEducationBlur(e, index)}
-                        required
-                      />
-                      {errors.education[index]?.yearOfPassing && <span className="field-error-msg">{errors.education[index].yearOfPassing}</span>}
-                    </div>
+                        <div className="reorder-item-content">
+                          <FaBars className="reorder-handle" />
+                          <span>{sectionLabels[sectionId] || sectionId}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-            <button type="button" onClick={handlers.addEducation} className="btn-add-item">
-              <FaPlus /> Add Another Education
-            </button>
-          </div>
-        )}
-
-        {/* STEP 5: EXPERIENCE */}
-        {currentStep === 5 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Professional Experience</h2>
-            <p className="step-subtitle">Your job history, internships, and work details.</p>
-
-            <div className="dynamic-items-list">
-              {formData.professionalHistory.map((history, index) => (
-                <div key={index} className="wizard-item-card glass-card">
-                  <div className="wizard-item-header">
-                    <h4>Work Experience #{index + 1}</h4>
-                    {formData.professionalHistory.length > 1 && (
-                      <button type="button" onClick={() => handlers.removeProfessionalHistory(index)} className="btn-icon btn-remove">
-                        <FaTrash />
-                      </button>
-                    )}
-                  </div>
-                  <div className="wizard-card-grid">
-                    <div className="form-group">
-                      <label>Company Name *</label>
-                      <input
-                        type="text"
-                        name="companyName"
-                        value={history.companyName}
-                        onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        placeholder="e.g. Google"
-                        required
-                      />
-                      {errors.professionalHistory[index]?.companyName && <span className="field-error-msg">{errors.professionalHistory[index].companyName}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Position / Role *</label>
-                      <input
-                        type="text"
-                        name="position"
-                        value={history.position}
-                        onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        placeholder="e.g. Software Engineer Intern"
-                        required
-                      />
-                      {errors.professionalHistory[index]?.position && <span className="field-error-msg">{errors.professionalHistory[index].position}</span>}
-                    </div>
-                    <div className="form-group select-span-2">
-                      <label>Responsibility *</label>
-                      <textarea
-                        name="responsibility"
-                        value={history.responsibility}
-                        onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        placeholder="Detail your roles/responsibilities. Each sentence/point must start with capital letter and end with a period."
-                        rows={3}
-                        required
-                      />
-                      {errors.professionalHistory[index]?.responsibility && <span className="field-error-msg">{errors.professionalHistory[index].responsibility}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Year of Joining *</label>
-                      <input
-                        type="date"
-                        name="yearOfJoining"
-                        value={history.yearOfJoining}
-                        onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        required
-                      />
-                      {errors.professionalHistory[index]?.yearOfJoining && <span className="field-error-msg">{errors.professionalHistory[index].yearOfJoining}</span>}
-                    </div>
-                    <div className="form-group">
-                      <label>Year of Leaving</label>
-                      <input
-                        type="date"
-                        name="yearOfLeaving"
-                        value={history.isCurrentEmployee ? '' : (history.yearOfLeaving ?? '')}
-                        onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        disabled={history.isCurrentEmployee}
-                        required={!history.isCurrentEmployee}
-                      />
-                      {errors.professionalHistory[index]?.yearOfLeaving && <span className="field-error-msg">{errors.professionalHistory[index].yearOfLeaving}</span>}
-                    </div>
-                    <div className="form-group checkbox-group select-span-2">
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          name="isCurrentEmployee"
-                          checked={history.isCurrentEmployee}
-                          onChange={(e) => handlers.handleProfessionalHistoryChange(e, index)}
-                        />
-                        Presently working here?
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button type="button" onClick={handlers.addProfessionalHistory} className="btn-add-item">
-              <FaPlus /> Add Another Job Experience
-            </button>
-          </div>
-        )}
-
-        {/* STEP 6: LINKS & PDF */}
-        {currentStep === 6 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Social Links & Resume File</h2>
-            <p className="step-subtitle">Provide your public profile links and upload a PDF copy of your resume.</p>
-
-            <div className="form-group">
-              <label htmlFor="github">GitHub Profile URL (Optional)</label>
-              <input
-                type="text"
-                id="github"
-                name="github"
-                value={formData.portfolioLinks.github}
-                onChange={handlers.handlePortfolioLinksChange}
-                placeholder="e.g. https://github.com/username"
-              />
-              {errors.portfolioLinks.github && <span className="field-error-msg">{errors.portfolioLinks.github}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="leetcode">LeetCode Profile URL (Optional)</label>
-              <input
-                type="text"
-                id="leetcode"
-                name="leetcode"
-                value={formData.portfolioLinks.leetcode}
-                onChange={handlers.handlePortfolioLinksChange}
-                placeholder="e.g. https://leetcode.com/username"
-              />
-              {errors.portfolioLinks.leetcode && <span className="field-error-msg">{errors.portfolioLinks.leetcode}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="gfg">GeeksforGeeks Profile URL (Optional)</label>
-              <input
-                type="text"
-                id="gfg"
-                name="gfg"
-                value={formData.portfolioLinks.gfg}
-                onChange={handlers.handlePortfolioLinksChange}
-                placeholder="e.g. https://geeksforgeeks.org/user/username"
-              />
-              {errors.portfolioLinks.gfg && <span className="field-error-msg">{errors.portfolioLinks.gfg}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="linkedin">LinkedIn Profile URL (Optional)</label>
-              <input
-                type="text"
-                id="linkedin"
-                name="linkedin"
-                value={formData.portfolioLinks.linkedin || ''}
-                onChange={handlers.handlePortfolioLinksChange}
-                placeholder="e.g. https://linkedin.com/in/username"
-              />
-              {errors.portfolioLinks.linkedin && <span className="field-error-msg">{errors.portfolioLinks.linkedin}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="pdf-upload">Upload Resume PDF (Optional)</label>
-              <div className="file-input-wrapper">
-                <input
-                  type="file"
-                  id="pdf-upload"
-                  name="pdf"
-                  onChange={handlers.handleFileChange}
-                  accept="application/pdf"
-                />
-                <span className="file-input-info">
-                  {formData.pdf ? `Selected: ${formData.pdf.name}` : 'Choose a PDF file...'}
-                </span>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* STEP 7: CHOOSE TEMPLATE */}
-        {currentStep === 7 && (
-          <div className="wizard-step-section animated fade-in">
-            <h2>Select Portfolio Theme Template</h2>
-            <p className="step-subtitle">Select the design that matches your aesthetic preference. You can change this at any time.</p>
-
-            <div className="template-picker-grid">
-              {/* Classic Green */}
-              <div
-                className={`template-select-card ${formData.templateId === 'classic-green' ? 'selected' : ''}`}
-                onClick={() => handlers.handleTemplateChange('classic-green')}
-              >
-                <div className="template-preview-bar classic-green-bar"></div>
-                <div className="template-info">
-                  <h3>Classic Green (Default)</h3>
-                  <p>Your original professional clean design with rich green accents, ideal for standard engineering resumes.</p>
-                </div>
-              </div>
-
-              {/* Dark Pro */}
-              <div
-                className={`template-select-card ${formData.templateId === 'dark-pro' ? 'selected' : ''}`}
-                onClick={() => handlers.handleTemplateChange('dark-pro')}
-              >
-                <div className="template-preview-bar dark-pro-bar"></div>
-                <div className="template-info">
-                  <h3>Dark Pro</h3>
-                  <p>Sleek modern dark layout with neon glassmorphism cards and premium developer look.</p>
-                </div>
-              </div>
-
-              {/* Creative */}
-              <div
-                className={`template-select-card ${formData.templateId === 'creative' ? 'selected' : ''}`}
-                onClick={() => handlers.handleTemplateChange('creative')}
-              >
-                <div className="template-preview-bar creative-bar"></div>
-                <div className="template-info">
-                  <h3>Creative Gradient</h3>
-                  <p>Vibrant colors, stylish typography, bold card styling, and animated elements.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* CONTROLS */}
-        <div className="wizard-controls">
-          {currentStep > 1 && (
-            <button type="button" onClick={prevStep} className="btn-secondary" disabled={submitting}>
-              <FaArrowLeft /> Back
-            </button>
-          )}
-
-          {currentStep < totalSteps ? (
-            <button type="button" onClick={nextStep} className="btn-primary select-right">
-              Next <FaArrowRight />
-            </button>
-          ) : (
-            <button type="submit" className="btn-primary submit-btn select-right" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <FaSpinner className="spinner-icon" /> Saving...
-                </>
-              ) : (
-                <>
-                  <FaCheck /> {mode === 'create' ? 'Create Portfolio' : 'Save Changes'}
-                </>
+            {/* CONTROLS */}
+            <div className="wizard-controls">
+              {currentStep > 1 && (
+                <button type="button" onClick={prevStep} className="btn-secondary" disabled={submitting}>
+                  <FaArrowLeft /> Back
+                </button>
               )}
-            </button>
-          )}
+
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  className={`btn-primary select-right${nextBtnShake ? ' btn-shake' : ''}`}
+                  onClick={() => {
+                    const advanced = nextStep();
+                    if (!advanced) {
+                      triggerShake(setNextBtnShake);
+                      const stepName = STEP_NAMES[currentStep - 1] || 'this step';
+                      toast.warn(`⚠️ Fix errors in "${stepName}" before proceeding.`);
+                      scrollToFirstError();
+                    }
+                  }}
+                >
+                  Next <FaArrowRight />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className={`btn-primary submit-btn select-right${saveBtnShake ? ' btn-shake' : ''}`}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <FaSpinner className="spinner-icon animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck /> {mode === 'create' ? 'Create Portfolio' : 'Save Changes'}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
+
+      {/* RIGHT COLUMN: RESPONSIVE BROWSER PREVIEW */}
+      <div className="builder-right-preview-pane">
+        <div className="preview-browser-mockup">
+          <div className="browser-header">
+            <span className="dot red"></span>
+            <span className="dot yellow"></span>
+            <span className="dot green"></span>
+            <div className="browser-address">localhost:3000/portfolio/preview</div>
+          </div>
+          <div className="browser-content preview-mode">
+            {renderLivePreview()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

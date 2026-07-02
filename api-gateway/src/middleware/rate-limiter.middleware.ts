@@ -22,7 +22,7 @@ export class RateLimiterMiddleware implements NestMiddleware {
   /** Default window: 60 000 ms (1 minute) */
   private readonly WINDOW_MS = 60_000;
   /** Auth-specific limit (login / register) */
-  private readonly AUTH_LIMIT = 5;
+  private readonly AUTH_LIMIT = 50;
   /** Global limit */
   private readonly GLOBAL_LIMIT = 60;
 

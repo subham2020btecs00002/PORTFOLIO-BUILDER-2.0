@@ -39,7 +39,7 @@ export class JwtVerifyMiddleware implements NestMiddleware {
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string }>(token, {
+      const payload = this.jwtService.verify<{ sub: string; role?: string }>(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 
@@ -47,8 +47,11 @@ export class JwtVerifyMiddleware implements NestMiddleware {
         throw new UnauthorizedException('Token payload is invalid');
       }
 
-      // Inject user identity for downstream services
+      // Inject user identity and role for downstream services
       req.headers['x-user-id'] = payload.sub;
+      if (payload.role) {
+        req.headers['x-user-role'] = payload.role;
+      }
     } catch (err: any) {
       if (err instanceof UnauthorizedException) throw err;
       // JsonWebTokenError, TokenExpiredError, etc.

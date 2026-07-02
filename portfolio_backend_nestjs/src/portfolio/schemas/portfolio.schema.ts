@@ -148,6 +148,18 @@ export class Portfolio extends Document {
   @Prop({ default: 'classic-green' })
   templateId: string;
 
+  @Prop({ type: [String], default: ['about', 'skills', 'experience', 'projects', 'contact'] })
+  sectionOrder: string[];
+
+  @Prop({ default: 'default' })
+  themeColor: string;
+
+  @Prop({ default: 'default' })
+  fontFamily: string;
+
+  @Prop({ default: 'default' })
+  borderRadius: string;
+
   @Prop({ type: PdfDataSchema })
   pdf: PdfData;
 

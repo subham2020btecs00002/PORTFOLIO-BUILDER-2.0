@@ -68,11 +68,12 @@
 
 .step-label {
   margin-top: 10px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-secondary);
   text-align: center;
   transition: var(--transition-smooth);
+  padding: 0 4px;
 }
 
 .step-dot-wrapper.active .step-label {
@@ -154,12 +155,20 @@
 /* Card Inputs Layout Grid */
 .wizard-card-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
+  width: 100%;
 }
 
 .select-span-2 {
   grid-column: span 2;
+}
+
+.form-group {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Checkbox & File Uploads Customization */
@@ -337,3 +346,251 @@
     padding: 24px 16px;
   }
 }
+
+/* Split Screen Layout for Builder & Live Preview */
+.portfolio-builder-split-container {
+  display: flex;
+  gap: 32px;
+  max-width: 1750px;
+  margin: 30px auto;
+  padding: 0 20px;
+  min-height: calc(100vh - 120px);
+}
+
+.builder-left-form-pane {
+  flex: 0.95;
+  min-width: 0;
+}
+
+.builder-right-preview-pane {
+  flex: 1.25;
+  position: sticky;
+  top: 90px;
+  height: calc(100vh - 140px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.preview-browser-mockup {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.browser-header {
+  height: 40px;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.browser-header .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.browser-header .dot.red { background: #ef4444; }
+.browser-header .dot.yellow { background: #eab308; }
+.browser-header .dot.green { background: #22c55e; }
+
+.browser-address {
+  margin-left: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  padding: 4px 16px;
+  flex-grow: 1;
+  text-align: center;
+  font-family: monospace;
+}
+
+.browser-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+/* Customizer Style Controls */
+.style-customizer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.style-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.style-control-group h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.style-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.style-option-btn {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: center;
+}
+
+.style-option-btn:hover {
+  border-color: var(--text-secondary);
+}
+
+.style-option-btn.selected {
+  border-color: var(--accent-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Drag and Drop Section Styling */
+.reorder-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.reorder-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  user-select: none;
+  transition: var(--transition-smooth);
+}
+
+.reorder-item-card:hover {
+  border-color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.reorder-item-card:active {
+  cursor: grabbing;
+}
+
+.reorder-item-card.dragging {
+  opacity: 0.5;
+  border-color: var(--accent-color);
+}
+
+.reorder-item-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+}
+
+.reorder-handle {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+/* Custom Bars for new templates */
+.minimalist-bar {
+  background: #ffffff;
+  border-bottom: 2px solid #e7e5e4;
+}
+.cyberpunk-bar {
+  background: #020204;
+  border-bottom: 2px solid #00ff66;
+}
+.neobrutalism-bar {
+  background: #f6e8df;
+  border-bottom: 3px solid #1a1a1a;
+}
+
+@media (max-width: 1024px) {
+  .portfolio-builder-split-container {
+    flex-direction: column;
+  }
+  .builder-right-preview-pane {
+    display: none; /* Hide preview on smaller screens to avoid cramming */
+  }
+}
+
+/* ── Validation error messages ─────────────────────────────────── */
+.field-error-msg {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.1);
+  border-left: 3px solid #ff6b6b;
+  animation: errorSlideIn 0.25s ease;
+}
+
+@keyframes errorSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Highlight input that has an error below it */
+.form-group:has(.field-error-msg) input,
+.form-group:has(.field-error-msg) textarea,
+.form-group:has(.field-error-msg) select {
+  border-color: #ff6b6b !important;
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+}
+
+/* ── Shake animation for blocked Next / Save buttons ──────────── */
+@keyframes btnShake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  30%  { transform: translateX(6px); }
+  45%  { transform: translateX(-5px); }
+  60%  { transform: translateX(5px); }
+  75%  { transform: translateX(-3px); }
+  90%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.btn-shake {
+  animation: btnShake 0.55s ease !important;
+}
+
+/* ── Step dot error state ─────────────────────────────────────── */
+.step-dot-wrapper.has-error .step-dot {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+}
+.step-dot-wrapper.has-error .step-label {
+  color: #ff6b6b;
+}
+

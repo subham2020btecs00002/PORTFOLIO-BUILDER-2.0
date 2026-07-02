@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;700;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 /* Portfolio Theme Templates Stylesheet */
 
 /* ==========================================================================
@@ -669,3 +671,693 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   STYLE OVERRIDES & UTILITIES
+   ========================================================================== */
+
+/* Font Family Overrides */
+.font-family-sans {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+}
+.font-family-serif {
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+.font-family-grotesk {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+.font-family-mono {
+  font-family: 'Courier Prime', Courier, monospace !important;
+}
+
+/* Border Radius Overrides */
+.radius-override-sharp, 
+.radius-override-sharp .theme-card,
+.radius-override-sharp .skill-badge,
+.radius-override-sharp .social-link-icon-btn,
+.radius-override-sharp .theme-contact-form-card,
+.radius-override-sharp .theme-contact-form-card input,
+.radius-override-sharp .theme-contact-form-card textarea,
+.radius-override-sharp .theme-contact-form-card button,
+.radius-override-sharp .theme-nav {
+  border-radius: 0px !important;
+}
+
+.radius-override-rounded,
+.radius-override-rounded .theme-card,
+.radius-override-rounded .theme-contact-form-card,
+.radius-override-rounded .theme-nav {
+  border-radius: 16px !important;
+}
+.radius-override-rounded .skill-badge,
+.radius-override-rounded .social-link-icon-btn,
+.radius-override-rounded .theme-contact-form-card button {
+  border-radius: 30px !important;
+}
+
+.radius-override-pill,
+.radius-override-pill .theme-card,
+.radius-override-pill .theme-contact-form-card,
+.radius-override-pill .theme-nav {
+  border-radius: 28px !important;
+}
+.radius-override-pill .skill-badge,
+.radius-override-pill .social-link-icon-btn,
+.radius-override-pill .theme-contact-form-card button {
+  border-radius: 50px !important;
+}
+
+/* Accent Color Mappings */
+/* Classic Green Accents */
+.theme-container.color-override-default,
+.theme-container.classic-green-theme {
+  --accent-primary: #10b981;
+  --accent-hover: #059669;
+  --accent-light: rgba(16, 185, 129, 0.08);
+  --accent-border: rgba(16, 185, 129, 0.15);
+  --accent-text: #047857;
+  --accent-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+/* Cyberpink Accents */
+.theme-container.color-override-cyberpink {
+  --accent-primary: #ec4899;
+  --accent-hover: #db2777;
+  --accent-light: rgba(236, 72, 153, 0.08);
+  --accent-border: rgba(236, 72, 153, 0.15);
+  --accent-text: #be185d;
+  --accent-gradient: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+}
+/* Indigo Accents */
+.theme-container.color-override-indigo {
+  --accent-primary: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-light: rgba(99, 102, 241, 0.08);
+  --accent-border: rgba(99, 102, 241, 0.15);
+  --accent-text: #4338ca;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+/* Amber Accents */
+.theme-container.color-override-amber {
+  --accent-primary: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-light: rgba(245, 158, 11, 0.08);
+  --accent-border: rgba(245, 158, 11, 0.15);
+  --accent-text: #b45309;
+  --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+/* Slate Accents */
+.theme-container.color-override-slate {
+  --accent-primary: #475569;
+  --accent-hover: #334155;
+  --accent-light: rgba(71, 85, 105, 0.08);
+  --accent-border: rgba(71, 85, 105, 0.15);
+  --accent-text: #1e293b;
+  --accent-gradient: linear-gradient(135deg, #475569 0%, #334155 100%);
+}
+
+/* Apply accents to templates dynamically */
+.theme-container .theme-section h2::after {
+  background: var(--accent-gradient) !important;
+}
+.theme-container .skill-badge {
+  background: var(--accent-light) !important;
+  border-color: var(--accent-border) !important;
+  color: var(--accent-text) !important;
+}
+.theme-container .theme-card-title {
+  color: var(--accent-primary) !important;
+}
+.theme-container .theme-nav-links li:hover {
+  color: var(--accent-primary) !important;
+}
+.theme-container .timeline-node::before {
+  background-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-light) !important;
+}
+.theme-container .social-link-icon-btn:hover {
+  background: var(--accent-gradient) !important;
+  color: #fff !important;
+}
+.theme-container .theme-contact-form-card button {
+  background: var(--accent-gradient) !important;
+}
+.theme-container .theme-contact-form-card button:hover {
+  box-shadow: 0 4px 12px var(--accent-light) !important;
+}
+.theme-container .theme-contact-form-card input:focus,
+.theme-container .theme-contact-form-card textarea:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-light) !important;
+}
+
+/* ==========================================================================
+   THEME 4: MINIMALIST
+   ========================================================================== */
+.minimalist-theme {
+  background-color: #ffffff;
+  color: #1c1917;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.minimalist-theme .theme-nav {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid #e7e5e4;
+  border-radius: 0;
+  top: 0;
+}
+
+.minimalist-theme .theme-nav-links li {
+  color: #78716c;
+}
+
+.minimalist-theme .theme-nav-links li:hover {
+  color: #1c1917;
+}
+
+.minimalist-theme .theme-hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.minimalist-theme .theme-hero-subtitle {
+  font-family: 'Inter', sans-serif;
+  color: var(--accent-primary, #78716c);
+}
+
+.minimalist-theme .theme-card {
+  background: #fafaf9;
+  border: none;
+  border-bottom: 1px solid #e7e5e4;
+  padding: 20px 0;
+}
+
+.minimalist-theme .theme-card:hover {
+  transform: none;
+  background: #fafaf9;
+  border-bottom-color: var(--accent-primary, #1c1917);
+}
+
+.minimalist-theme .theme-card-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  color: #1c1917 !important;
+}
+
+.minimalist-theme .theme-card-subtitle {
+  color: #44403c;
+}
+
+.minimalist-theme .theme-card-meta {
+  color: #78716c;
+}
+
+.minimalist-theme .skill-badge {
+  background: #f5f5f4 !important;
+  border: 1px solid #e7e5e4 !important;
+  color: #1c1917 !important;
+}
+
+.minimalist-theme .social-link-icon-btn {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  color: #1c1917;
+}
+
+.minimalist-theme .social-link-icon-btn:hover {
+  background: #1c1917 !important;
+  color: #ffffff !important;
+}
+
+.minimalist-theme .theme-contact-form-card {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+}
+
+.minimalist-theme .theme-contact-form-card input,
+.minimalist-theme .theme-contact-form-card textarea {
+  background-color: #fafaf9;
+  border: 1px solid #e7e5e4;
+  color: #1c1917;
+}
+
+.minimalist-theme .theme-contact-form-card button {
+  background: #1c1917 !important;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   THEME 5: CYBERPUNK
+   ========================================================================== */
+.cyberpunk-theme {
+  background-color: #020204;
+  color: #00ff66;
+  font-family: 'Courier Prime', monospace;
+  position: relative;
+}
+
+/* scanlines scan overlay */
+.cyberpunk-theme::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 10;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+.cyberpunk-theme h1,
+.cyberpunk-theme h2,
+.cyberpunk-theme h3,
+.cyberpunk-theme h4 {
+  color: #ffffff;
+  font-family: 'Courier Prime', monospace;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+}
+
+.cyberpunk-theme .theme-section h2 {
+  border: 1px solid #00ff66;
+  padding: 10px 20px;
+  background: rgba(0, 255, 102, 0.03);
+}
+
+.cyberpunk-theme .theme-section h2::after {
+  display: none;
+}
+
+.cyberpunk-theme .theme-nav {
+  background: rgba(2, 2, 4, 0.9);
+  border: 1px solid #00ff66;
+}
+
+.cyberpunk-theme .theme-nav-links li {
+  color: #00ff66;
+}
+
+.cyberpunk-theme .theme-nav-links li:hover {
+  color: #ff0055;
+  text-shadow: 0 0 5px #ff0055;
+}
+
+.cyberpunk-theme .theme-hero h1 {
+  color: #ffffff;
+  text-shadow: 3px 3px 0px #ff0055, -3px -3px 0px #00ffff;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cyberpunk-theme .theme-hero-subtitle {
+  color: #ff0055;
+}
+
+.cyberpunk-theme .theme-card {
+  background: #08080c;
+  border: 1px solid #00ff66;
+  box-shadow: 3px 3px 0px #00ff66;
+}
+
+.cyberpunk-theme .theme-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #ff0055;
+  border-color: #ff0055;
+}
+
+.cyberpunk-theme .theme-card-title {
+  color: #ff0055 !important;
+}
+
+.cyberpunk-theme .theme-card-subtitle {
+  color: #00ffff;
+}
+
+.cyberpunk-theme .theme-card-meta {
+  color: #00ff66;
+  opacity: 0.8;
+}
+
+.cyberpunk-theme .skill-badge {
+  background: rgba(0, 255, 102, 0.05) !important;
+  border: 1px solid #00ff66 !important;
+  color: #00ff66 !important;
+}
+
+.cyberpunk-theme .social-link-icon-btn {
+  background: #020204;
+  border: 1px solid #00ff66;
+  color: #00ff66;
+}
+
+.cyberpunk-theme .social-link-icon-btn:hover {
+  background: #ff0055 !important;
+  color: #ffffff !important;
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 10px #ff0055;
+}
+
+.cyberpunk-theme .theme-contact-form-card {
+  background: #08080c;
+  border: 1px solid #00ff66;
+}
+
+.cyberpunk-theme .theme-contact-form-card input,
+.cyberpunk-theme .theme-contact-form-card textarea {
+  background-color: #020204;
+  border: 1px solid #00ff66;
+  color: #00ff66;
+  font-family: 'Courier Prime', monospace;
+}
+
+.cyberpunk-theme .theme-contact-form-card button {
+  background: #ff0055 !important;
+  color: #ffffff;
+  border: 1px solid #ff0055;
+  box-shadow: 3px 3px 0px #00ffff;
+  font-family: 'Courier Prime', monospace;
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   THEME 6: NEOBRUTALISM
+   ========================================================================== */
+.neobrutalism-theme {
+  background-color: #f6e8df;
+  color: #1a1a1a;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.neobrutalism-theme .theme-nav {
+  background: #ffd500;
+  border: 3px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .theme-nav-links li {
+  color: #1a1a1a;
+}
+
+.neobrutalism-theme .theme-nav-links li:hover {
+  text-decoration: underline;
+}
+
+.neobrutalism-theme .theme-hero h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+.neobrutalism-theme .theme-hero-subtitle {
+  color: #1a1a1a;
+  background: #00ffa2;
+  display: inline-block;
+  padding: 4px 12px;
+  border: 2px solid #1a1a1a;
+  transform: rotate(-1deg);
+}
+
+.neobrutalism-theme .theme-card {
+  background: #ffffff;
+  border: 3px solid #1a1a1a;
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .theme-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .theme-card-title {
+  color: #1a1a1a !important;
+  font-weight: 700;
+}
+
+.neobrutalism-theme .theme-card-subtitle {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.neobrutalism-theme .theme-card-meta {
+  color: #333333;
+}
+
+.neobrutalism-theme .skill-badge {
+  background: #ff8800 !important;
+  border: 2px solid #1a1a1a !important;
+  color: #1a1a1a !important;
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .social-link-icon-btn {
+  background: #00ffd5;
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  box-shadow: 3px 3px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .social-link-icon-btn:hover {
+  background: #ff00bb !important;
+  color: #ffffff !important;
+}
+
+.neobrutalism-theme .theme-contact-form-card {
+  background: #ffffff;
+  border: 3px solid #1a1a1a;
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+.neobrutalism-theme .theme-contact-form-card input,
+.neobrutalism-theme .theme-contact-form-card textarea {
+  background-color: #ffffff;
+  border: 2px solid #1a1a1a;
+  color: #1a1a1a;
+  border-radius: 0;
+}
+
+.neobrutalism-theme .theme-contact-form-card button {
+  background: #ffd500 !important;
+  color: #1a1a1a;
+  border: 2px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   PRINT MEDIA STYLESHEET (ATS CV TEMPLATE)
+   ========================================================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Hide everything except the printable resume */
+  .public-portfolio-wrapper, 
+  .floating-share-btn,
+  .share-modal-overlay,
+  .theme-nav,
+  .theme-contact-form-card,
+  #contact,
+  footer,
+  .navbar,
+  .btn,
+  .social-links-row,
+  .wizard-controls,
+  .step-indicator-container {
+    display: none !important;
+  }
+
+  .resume-print-wrapper {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .resume-header {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .resume-header h1 {
+    font-size: 24pt !important;
+    font-weight: bold !important;
+    margin: 0 0 5px 0 !important;
+    color: #000 !important;
+  }
+
+  .resume-contact-info {
+    font-size: 9.5pt !important;
+    color: #333333;
+    margin-bottom: 5px;
+  }
+
+  .resume-section {
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+
+  .resume-section h2 {
+    font-size: 13pt !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    border-bottom: 1px solid #777777;
+    margin: 0 0 10px 0 !important;
+    padding-bottom: 3px;
+    color: #000 !important;
+  }
+
+  .resume-item {
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }
+
+  .resume-item-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 10pt;
+  }
+
+  .resume-item-subtitle {
+    display: flex;
+    justify-content: space-between;
+    font-style: italic;
+    font-size: 9.5pt;
+    color: #444444;
+  }
+
+  .resume-item-description {
+    font-size: 9.5pt;
+    margin-top: 4px;
+  }
+
+  .resume-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    font-size: 9.5pt;
+  }
+
+  .resume-skill-cat {
+    margin-bottom: 8px;
+  }
+
+  .resume-skill-cat strong {
+    font-weight: bold;
+  }
+}
+
+/* Preview Scopes for Form Live Preview */
+.preview-mode .theme-container {
+  min-height: auto !important;
+  padding: 20px 10px !important;
+  overflow: visible !important;
+}
+
+.preview-mode .theme-nav {
+  display: none !important; /* Hide Nav in Mini-Preview */
+}
+
+.preview-mode .theme-section {
+  margin-bottom: 40px !important;
+}
+
+.preview-mode .theme-hero {
+  padding: 30px 0 !important;
+}
+
+.preview-mode .theme-contact-form-card {
+  padding: 20px !important;
+}
+
+.preview-mode .grid-2col {
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS OVERRIDES FOR ALL TEMPLATES
+   ========================================================================== */
+@media (max-width: 768px) {
+  .theme-container {
+    padding: 24px 16px !important;
+  }
+
+  .theme-content-wrapper {
+    max-width: 100% !important;
+  }
+
+  .theme-hero {
+    padding: 40px 0 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .theme-hero h1 {
+    font-size: 2.2rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .theme-hero-subtitle {
+    font-size: 1.15rem !important;
+  }
+
+  .theme-section {
+    margin-bottom: 48px !important;
+  }
+
+  .theme-section h2 {
+    font-size: 1.65rem !important;
+    margin-bottom: 24px !important;
+  }
+
+  .theme-nav {
+    justify-content: center !important;
+    padding: 10px 16px !important;
+    margin-bottom: 30px !important;
+    top: 8px !important;
+  }
+
+  .theme-nav-links {
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .theme-nav-links li {
+    font-size: 0.82rem !important;
+  }
+
+  .grid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .theme-card {
+    padding: 20px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .theme-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .theme-card-meta {
+    font-size: 0.85rem !important;
+  }
+
+  .theme-contact-form-card {
+    padding: 24px 16px !important;
+  }
+}
+

@@ -18,6 +18,9 @@ export class User extends Document {
   /** Custom public URL slug — e.g. "john-doe" → /p/john-doe */
   @Prop({ unique: true, sparse: true, default: null })
   username?: string;
+
+  @Prop({ default: 'user' })
+  role?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

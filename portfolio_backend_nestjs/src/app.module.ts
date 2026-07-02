@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { ContactModule } from './contact/contact.module';
+import { AdminModule } from './admin/admin.module';
 import { InternalSecretMiddleware } from './common/middleware/internal-secret.middleware';
 
 /**
@@ -41,6 +42,7 @@ import { InternalSecretMiddleware } from './common/middleware/internal-secret.mi
     }),
     PortfolioModule,
     ContactModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

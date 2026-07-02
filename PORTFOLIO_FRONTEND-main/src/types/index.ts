@@ -15,6 +15,7 @@ export interface User {
   name: string;
   email: string;
   username?: string;
+  role?: string;
 }
 
 /** Shape of the auth reducer state. */
@@ -131,6 +132,10 @@ export interface Portfolio {
   portfolioLinks: PortfolioLinks;
   skills: Skill[];
   templateId: string;
+  sectionOrder?: string[];
+  themeColor?: string;
+  fontFamily?: string;
+  borderRadius?: string;
   analytics?: AnalyticsData;
   pdf?: { contentType: string } | null;
 }
@@ -149,6 +154,10 @@ export interface PortfolioFormData {
   portfolioLinks: PortfolioLinks;
   skills: Skill[];
   templateId: string;
+  sectionOrder: string[];
+  themeColor: string;
+  fontFamily: string;
+  borderRadius: string;
   /** File selected for resume upload; null when no file chosen. */
   pdf: File | null;
 }

@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Put,
+  Delete,
   Get,
   Param,
   Body,
@@ -73,5 +74,11 @@ export class PortfolioController {
   @Get('public/:userId')
   async getPublic(@Param('userId') userId: string) {
     return this.portfolioService.getPublic(userId);
+  }
+
+  @Delete()
+  async delete(@CurrentUser() user: { id: string }) {
+    await this.portfolioService.deletePortfolio(user.id);
+    return { message: 'Portfolio successfully deleted.' };
   }
 }

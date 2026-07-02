@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import debounce from 'lodash.debounce';
-import { FaSpinner } from 'react-icons/fa';
 import api from '../api';
 import PortfolioFormShell from './PortfolioFormShell';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 /**
  * Smart wrapper: redirects to /portfolio/edit if a portfolio already exists,
@@ -32,11 +32,7 @@ const CreatePortfolio: React.FC = () => {
   }, [navigate]);
 
   if (portfolioExists === null) {
-    return (
-      <div className="spinner-container">
-        <FaSpinner className="spinner-icon" />
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Initializing portfolio wizard..." />;
   }
 
   return portfolioExists ? null : (

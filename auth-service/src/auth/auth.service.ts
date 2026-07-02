@@ -29,11 +29,11 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  private issueTokens(userId: string): {
+  private issueTokens(userId: string, role: string = 'user'): {
     accessToken: string;
     refreshToken: string;
   } {
-    const payload = { sub: userId };
+    const payload = { sub: userId, role };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -94,6 +94,7 @@ export class AuthService {
       name: string;
       email: string;
       username?: string;
+      role?: string;
     };
   }> {
     const { email, password } = loginDto;
@@ -108,7 +109,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { accessToken, refreshToken } = this.issueTokens(user.id);
+    const { accessToken, refreshToken } = this.issueTokens(user.id, user.role);
     user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     await user.save();
 
@@ -120,6 +121,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         username: user.username,
+        role: user.role,
       },
     };
   }
@@ -152,6 +154,7 @@ export class AuthService {
 
     const { accessToken, refreshToken: newRefreshToken } = this.issueTokens(
       user.id,
+      user.role,
     );
     user.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
     await user.save();

@@ -10,6 +10,8 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicPortfolio from './components/Portfolio/PublicPortfolio';
 import AnalyticsDashboard from './components/Dashboard/AnalyticsDashboard';
 import ProfileSettings from './components/Profile/ProfileSettings';
+import AdminRoute from './components/Admin/AdminRoute';
+import AdminDashboard from './components/Admin/AdminDashboard';
 
 const App: React.FC = () => {
   return (
@@ -48,8 +50,14 @@ const MainApp: React.FC = () => {
           path="/settings"
           element={<PrivateRoute element={<ProfileSettings />} />}
         />
+        <Route
+          path="/admin"
+          element={<AdminRoute element={<AdminDashboard />} />}
+        />
         <Route path="/p/:username" element={<PublicPortfolio />} />
+        <Route path="/p/:username/resume" element={<PublicPortfolio isResumeMode={true} />} />
         <Route path="/portfolio/public/:userId" element={<PublicPortfolio />} />
+        <Route path="/portfolio/public/:userId/resume" element={<PublicPortfolio isResumeMode={true} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

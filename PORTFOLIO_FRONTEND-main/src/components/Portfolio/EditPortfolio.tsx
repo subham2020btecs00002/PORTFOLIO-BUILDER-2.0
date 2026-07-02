@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import debounce from 'lodash.debounce';
-import { FaSpinner } from 'react-icons/fa';
 import api from '../api';
 import type { Portfolio, PortfolioFormData } from '../../types';
 import PortfolioFormShell from './PortfolioFormShell';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 /**
  * Fetches the user's existing portfolio, formats the date values,
@@ -22,6 +22,10 @@ const EditPortfolio: React.FC = () => {
           title: data.title || '',
           description: data.description || '',
           templateId: data.templateId || 'classic-green',
+          sectionOrder: data.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'],
+          themeColor: data.themeColor || 'default',
+          fontFamily: data.fontFamily || 'default',
+          borderRadius: data.borderRadius || 'default',
           pdf: null,
           portfolioLinks: {
             github: data.portfolioLinks?.github || '',
@@ -86,11 +90,7 @@ const EditPortfolio: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="spinner-container">
-        <FaSpinner className="spinner-icon" />
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Fetching your portfolio configurations..." />;
   }
 
   return (

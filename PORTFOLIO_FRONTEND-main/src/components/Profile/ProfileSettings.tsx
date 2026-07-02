@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaUserTag, FaCheck, FaSpinner, FaUser } from 'react-icons/fa';
+import { FaUserTag, FaCheck, FaSpinner, FaUser, FaExclamationTriangle, FaTrashAlt } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
+import api from '../api';
+import DeleteConfirmModal from '../Admin/DeleteConfirmModal';
 import './ProfileSettings.css';
 
 const ProfileSettings: React.FC = () => {
@@ -10,6 +12,24 @@ const ProfileSettings: React.FC = () => {
   const navigate = useNavigate();
   const [usernameInput, setUsernameInput] = useState<string>(user?.username || '');
   const [updating, setUpdating] = useState<boolean>(false);
+
+  const [hasPortfolio, setHasPortfolio] = useState<boolean>(false);
+  const [checkingPortfolio, setCheckingPortfolio] = useState<boolean>(true);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkUserPortfolio = async () => {
+      try {
+        const res = await api.get('/api/portfolio/exists');
+        setHasPortfolio(res.data.exists);
+      } catch (err) {
+        console.error('Error checking portfolio status:', err);
+      } finally {
+        setCheckingPortfolio(false);
+      }
+    };
+    checkUserPortfolio();
+  }, []);
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +50,12 @@ const ProfileSettings: React.FC = () => {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleDeletePortfolioConfirm = async () => {
+    await api.delete('/api/portfolio');
+    setHasPortfolio(false);
+    toast.success('Your portfolio website was successfully deleted.');
   };
 
   const shareableUrl = usernameInput 
@@ -117,6 +143,39 @@ const ProfileSettings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Danger Zone */}
+      {!checkingPortfolio && hasPortfolio && (
+        <div className="settings-danger-zone card-glass animated fade-in">
+          <div className="card-title-row">
+            <FaExclamationTriangle className="card-title-icon text-danger" />
+            <h3 className="text-danger">Danger Zone</h3>
+          </div>
+          <p className="settings-card-desc text-danger-soft">
+            Permanently delete your portfolio website, themes, items, and metrics. Your user account and credentials will remain active.
+          </p>
+          <button
+            type="button"
+            className="btn-danger-action"
+            onClick={() => setIsDeleteModalOpen(true)}
+          >
+            <FaTrashAlt /> Permanently Delete My Portfolio
+          </button>
+        </div>
+      )}
+
+      {/* Self portfolio deletion confirmation */}
+      {user && (
+        <DeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeletePortfolioConfirm}
+          targetType="portfolio"
+          targetName={user.name}
+          targetEmail={user.email}
+        />
+      )}
+
       <ToastContainer position="bottom-right" />
     </div>
   );

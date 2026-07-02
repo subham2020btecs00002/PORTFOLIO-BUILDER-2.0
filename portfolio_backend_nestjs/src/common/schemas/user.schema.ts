@@ -21,6 +21,9 @@ export class User extends Document {
 
   @Prop({ sparse: true })
   username?: string;
+
+  @Prop({ default: 'user' })
+  role?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

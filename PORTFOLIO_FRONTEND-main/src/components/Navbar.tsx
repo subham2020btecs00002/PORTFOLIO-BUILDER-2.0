@@ -5,7 +5,7 @@ import { FaLaptopCode, FaSignOutAlt, FaUser, FaChartBar } from 'react-icons/fa';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,6 +26,14 @@ const Navbar: React.FC = () => {
       <div className="nav-links">
         {isAuthenticated ? (
           <>
+            {user?.role === 'admin' && (
+              <button
+                className={`nav-link-btn ${isActive('/admin') ? 'active' : ''}`}
+                onClick={() => navigate('/admin')}
+              >
+                <FaChartBar /> Admin Panel
+              </button>
+            )}
             <button
               className={`nav-link-btn ${isActive('/dashboard') ? 'active' : ''}`}
               onClick={() => navigate('/dashboard')}
