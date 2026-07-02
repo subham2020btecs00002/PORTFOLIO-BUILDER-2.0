@@ -108,6 +108,23 @@ export class CreatePortfolioDto {
 
   @IsArray()
   @IsOptional()
+  @IsString({ each: true })
+  sectionOrder?: string[];
+
+  @IsString()
+  @IsOptional()
+  themeColor?: string;
+
+  @IsString()
+  @IsOptional()
+  fontFamily?: string;
+
+  @IsString()
+  @IsOptional()
+  borderRadius?: string;
+
+  @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => SkillDto)
   skills?: SkillDto[];

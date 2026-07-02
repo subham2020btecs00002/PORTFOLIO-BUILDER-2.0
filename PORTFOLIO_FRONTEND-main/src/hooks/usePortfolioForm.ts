@@ -45,89 +45,247 @@ export interface FormErrors {
 }
 
 // ---------------------------------------------------------------------------
-// Validation helpers
+// Validation helpers — pragmatic, user-friendly rules
 // ---------------------------------------------------------------------------
 
-const nameValidator = /^[a-zA-Z\s]*$/;
-const pointWiseValidator = /^[A-Z][^.!?]*\.\s*(?:[A-Z][^.!?]*\.\s*)*$/;
-const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+/** Loose URL: must start with http(s):// or be blank */
+const urlPattern = /^https?:\/\/\S+\.\S+/;
 
+/** CGPA: 0.0–10.0 or percentage: 0–100% or 0–100 */
+const cgpaPattern = /^(?:10(?:\.0{1,2})?|[0-9](?:\.\d{1,2})?)$/;
+const percentagePattern = /^(?:100(?:\.0{1,2})?|[0-9]{1,2}(?:\.\d{1,2})?)\s*%?$/;
+
+// --- Title ---
 export const validateTitle = (title: string): string => {
-  if (title.trim() === '') return 'Title cannot be empty';
-  if (title.length < 3) return 'Title must be at least 3 characters long';
-  if (!nameValidator.test(title)) return 'Title cannot contain numbers';
+  const t = title.trim();
+  if (!t) return 'Headline title is required.';
+  if (t.length < 3) return 'Title must be at least 3 characters.';
+  if (t.length > 120) return 'Title must be under 120 characters.';
   return '';
 };
 
+// --- Summary / Description ---
 export const validateDescription = (description: string): string => {
-  if (description.trim() === '') return 'Description cannot be empty';
-  if (!pointWiseValidator.test(description)) {
-    return 'Description must start with a capital letter and end with a period.';
+  const d = description.trim();
+  if (!d) return 'Professional summary is required.';
+  if (d.length < 30) return 'Summary is too short — write at least 30 characters.';
+  if (d.length > 2000) return 'Summary must be under 2000 characters.';
+  return '';
+};
+
+// --- Project title ---
+export const validateProjectTitle = (title: string): string => {
+  const t = title.trim();
+  if (!t) return 'Project title is required.';
+  if (t.length < 2) return 'Project title must be at least 2 characters.';
+  if (t.length > 150) return 'Project title must be under 150 characters.';
+  return '';
+};
+
+// --- Project description ---
+export const validateProjectDescription = (desc: string): string => {
+  const d = desc.trim();
+  if (!d) return 'Project description is required.';
+  if (d.length < 20) return 'Description is too short — write at least 20 characters.';
+  if (d.length > 1500) return 'Description must be under 1500 characters.';
+  return '';
+};
+
+// --- URL ---
+export const validateLink = (link: string): string => {
+  if (!link || !link.trim()) return ''; // Optional
+  if (!urlPattern.test(link.trim())) {
+    return 'Please enter a valid URL starting with http:// or https://';
   }
   return '';
 };
 
-export const validateLink = (link: string): string => {
-  if (!link) return '';
-  if (!urlPattern.test(link)) return 'Invalid URL format';
+// --- Skill name ---
+export const validateSkillName = (name: string): string => {
+  const n = name.trim();
+  if (!n) return 'Skill name is required.';
+  if (n.length < 1) return 'Skill name cannot be empty.';
+  if (n.length > 80) return 'Skill name must be under 80 characters.';
   return '';
 };
 
-export const validateEducationField = (name: string, value: string): string => {
+// --- Education field-by-field ---
+export const validateEducationField = (name: string, value: string, education?: Education): string => {
   switch (name) {
-    case 'collegeName':
-      return value.trim() ? '' : 'College Name is required.';
-    case 'degree':
-      return value ? '' : 'Degree is required.';
-    case 'branch':
-      return value ? '' : 'Branch is required.';
-    case 'cgpaOrPercentage':
-      return value.trim() ? '' : 'CGPA or Percentage is required.';
-    case 'yearOfJoining':
-      return value === '' ? 'Year of Joining is required.' : '';
-    case 'yearOfPassing':
-      return value.trim() ? '' : 'Year of Passing is required.';
+    case 'collegeName': {
+      const v = value.trim();
+      if (!v) return 'College or institution name is required.';
+      if (v.length < 3) return 'Name is too short.';
+      return '';
+    }
+    case 'degree': {
+      const v = value.trim();
+      if (!v) return 'Degree is required (e.g. B.Tech, B.Sc, Diploma).';
+      return '';
+    }
+    case 'branch': {
+      const v = value.trim();
+      if (!v) return 'Branch or major is required (e.g. Computer Science).';
+      return '';
+    }
+    case 'cgpaOrPercentage': {
+      const v = value.trim();
+      if (!v) return 'CGPA or percentage is required.';
+      if (!cgpaPattern.test(v) && !percentagePattern.test(v)) {
+        return 'Enter a valid CGPA (e.g. 8.5) or percentage (e.g. 85% or 85).';
+      }
+      return '';
+    }
+    case 'yearOfJoining': {
+      if (!value) return 'Year of joining is required.';
+      const date = new Date(value);
+      const year = date.getFullYear();
+      if (year < 1950 || year > new Date().getFullYear() + 1) {
+        return 'Enter a realistic joining year.';
+      }
+      return '';
+    }
+    case 'yearOfPassing': {
+      if (!value) return 'Year of passing is required.';
+      if (education?.yearOfJoining && value) {
+        if (new Date(value) <= new Date(education.yearOfJoining)) {
+          return 'Year of passing must be after year of joining.';
+        }
+      }
+      return '';
+    }
     default:
       return '';
   }
 };
 
+// --- Professional history field-by-field ---
 export const validateProfessionalHistoryField = (
   name: string,
   value: string,
   history: ProfessionalHistory,
 ): string => {
   switch (name) {
-    case 'companyName':
-      return value.trim() ? '' : 'Company name is required';
-    case 'position':
-      return value.trim() ? '' : 'Position is required';
-    case 'responsibility':
-      if (!value.trim()) return 'Responsibility is required';
-      if (!pointWiseValidator.test(value)) {
-        return 'Responsibility must start with a capital letter and end with a period.';
+    case 'companyName': {
+      const v = value.trim();
+      if (!v) return 'Company name is required.';
+      if (v.length < 2) return 'Company name is too short.';
+      return '';
+    }
+    case 'position': {
+      const v = value.trim();
+      if (!v) return 'Position or role title is required.';
+      if (v.length < 2) return 'Position is too short.';
+      return '';
+    }
+    case 'responsibility': {
+      const v = value.trim();
+      if (!v) return 'Responsibilities are required.';
+      if (v.length < 20) return 'Please describe your responsibilities in at least 20 characters.';
+      return '';
+    }
+    case 'yearOfJoining': {
+      if (!value) return 'Date of joining is required.';
+      if (history.yearOfLeaving && !history.isCurrentEmployee) {
+        if (new Date(value) >= new Date(history.yearOfLeaving)) {
+          return 'Joining date must be before leaving date.';
+        }
       }
       return '';
-    case 'yearOfJoining':
-      if (value === '') return 'Year of joining is required';
-      if (
-        history.yearOfLeaving &&
-        new Date(value) >= new Date(history.yearOfLeaving)
-      ) {
-        return 'Year of joining must be before Year of leaving';
+    }
+    case 'yearOfLeaving': {
+      if (!history.isCurrentEmployee) {
+        if (!value) return 'Date of leaving is required (or check "Currently working here").';
+        if (history.yearOfJoining && new Date(value) <= new Date(history.yearOfJoining)) {
+          return 'Leaving date must be after joining date.';
+        }
       }
       return '';
-    case 'yearOfLeaving':
-      if (!history.isCurrentEmployee && value === '') return 'Year of leaving is required';
-      if (
-        !history.isCurrentEmployee &&
-        new Date(value) <= new Date(history.yearOfJoining)
-      ) {
-        return 'Year of leaving must be after Year of joining';
-      }
-      return '';
+    }
     default:
       return '';
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Step-level validation — checks all required fields in a step
+// ---------------------------------------------------------------------------
+
+const validateStep1 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  return {
+    title: validateTitle(formData.title),
+    description: validateDescription(formData.description),
+  };
+};
+
+const validateStep2 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  const skillsErrors = formData.skills.map((skill) => ({
+    name: validateSkillName(skill.name),
+    level: '',
+    category: '',
+  }));
+  return { skills: skillsErrors };
+};
+
+const validateStep3 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  const projectErrors = formData.projects.map((proj) => ({
+    title: validateProjectTitle(proj.title),
+    description: validateProjectDescription(proj.description),
+    link: validateLink(proj.link ?? ''),
+  }));
+  return { projects: projectErrors };
+};
+
+const validateStep4 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  const educationErrors = formData.education.map((edu) => ({
+    collegeName: validateEducationField('collegeName', edu.collegeName),
+    degree: validateEducationField('degree', edu.degree),
+    branch: validateEducationField('branch', edu.branch),
+    cgpaOrPercentage: validateEducationField('cgpaOrPercentage', edu.cgpaOrPercentage),
+    yearOfJoining: validateEducationField('yearOfJoining', edu.yearOfJoining),
+    yearOfPassing: validateEducationField('yearOfPassing', edu.yearOfPassing, edu),
+  }));
+  return { education: educationErrors };
+};
+
+const validateStep5 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  const historyErrors = formData.professionalHistory.map((hist) => ({
+    companyName: validateProfessionalHistoryField('companyName', hist.companyName, hist),
+    position: validateProfessionalHistoryField('position', hist.position, hist),
+    responsibility: validateProfessionalHistoryField('responsibility', hist.responsibility, hist),
+    yearOfJoining: validateProfessionalHistoryField('yearOfJoining', hist.yearOfJoining, hist),
+    yearOfLeaving: validateProfessionalHistoryField('yearOfLeaving', hist.yearOfLeaving ?? '', hist),
+  }));
+  return { professionalHistory: historyErrors };
+};
+
+const validateStep6 = (formData: PortfolioFormData): Partial<FormErrors> => {
+  return {
+    portfolioLinks: {
+      github: validateLink(formData.portfolioLinks.github ?? ''),
+      leetcode: validateLink(formData.portfolioLinks.leetcode ?? ''),
+      gfg: validateLink(formData.portfolioLinks.gfg ?? ''),
+      linkedin: validateLink(formData.portfolioLinks.linkedin ?? ''),
+    },
+  };
+};
+
+const stepHasErrors = (errors: Partial<FormErrors>, step: number): boolean => {
+  switch (step) {
+    case 1:
+      return !!errors.title || !!errors.description;
+    case 2:
+      return !!errors.skills?.some((s) => !!s.name);
+    case 3:
+      return !!errors.projects?.some((p) => !!p.title || !!p.description || !!p.link);
+    case 4:
+      return !!errors.education?.some((e) => Object.values(e).some(Boolean));
+    case 5:
+      return !!errors.professionalHistory?.some((h) => Object.values(h).some(Boolean));
+    case 6:
+      return !!Object.values(errors.portfolioLinks ?? {}).some(Boolean);
+    default:
+      return false;
   }
 };
 
@@ -191,6 +349,10 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     portfolioLinks: { github: '', leetcode: '', gfg: '', linkedin: '' },
     skills: [emptySkill()],
     templateId: 'classic-green',
+    sectionOrder: ['about', 'skills', 'experience', 'projects', 'contact'],
+    themeColor: 'default',
+    fontFamily: 'default',
+    borderRadius: 'default',
     pdf: null,
   };
 
@@ -207,11 +369,17 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
   const [formData, setFormData] = useState<PortfolioFormData>(initialFormValues || defaultForm);
   const [errors, setErrors] = useState<FormErrors>(defaultErrors);
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const totalSteps = 7; // Basic Info, Skills, Projects, Education, Professional History, Links & File, Template Picker
+  const totalSteps = 7;
 
   // Handle setting loaded form data (e.g. from api in Edit mode)
   const setFormValues = (values: PortfolioFormData) => {
-    setFormData(values);
+    setFormData({
+      ...values,
+      sectionOrder: values.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'],
+      themeColor: values.themeColor || 'default',
+      fontFamily: values.fontFamily || 'default',
+      borderRadius: values.borderRadius || 'default',
+    });
     setErrors({
       title: '',
       description: '',
@@ -256,8 +424,8 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     }));
 
     let err = '';
-    if (name === 'title') err = validateTitle(value);
-    else if (name === 'description') err = validateDescription(value);
+    if (name === 'title') err = validateProjectTitle(value);
+    else if (name === 'description') err = validateProjectDescription(value);
     else if (name === 'link') err = validateLink(value);
 
     setErrors((prev) => ({
@@ -288,21 +456,21 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     }));
 
     setErrors((prev) => {
+      const currentEdu = { ...formData.education[index], [name]: value };
       const updated = prev.education.map((ee, i) =>
-        i === index ? { ...ee, [name]: validateEducationField(name, value) } : ee,
+        i === index ? { ...ee, [name]: validateEducationField(name, value, currentEdu) } : ee,
       );
 
       // Cross-field date validation
       if (name === 'yearOfJoining' || name === 'yearOfPassing') {
-        const edu = formData.education[index];
-        const joiningVal = name === 'yearOfJoining' ? value : edu.yearOfJoining;
-        const passingVal = name === 'yearOfPassing' ? value : edu.yearOfPassing;
+        const joiningVal = name === 'yearOfJoining' ? value : formData.education[index].yearOfJoining;
+        const passingVal = name === 'yearOfPassing' ? value : formData.education[index].yearOfPassing;
         if (passingVal && joiningVal && new Date(passingVal) <= new Date(joiningVal)) {
           updated[index] = {
             ...updated[index],
-            yearOfPassing: 'Year of Passing must be after Year of Joining.',
+            yearOfPassing: 'Year of passing must be after year of joining.',
           };
-        } else {
+        } else if (passingVal && joiningVal) {
           updated[index] = { ...updated[index], yearOfPassing: '' };
         }
       }
@@ -315,10 +483,11 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     index: number,
   ) => {
     const { name, value } = e.target;
+    const currentEdu = formData.education[index];
     setErrors((prev) => ({
       ...prev,
       education: prev.education.map((ee, i) =>
-        i === index ? { ...ee, [name]: validateEducationField(name, value) } : ee,
+        i === index ? { ...ee, [name]: validateEducationField(name, value, currentEdu) } : ee,
       ),
     }));
   };
@@ -350,7 +519,6 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     }));
 
     const currentHistory = formData.professionalHistory[index];
-    // Need to use temporary updated history object to validate correctly
     const updatedHistory = { ...currentHistory, [name]: fieldValue };
     const err = validateProfessionalHistoryField(name, String(fieldValue), updatedHistory);
 
@@ -394,6 +562,15 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
       ...prev,
       skills: prev.skills.map((s, i) => (i === index ? { ...s, [name]: value } : s)),
     }));
+
+    if (name === 'name') {
+      setErrors((prev) => ({
+        ...prev,
+        skills: prev.skills.map((se, i) =>
+          i === index ? { ...se, name: validateSkillName(value) } : se,
+        ),
+      }));
+    }
   };
 
   const addSkill = () => {
@@ -409,25 +586,53 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     setErrors((prev) => ({ ...prev, skills: prev.skills.filter((_, i) => i !== index) }));
   };
 
-  // Links logic
+  // Links logic — only validate on blur (not every keystroke)
   const handlePortfolioLinksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       portfolioLinks: { ...prev.portfolioLinks, [name]: value },
     }));
+    // Clear error while user is typing, only validate on blur
+    setErrors((prev) => ({
+      ...prev,
+      portfolioLinks: { ...prev.portfolioLinks, [name]: '' },
+    }));
+  };
 
+  const handlePortfolioLinksBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setErrors((prev) => ({
       ...prev,
       portfolioLinks: { ...prev.portfolioLinks, [name]: validateLink(value) },
     }));
   };
 
-  // Wizard navigation
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
+  // Wizard navigation — validate current step before allowing next
+  // Returns true if it advanced, false if blocked by errors
+  const nextStep = (): boolean => {
+    if (currentStep >= totalSteps) return false;
+
+    // Run validation for the current step
+    let stepErrors: Partial<FormErrors> = {};
+    switch (currentStep) {
+      case 1: stepErrors = validateStep1(formData); break;
+      case 2: stepErrors = validateStep2(formData); break;
+      case 3: stepErrors = validateStep3(formData); break;
+      case 4: stepErrors = validateStep4(formData); break;
+      case 5: stepErrors = validateStep5(formData); break;
+      case 6: stepErrors = validateStep6(formData); break;
     }
+
+    // Merge the step errors into global errors state
+    setErrors((prev) => ({ ...prev, ...stepErrors }));
+
+    // Only advance if this step has no errors
+    if (!stepHasErrors(stepErrors, currentStep)) {
+      setCurrentStep((prev) => prev + 1);
+      return true;
+    }
+    return false;
   };
 
   const prevStep = () => {
@@ -436,14 +641,33 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     }
   };
 
-  const isFormValid = () => {
-    const hasBasicErrors = !!errors.title || !!errors.description;
-    const hasProjectErrors = errors.projects.some((pe) => !!pe.title || !!pe.description || !!pe.link);
-    const hasEducationErrors = errors.education.some((ee) => Object.values(ee).some(Boolean));
-    const hasHistoryErrors = errors.professionalHistory.some((he) => Object.values(he).some(Boolean));
-    const hasLinkErrors = Object.values(errors.portfolioLinks).some(Boolean);
+  const handleStyleChange = (name: 'themeColor' | 'fontFamily' | 'borderRadius', value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    return !hasBasicErrors && !hasProjectErrors && !hasEducationErrors && !hasHistoryErrors && !hasLinkErrors;
+  const handleSectionOrderChange = (newOrder: string[]) => {
+    setFormData((prev) => ({ ...prev, sectionOrder: newOrder }));
+  };
+
+  const isFormValid = (): { valid: boolean; firstFailingStep: number } => {
+    // Run full validation on all steps
+    const s1 = validateStep1(formData);
+    const s2 = validateStep2(formData);
+    const s3 = validateStep3(formData);
+    const s4 = validateStep4(formData);
+    const s5 = validateStep5(formData);
+    const s6 = validateStep6(formData);
+
+    // Merge all errors so they are visible
+    setErrors((prev) => ({ ...prev, ...s1, ...s2, ...s3, ...s4, ...s5, ...s6 }));
+
+    const allSteps = [s1, s2, s3, s4, s5, s6];
+    for (let i = 0; i < allSteps.length; i++) {
+      if (stepHasErrors(allSteps[i], i + 1)) {
+        return { valid: false, firstFailingStep: i + 1 };
+      }
+    }
+    return { valid: true, firstFailingStep: -1 };
   };
 
   return {
@@ -460,6 +684,8 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
       handleChange,
       handleFileChange,
       handleTemplateChange,
+      handleStyleChange,
+      handleSectionOrderChange,
       handleProjectChange,
       addProject,
       removeProject,
@@ -474,6 +700,7 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
       addSkill,
       removeSkill,
       handlePortfolioLinksChange,
+      handlePortfolioLinksBlur,
     },
   };
 };

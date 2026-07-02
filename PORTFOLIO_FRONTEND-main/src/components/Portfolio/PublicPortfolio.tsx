@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { TailSpin } from 'react-loader-spinner';
 import { FaShareAlt, FaCopy, FaQrcode, FaTimes, FaLinkedin, FaTwitter } from 'react-icons/fa';
+import LoadingSpinner from '../common/LoadingSpinner';
 import QRCode from 'qrcode';
 import { baseUrl } from '../url';
 import type { Portfolio, ContactFormData } from '../../types';
@@ -13,9 +13,17 @@ import type { Portfolio, ContactFormData } from '../../types';
 import { ClassicGreen } from './templates/ClassicGreen';
 import { DarkPro } from './templates/DarkPro';
 import { Creative } from './templates/Creative';
+import { Minimalist } from './templates/Minimalist';
+import { Cyberpunk } from './templates/Cyberpunk';
+import { Neobrutalism } from './templates/Neobrutalism';
+import { ResumePrint } from './templates/ResumePrint';
 import './templates/templates.css';
 
-const PublicPortfolio: React.FC = () => {
+interface PublicPortfolioProps {
+  isResumeMode?: boolean;
+}
+
+const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false }) => {
   const { username, userId } = useParams<{ username?: string; userId?: string }>();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
@@ -65,6 +73,19 @@ const PublicPortfolio: React.FC = () => {
     }
   }, [portfolio]);
 
+  // Auto-print effect when in resume view mode
+  useEffect(() => {
+    let timer: any;
+    if (isResumeMode && !loading && portfolio) {
+      timer = setTimeout(() => {
+        window.print();
+      }, 800);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isResumeMode, loading, portfolio]);
+
   const handleScrollTo = (section: string) => {
     const element = document.getElementById(section);
     if (element) {
@@ -108,11 +129,7 @@ const PublicPortfolio: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="spinner-container">
-        <TailSpin height="80" width="80" color="#3b82f6" ariaLabel="loading" />
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Loading public portfolio..." />;
   }
 
   if (error || !portfolio) {
@@ -142,6 +159,12 @@ const PublicPortfolio: React.FC = () => {
         return <DarkPro {...props} />;
       case 'creative':
         return <Creative {...props} />;
+      case 'minimalist':
+        return <Minimalist {...props} />;
+      case 'cyberpunk':
+        return <Cyberpunk {...props} />;
+      case 'neobrutalism':
+        return <Neobrutalism {...props} />;
       case 'classic-green':
       default:
         return <ClassicGreen {...props} />;
@@ -151,6 +174,10 @@ const PublicPortfolio: React.FC = () => {
   const shareText = `Check out my professional developer portfolio built on PortfolioBuilder:`;
   const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
+
+  if (isResumeMode) {
+    return portfolio ? <ResumePrint portfolio={portfolio} /> : null;
+  }
 
   return (
     <div className="public-portfolio-wrapper">

@@ -82,6 +82,10 @@ export class PortfolioService {
       title: dto.title,
       description: dto.description || '',
       templateId: dto.templateId || 'classic-green',
+      sectionOrder: dto.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'],
+      themeColor: dto.themeColor || 'default',
+      fontFamily: dto.fontFamily || 'default',
+      borderRadius: dto.borderRadius || 'default',
       projects,
       portfolioLinks,
       education,
@@ -108,6 +112,10 @@ export class PortfolioService {
     portfolio.title = dto.title;
     portfolio.description = dto.description || '';
     portfolio.templateId = dto.templateId || portfolio.templateId || 'classic-green';
+    portfolio.sectionOrder = dto.sectionOrder || portfolio.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'];
+    portfolio.themeColor = dto.themeColor || portfolio.themeColor || 'default';
+    portfolio.fontFamily = dto.fontFamily || portfolio.fontFamily || 'default';
+    portfolio.borderRadius = dto.borderRadius || portfolio.borderRadius || 'default';
     portfolio.projects = projects;
     portfolio.portfolioLinks = portfolioLinks as any;
     portfolio.education = education as any;
@@ -210,5 +218,13 @@ export class PortfolioService {
       { user: userId },
       { $inc: { 'analytics.contactCount': 1 } },
     );
+  }
+
+  async deletePortfolio(userId: string): Promise<void> {
+    const portfolio = await this.portfolioModel.findOne({ user: userId });
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+    await this.portfolioModel.deleteOne({ user: userId });
   }
 }

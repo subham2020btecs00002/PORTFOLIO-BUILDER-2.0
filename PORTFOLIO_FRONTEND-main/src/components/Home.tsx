@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaEye, FaArrowRight, FaSpinner, FaRocket, FaUser, FaPalette, FaShareAlt } from 'react-icons/fa';
+import { FaEdit, FaEye, FaArrowRight, FaRocket, FaUser, FaPalette, FaShareAlt } from 'react-icons/fa';
 import api from './api';
 import { useAuth } from '../components/context/AuthContext';
+import LoadingSpinner from './common/LoadingSpinner';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -46,9 +47,7 @@ const Home: React.FC = () => {
         {isAuthenticated ? (
           <div className="cta-container">
             {loading ? (
-              <div className="spinner-container">
-                <FaSpinner className="spinner-icon" />
-              </div>
+              <LoadingSpinner size="sm" message="" />
             ) : (
               <div className="cta-buttons-group">
                 {portfolioExists ? (

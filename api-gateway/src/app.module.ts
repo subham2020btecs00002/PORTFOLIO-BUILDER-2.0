@@ -66,6 +66,11 @@ export class AppModule implements NestModule {
       if (userId) {
         proxyReq.setHeader('x-user-id', userId);
       }
+
+      const userRole = req.headers['x-user-role'];
+      if (userRole) {
+        proxyReq.setHeader('x-user-role', userRole);
+      }
     };
 
     /**
@@ -147,6 +152,7 @@ export class AppModule implements NestModule {
         // Sub-paths (e.g. GET /api/portfolio/exists, GET /api/portfolio/public/:id)
         { path: '/api/portfolio/*path', method: RequestMethod.ALL },
         { path: '/api/contact/*path', method: RequestMethod.ALL },
+        { path: '/api/admin/*path', method: RequestMethod.ALL },
       );
   }
 }

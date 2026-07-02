@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
-import { FaEye, FaEnvelope, FaClock, FaCopy, FaQrcode, FaEdit, FaExternalLinkAlt, FaTools, FaSpinner } from 'react-icons/fa';
-import { TailSpin } from 'react-loader-spinner';
+import { FaEye, FaEnvelope, FaClock, FaCopy, FaQrcode, FaEdit, FaExternalLinkAlt, FaTools } from 'react-icons/fa';
+import LoadingSpinner from '../common/LoadingSpinner';
 import QRCode from 'qrcode';
 import { toast, ToastContainer } from 'react-toastify';
 import './AnalyticsDashboard.css';
@@ -62,11 +62,7 @@ const AnalyticsDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="spinner-container">
-        <TailSpin height="80" width="80" color="#3b82f6" ariaLabel="loading" />
-      </div>
-    );
+    return <LoadingSpinner fullPage message="Fetching dashboard analytics..." />;
   }
 
   return (
@@ -164,7 +160,7 @@ const AnalyticsDashboard: React.FC = () => {
                   </a>
                 </>
               ) : (
-                <FaSpinner className="spinner-icon" />
+                <LoadingSpinner size="sm" message="" />
               )}
             </div>
           </div>

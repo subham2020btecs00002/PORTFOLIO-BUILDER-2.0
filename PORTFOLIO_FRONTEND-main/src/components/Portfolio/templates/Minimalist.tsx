@@ -13,7 +13,7 @@ interface TemplateProps {
   isPreview?: boolean;
 }
 
-export const DarkPro: React.FC<TemplateProps> = ({
+export const Minimalist: React.FC<TemplateProps> = ({
   portfolio,
   contactForm,
   handleInputChange,
@@ -162,13 +162,7 @@ export const DarkPro: React.FC<TemplateProps> = ({
   };
 
   return (
-    <div className={`theme-container dark-pro-theme ${fontClass} ${radiusClass} ${colorClass}`}>
-      {/* Glow Spheres */}
-      <div className="dark-pro-bg">
-        <div className="dark-sphere ds-1"></div>
-        <div className="dark-sphere ds-2"></div>
-      </div>
-
+    <div className={`theme-container minimalist-theme ${fontClass} ${radiusClass} ${colorClass}`}>
       <div className="theme-content-wrapper">
         
         {/* Navigation */}
