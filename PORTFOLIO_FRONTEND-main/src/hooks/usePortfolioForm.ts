@@ -293,7 +293,7 @@ const stepHasErrors = (errors: Partial<FormErrors>, step: number): boolean => {
 // Default factory helpers
 // ---------------------------------------------------------------------------
 
-export const emptyProject = (): Project => ({ title: '', description: '', link: '' });
+export const emptyProject = (): Project => ({ title: '', description: '', link: '', technologies: [] });
 export const emptyProjectErrors = (): ProjectErrors => ({ title: '', description: '', link: '' });
 
 export const emptyEducation = (): Education => ({
@@ -320,6 +320,7 @@ export const emptyHistory = (): ProfessionalHistory => ({
   yearOfJoining: '',
   yearOfLeaving: '',
   isCurrentEmployee: false,
+  technologies: [],
 });
 export const emptyHistoryErrors = (): ProfessionalHistoryErrors => ({
   companyName: '',
@@ -354,6 +355,7 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     fontFamily: 'default',
     borderRadius: 'default',
     pdf: null,
+    avatar: null,
   };
 
   const defaultErrors: FormErrors = {
@@ -371,6 +373,8 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps = 7;
 
+
+
   // Handle setting loaded form data (e.g. from api in Edit mode)
   const setFormValues = (values: PortfolioFormData) => {
     setFormData({
@@ -379,6 +383,8 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
       themeColor: values.themeColor || 'default',
       fontFamily: values.fontFamily || 'default',
       borderRadius: values.borderRadius || 'default',
+      projects: (values.projects || []).map((p) => ({ ...p, technologies: p.technologies || [] })),
+      professionalHistory: (values.professionalHistory || []).map((h) => ({ ...h, technologies: h.technologies || [] })),
     });
     setErrors({
       title: '',
@@ -412,6 +418,16 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     setFormData((prev) => ({ ...prev, pdf: file }));
   };
 
+  const handleAvatarChange = (fileOrEvent: File | null | React.ChangeEvent<HTMLInputElement>) => {
+    let file: File | null = null;
+    if (fileOrEvent && 'target' in fileOrEvent) {
+      file = fileOrEvent.target.files?.[0] ?? null;
+    } else {
+      file = fileOrEvent;
+    }
+    setFormData((prev) => ({ ...prev, avatar: file }));
+  };
+
   // Projects logic
   const handleProjectChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -442,6 +458,13 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
   const removeProject = (index: number) => {
     setFormData((prev) => ({ ...prev, projects: prev.projects.filter((_, i) => i !== index) }));
     setErrors((prev) => ({ ...prev, projects: prev.projects.filter((_, i) => i !== index) }));
+  };
+
+  const handleProjectCustomChange = (name: string, value: any, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      projects: prev.projects.map((p, i) => (i === index ? { ...p, [name]: value } : p)),
+    }));
   };
 
   // Education logic
@@ -549,6 +572,13 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     setErrors((prev) => ({
       ...prev,
       professionalHistory: prev.professionalHistory.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleProfessionalHistoryCustomChange = (name: string, value: any, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      professionalHistory: prev.professionalHistory.map((h, i) => (i === index ? { ...h, [name]: value } : h)),
     }));
   };
 
@@ -683,10 +713,12 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     handlers: {
       handleChange,
       handleFileChange,
+      handleAvatarChange,
       handleTemplateChange,
       handleStyleChange,
       handleSectionOrderChange,
       handleProjectChange,
+      handleProjectCustomChange,
       addProject,
       removeProject,
       handleEducationChange,
@@ -694,6 +726,7 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
       addEducation,
       removeEducation,
       handleProfessionalHistoryChange,
+      handleProfessionalHistoryCustomChange,
       addProfessionalHistory,
       removeProfessionalHistory,
       handleSkillChange,

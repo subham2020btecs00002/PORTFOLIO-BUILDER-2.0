@@ -19,6 +19,7 @@ const EditPortfolio: React.FC = () => {
         const { data } = await api.get<Portfolio>('/api/portfolio');
 
         const transformed: PortfolioFormData = {
+          _id: data._id,
           title: data.title || '',
           description: data.description || '',
           templateId: data.templateId || 'classic-green',
@@ -27,6 +28,7 @@ const EditPortfolio: React.FC = () => {
           fontFamily: data.fontFamily || 'default',
           borderRadius: data.borderRadius || 'default',
           pdf: null,
+          avatar: data.avatar || null,
           portfolioLinks: {
             github: data.portfolioLinks?.github || '',
             leetcode: data.portfolioLinks?.leetcode || '',
@@ -45,6 +47,7 @@ const EditPortfolio: React.FC = () => {
                 title: p.title || '',
                 description: p.description || '',
                 link: p.link || '',
+                technologies: p.technologies || [],
               }))
             : [],
           education: data.education?.length
@@ -73,6 +76,7 @@ const EditPortfolio: React.FC = () => {
                 yearOfLeaving: hist.yearOfLeaving && !hist.isCurrentEmployee
                   ? new Date(hist.yearOfLeaving).toISOString().substring(0, 10)
                   : '',
+                technologies: hist.technologies || [],
               }))
             : [],
         };

@@ -20,6 +20,7 @@ async function bootstrap() {
     helmet({
       // Relax CSP for API gateway (no HTML served)
       contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
 

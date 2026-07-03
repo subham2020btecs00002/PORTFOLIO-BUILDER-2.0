@@ -11,8 +11,19 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const gatewayUrl = configService.get<string>('GATEWAY_URL') || 'http://localhost:3001';
+  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          frameAncestors: ["'self'", frontendUrl, 'http://localhost:3000'],
+        },
+      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(cookieParser());
 
   /**

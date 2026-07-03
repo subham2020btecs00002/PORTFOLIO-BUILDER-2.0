@@ -24,6 +24,7 @@ export const PUBLIC_ROUTES: RouteDefinition[] = [
 export const PUBLIC_PREFIXES: string[] = [
   '/api/portfolio/public/',
   '/api/portfolio/download/',
+  '/api/portfolio/avatar/',
 ];
 
 /**

@@ -87,6 +87,7 @@ export interface Project {
   title: string;
   description: string;
   link?: string;
+  technologies?: string[];
 }
 
 export interface Education {
@@ -105,6 +106,7 @@ export interface ProfessionalHistory {
   yearOfJoining: string;
   yearOfLeaving?: string;
   isCurrentEmployee: boolean;
+  technologies?: string[];
 }
 
 export interface PortfolioLinks {
@@ -138,6 +140,8 @@ export interface Portfolio {
   borderRadius?: string;
   analytics?: AnalyticsData;
   pdf?: { contentType: string } | null;
+  avatar?: { contentType: string } | null;
+  avatarUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +150,7 @@ export interface Portfolio {
 
 /** Shape of the local form state used in Create / Edit portfolio forms. */
 export interface PortfolioFormData {
+  _id?: string;
   title: string;
   description: string;
   projects: Project[];
@@ -160,6 +165,8 @@ export interface PortfolioFormData {
   borderRadius: string;
   /** File selected for resume upload; null when no file chosen. */
   pdf: File | null;
+  /** File selected for profile avatar upload; null when no file chosen. */
+  avatar: File | { contentType: string } | null;
 }
 
 // ---------------------------------------------------------------------------

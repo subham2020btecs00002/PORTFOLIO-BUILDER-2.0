@@ -27,6 +27,11 @@ export class ProjectDto {
   @IsString()
   @IsOptional()
   link?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  technologies?: string[];
 }
 
 export class EducationDto {
@@ -73,6 +78,11 @@ export class ProfessionalHistoryDto {
 
   @IsOptional()
   isCurrentEmployee?: any;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  technologies?: string[];
 }
 
 export class PortfolioLinksDto {

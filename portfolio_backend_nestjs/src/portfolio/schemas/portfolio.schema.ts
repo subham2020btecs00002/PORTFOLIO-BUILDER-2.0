@@ -25,6 +25,9 @@ export class Project {
 
   @Prop()
   link: string;
+
+  @Prop({ type: [String], default: [] })
+  technologies: string[];
 }
 
 const ProjectSchema = SchemaFactory.createForClass(Project);
@@ -71,6 +74,9 @@ export class ProfessionalHistory {
 
   @Prop()
   isCurrentEmployee: boolean;
+
+  @Prop({ type: [String], default: [] })
+  technologies: string[];
 }
 
 const ProfessionalHistorySchema = SchemaFactory.createForClass(ProfessionalHistory);
@@ -162,6 +168,9 @@ export class Portfolio extends Document {
 
   @Prop({ type: PdfDataSchema })
   pdf: PdfData;
+
+  @Prop({ type: PdfDataSchema })
+  avatar: PdfData;
 
   @Prop({ type: AnalyticsSchema, default: () => ({}) })
   analytics: Analytics;

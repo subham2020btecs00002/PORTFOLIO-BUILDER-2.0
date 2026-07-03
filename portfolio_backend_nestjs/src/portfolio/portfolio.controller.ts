@@ -8,9 +8,10 @@ import {
   Body,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   Res,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
@@ -23,23 +24,53 @@ export class PortfolioController {
   constructor(private portfolioService: PortfolioService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('pdf'), NestedFieldsInterceptor)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'pdf', maxCount: 1 },
+        { name: 'avatar', maxCount: 1 },
+      ],
+      {
+        limits: {
+          fileSize: 2 * 1024 * 1024, // 2MB limit for all files
+        },
+      },
+    ),
+    NestedFieldsInterceptor,
+  )
   async create(
     @CurrentUser() user: { id: string },
     @Body() dto: CreatePortfolioDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
   ) {
-    return this.portfolioService.create(user.id, dto, file);
+    const pdfFile = files?.pdf?.[0];
+    const avatarFile = files?.avatar?.[0];
+    return this.portfolioService.create(user.id, dto, pdfFile, avatarFile);
   }
 
   @Put()
-  @UseInterceptors(FileInterceptor('pdf'), NestedFieldsInterceptor)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'pdf', maxCount: 1 },
+        { name: 'avatar', maxCount: 1 },
+      ],
+      {
+        limits: {
+          fileSize: 2 * 1024 * 1024, // 2MB limit for all files
+        },
+      },
+    ),
+    NestedFieldsInterceptor,
+  )
   async update(
     @CurrentUser() user: { id: string },
     @Body() dto: CreatePortfolioDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
   ) {
-    return this.portfolioService.update(user.id, dto, file);
+    const pdfFile = files?.pdf?.[0];
+    const avatarFile = files?.avatar?.[0];
+    return this.portfolioService.update(user.id, dto, pdfFile, avatarFile);
   }
 
   @Get('download/:id')
@@ -47,6 +78,13 @@ export class PortfolioController {
     const pdf = await this.portfolioService.getPdf(id);
     res.set('Content-Type', pdf.contentType);
     res.send(pdf.data);
+  }
+
+  @Get('avatar/:id')
+  async getAvatar(@Param('id') id: string, @Res() res: Response) {
+    const avatar = await this.portfolioService.getAvatar(id);
+    res.set('Content-Type', avatar.contentType);
+    res.send(avatar.data);
   }
 
   @Get('analytics')
