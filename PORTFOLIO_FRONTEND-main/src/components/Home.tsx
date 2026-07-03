@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaEye, FaArrowRight, FaRocket, FaUser, FaPalette, FaShareAlt } from 'react-icons/fa';
 import api from './api';
@@ -11,6 +11,7 @@ const Home: React.FC = () => {
   const [portfolioExists, setPortfolioExists] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+  const featuresGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkPortfolioExists = async () => {
@@ -29,6 +30,36 @@ const Home: React.FC = () => {
     };
     void checkPortfolioExists();
   }, [isAuthenticated]);
+
+  // Staggered card entrance: IntersectionObserver adds .visible when cards scroll into view.
+  // Observer disconnects after all 4 cards are visible — zero ongoing CPU cost.
+  const handleFeatureCards = useCallback(() => {
+    const grid = featuresGridRef.current;
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.feature-card'));
+    let visibleCount = 0;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+            visibleCount++;
+            if (visibleCount === cards.length) observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    return handleFeatureCards();
+  }, [handleFeatureCards]);
 
   return (
     <div className="home-hero-container">
@@ -83,7 +114,7 @@ const Home: React.FC = () => {
       {/* Feature Grid */}
       <div className="home-features-section portfolio-page-wrapper">
         <h2>How It Works</h2>
-        <div className="features-grid">
+        <div className="features-grid" ref={featuresGridRef}>
           <div className="feature-card card-glass">
             <div className="feature-icon"><FaUser /></div>
             <h3>1. Fill Details</h3>

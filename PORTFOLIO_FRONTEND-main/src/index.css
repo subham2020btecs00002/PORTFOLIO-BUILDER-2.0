@@ -11,28 +11,65 @@
   --accent-green: #10b981;
   --accent-green-rgb: 16, 185, 129;
   --accent-green-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  
+
+  /* Semantic Colors */
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color:   #ef4444;
+  --info-color:    #3b82f6;
+
+  /* Surface Layers */
+  --surface-1: rgba(255, 255, 255, 0.02);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --surface-3: rgba(255, 255, 255, 0.07);
+
   --text-primary: #f3f4f6;
   --text-secondary: #9ca3af;
   --text-muted: #6b7280;
-  
+
   --border-color: rgba(255, 255, 255, 0.08);
   --border-active: rgba(59, 130, 246, 0.5);
-  
+
   --glass-bg: rgba(17, 24, 39, 0.7);
   --glass-border: rgba(255, 255, 255, 0.05);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  
+
   /* Fonts */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-title: 'Outfit', sans-serif;
-  
+
   /* Transitions & Radii */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-full: 9999px;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Scroll progress bar (updated by JS in index.tsx) */
+  --scroll-progress: 0%;
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-active: rgba(59, 130, 246, 0.6);
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(15, 23, 42, 0.06);
+  --glass-shadow: 0 8px 32px 0 rgba(148, 163, 184, 0.1);
+}
+
+/* Smooth transition for theme switching */
+body, nav, div, input, textarea, select, button, h1, h2, h3, h4, h5, h6, span, p, a {
+  transition: background-color 0.25s ease, color 0.2s ease, border-color 0.25s ease, box-shadow 0.2s ease;
 }
 
 /* Base Styles */
@@ -129,6 +166,19 @@ input:focus, textarea:focus, select:focus {
   padding: 0 24px;
 }
 
+/* 2-column responsive grid (used in Dashboard share section) */
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -137,6 +187,24 @@ input:focus, textarea:focus, select:focus {
 
 .animated.fade-in {
   animation: fadeIn 0.5s ease forwards;
+}
+
+/* Skeleton shimmer — reusable across components */
+@keyframes skeletonShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-1) 25%,
+    var(--surface-2) 50%,
+    var(--surface-1) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius-md);
 }
 
 /* Spin animation for buttons */

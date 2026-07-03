@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope } from 'react-icons/fa';
+import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaSun, FaMoon } from 'react-icons/fa';
 import type { Portfolio, ContactFormData } from '../../../types';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
@@ -11,6 +11,8 @@ interface TemplateProps {
   handleSubmit: (e: React.FormEvent) => void;
   handleScrollTo: (sectionId: string) => void;
   isPreview?: boolean;
+  theme?: string;
+  toggleTheme?: () => void;
 }
 
 export const Cyberpunk: React.FC<TemplateProps> = ({
@@ -20,6 +22,8 @@ export const Cyberpunk: React.FC<TemplateProps> = ({
   handleSubmit,
   handleScrollTo,
   isPreview = false,
+  theme,
+  toggleTheme,
 }) => {
   const currentJob = portfolio.professionalHistory?.find((job) => job.isCurrentEmployee);
   
@@ -178,6 +182,11 @@ export const Cyberpunk: React.FC<TemplateProps> = ({
                 );
               })}
             </ul>
+            {toggleTheme && (
+              <button className="navbar-theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle theme">
+                {theme === 'dark' ? <FaSun className="sun-icon" /> : <FaMoon className="moon-icon" />}
+              </button>
+            )}
           </nav>
         )}
 

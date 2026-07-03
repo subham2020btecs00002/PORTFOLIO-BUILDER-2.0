@@ -93,7 +93,7 @@
 .wizard-step-section h2 {
   font-size: 1.8rem;
   margin-bottom: 6px;
-  background: linear-gradient(to right, #ffffff, #d1d5db);
+  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -118,7 +118,7 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   position: relative;
-  background: rgba(255, 255, 255, 0.01);
+  background: var(--surface-1);
 }
 
 .wizard-item-header {
@@ -126,7 +126,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
 }
 

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import { FaEye, FaEnvelope, FaClock, FaCopy, FaQrcode, FaEdit, FaExternalLinkAlt, FaTools } from 'react-icons/fa';
-import LoadingSpinner from '../common/LoadingSpinner';
 import QRCode from 'qrcode';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import './AnalyticsDashboard.css';
 
 interface AnalyticsRes {
@@ -20,6 +19,24 @@ const AnalyticsDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsRes | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [displayViews, setDisplayViews] = useState(0);
+  const [displayContacts, setDisplayContacts] = useState(0);
+
+  // Animated counter: uses requestAnimationFrame — no library, zero cost
+  const animateCount = useCallback((target: number, setter: (v: number) => void) => {
+    if (target === 0) return;
+    const duration = 1200;
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setter(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, []);
 
   const publicUrl = user?.username 
     ? `${window.location.origin}/p/${user.username}` 
@@ -30,9 +47,11 @@ const AnalyticsDashboard: React.FC = () => {
       try {
         const { data } = await api.get<AnalyticsRes>('/api/portfolio/analytics');
         setAnalytics(data);
+        // Start count-up animations after data loads
+        animateCount(data.views, setDisplayViews);
+        animateCount(data.contactCount, setDisplayContacts);
       } catch (err: any) {
         console.error('Error fetching analytics:', err);
-        // If portfolio doesn't exist, we should redirect to creation page
         if (err.response?.status === 404) {
           toast.info('Please create your portfolio first!');
           navigate('/portfolio');
@@ -42,7 +61,7 @@ const AnalyticsDashboard: React.FC = () => {
       }
     };
     void fetchAnalytics();
-  }, [navigate]);
+  }, [navigate, animateCount]);
 
   useEffect(() => {
     if (publicUrl) {
@@ -62,7 +81,28 @@ const AnalyticsDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner fullPage message="Fetching dashboard analytics..." />;
+    // Skeleton placeholders — match the real card layout so there's no layout shift
+    return (
+      <div className="dashboard-wrapper portfolio-page-wrapper">
+        <div className="dashboard-header">
+          <div>
+            <div className="skeleton" style={{ width: 200, height: 36, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: 300, height: 18 }} />
+          </div>
+        </div>
+        <div className="analytics-stats-grid">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="stat-card card-glass">
+              <div className="skeleton" style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div className="skeleton" style={{ width: '60%', height: 14, marginBottom: 10 }} />
+                <div className="skeleton" style={{ width: '40%', height: 32 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -103,7 +143,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="stat-icon icon-blue"><FaEye /></div>
           <div className="stat-content">
             <span className="stat-label">Total Profile Views</span>
-            <h3 className="stat-value">{analytics?.views ?? 0}</h3>
+            <h3 className="stat-value">{displayViews}</h3>
           </div>
         </div>
 
@@ -111,7 +151,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="stat-icon icon-green"><FaEnvelope /></div>
           <div className="stat-content">
             <span className="stat-label">Contact Messages</span>
-            <h3 className="stat-value">{analytics?.contactCount ?? 0}</h3>
+            <h3 className="stat-value">{displayContacts}</h3>
           </div>
         </div>
 
@@ -160,14 +200,37 @@ const AnalyticsDashboard: React.FC = () => {
                   </a>
                 </>
               ) : (
-                <LoadingSpinner size="sm" message="" />
+                <div className="skeleton" style={{ width: 160, height: 160, borderRadius: 8 }} />
               )}
             </div>
           </div>
         </div>
       )}
 
-      <ToastContainer position="bottom-right" />
+      {/* Embed Iframe Section */}
+      {user?.username && (
+        <div className="dashboard-embed-section card-glass" style={{ marginTop: '24px', padding: '32px' }}>
+          <h3>Embed Portfolio on Your Website</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
+            Want to display your portfolio card on your personal blog or external website? Copy the iframe embed code snippet below.
+          </p>
+          <div className="dashboard-link-input-group">
+            <input 
+              type="text" 
+              value={`<iframe src="${publicUrl}" width="100%" height="600" style="border:1px solid rgba(0,0,0,0.1); border-radius:12px;" title="${user.username}'s Portfolio"></iframe>`} 
+              readOnly 
+            />
+            <button onClick={() => {
+              navigator.clipboard.writeText(`<iframe src="${publicUrl}" width="100%" height="600" style="border:1px solid rgba(0,0,0,0.1); border-radius:12px;" title="${user.username}'s Portfolio"></iframe>`);
+              toast.success('Embed iframe code copied to clipboard!');
+            }}>
+              <FaCopy /> Copy Code
+            </button>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };

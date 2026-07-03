@@ -39,6 +39,46 @@
   gap: 12px;
 }
 
+.nav-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.25s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.08) rotate(12deg);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn .sun-icon {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+}
+
+.theme-toggle-btn .moon-icon {
+  color: #60a5fa;
+  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.4));
+}
+
 .nav-link-btn {
   background: transparent;
   border: none;
@@ -96,11 +136,82 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-@media (max-width: 500px) {
+/* ===== Hamburger Button (hidden on desktop) ===== */
+.nav-hamburger {
+  display: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+.nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Full-screen overlay (closes menu on outside click) ===== */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease;
+}
+
+/* ===== Mobile Styles ===== */
+@media (max-width: 640px) {
   .global-navbar {
     padding: 12px 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 16px;
+    z-index: 100;
   }
-  .nav-brand span {
+
+  /* Show hamburger */
+  .nav-hamburger {
+    display: flex;
+  }
+
+  /* Nav links become a vertical dropdown */
+  .nav-links {
     display: none;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+    order: 3; /* below brand and hamburger */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .nav-links--open {
+    display: flex;
+    max-height: 400px;
+  }
+
+  /* Full-width buttons in mobile menu */
+  .nav-link-btn,
+  .nav-logout-btn,
+  .nav-register-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+  }
+
+  .nav-brand span {
+    display: inline; /* always show brand name */
   }
 }

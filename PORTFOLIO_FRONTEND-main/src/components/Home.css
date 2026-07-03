@@ -25,6 +25,7 @@
   border-radius: var(--radius-full);
   filter: blur(120px);
   opacity: 0.15;
+  will-change: transform; /* hint browser to composite on GPU */
 }
 
 .sphere-1 {
@@ -33,6 +34,7 @@
   width: 40vw;
   height: 40vw;
   background: radial-gradient(circle, #3b82f6 0%, #8b5cf6 100%);
+  animation: sphereFloat 9s ease-in-out infinite;
 }
 
 .sphere-2 {
@@ -41,6 +43,19 @@
   width: 35vw;
   height: 35vw;
   background: radial-gradient(circle, #ec4899 0%, #8b5cf6 100%);
+  animation: sphereFloat 12s ease-in-out infinite reverse;
+}
+
+/* GPU-safe: only transforms opacity — zero layout reflow */
+@keyframes sphereFloat {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33%       { transform: translateY(-28px) translateX(10px); }
+  66%       { transform: translateY(14px) translateX(-8px); }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .sphere-1, .sphere-2 { animation: none; }
 }
 
 .home-hero-content {
@@ -53,21 +68,37 @@
 
 .badge-promo {
   display: inline-block;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: var(--accent-color);
   padding: 6px 16px;
   border-radius: var(--radius-full);
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 24px;
+  color: var(--accent-color);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.08) 0%,
+    rgba(139, 92, 246, 0.2) 40%,
+    rgba(59, 130, 246, 0.08) 80%
+  );
+  background-size: 200% auto;
+  animation: shimmerBadge 3s linear infinite;
+}
+
+@keyframes shimmerBadge {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-promo { animation: none; }
 }
 
 .home-hero-content h1 {
   font-size: 3.5rem;
   line-height: 1.15;
   margin-bottom: 24px;
-  background: linear-gradient(to right, #ffffff, #9ca3af);
+  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -175,16 +206,36 @@
   gap: 24px;
 }
 
+/* Cards start invisible; JS adds .visible via IntersectionObserver */
 .feature-card {
   padding: 32px;
   text-align: left;
   transition: var(--transition-smooth);
+  opacity: 0;
+  transform: translateY(24px);
 }
 
+/* Staggered entrance — each card is slightly delayed */
+.feature-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feature-card:nth-child(2).visible { transition-delay: 0.1s; }
+.feature-card:nth-child(3).visible { transition-delay: 0.2s; }
+.feature-card:nth-child(4).visible { transition-delay: 0.3s; }
+
 .feature-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-6px) !important;
   border-color: rgba(59, 130, 246, 0.3);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* If user prefers reduced motion: show cards immediately, no animation */
+@media (prefers-reduced-motion: reduce) {
+  .feature-card { opacity: 1; transform: none; }
+  .feature-card.visible { transition: none; }
 }
 
 .feature-icon {
@@ -211,9 +262,32 @@
   line-height: 1.5;
 }
 
-/* Mobile responsive fixes */
+/* Tablet (768px) */
 @media (max-width: 768px) {
   .home-hero-content h1 {
     font-size: 2.5rem;
+  }
+  .hero-lead {
+    font-size: 1.1rem;
+  }
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small mobile (480px) */
+@media (max-width: 480px) {
+  .home-hero-content h1 {
+    font-size: 2rem;
+  }
+  .hero-lead {
+    font-size: 1rem;
+  }
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .btn-primary, .btn-secondary, .btn-outline {
+    width: 100%;
+    justify-content: center;
   }
 }
