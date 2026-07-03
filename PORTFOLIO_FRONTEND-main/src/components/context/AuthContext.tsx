@@ -117,6 +117,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             return await api(original);
           } catch {
             dispatchRef.current({ type: 'AUTH_ERROR' });
+            localStorage.removeItem('isAuthenticated');
           }
         }
         return Promise.reject(error);
@@ -129,11 +130,18 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const loadUser = useCallback(async (): Promise<void> => {
+    const hasAuth = localStorage.getItem('isAuthenticated') === 'true';
+    if (!hasAuth) {
+      dispatch({ type: 'AUTH_ERROR' });
+      return;
+    }
     try {
       const res = await api.get<User>('/api/auth/user');
       dispatch({ type: 'USER_LOADED', payload: res.data });
+      localStorage.setItem('isAuthenticated', 'true');
     } catch {
       dispatch({ type: 'AUTH_ERROR' });
+      localStorage.removeItem('isAuthenticated');
     }
   }, []);
 
@@ -159,9 +167,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const res = await api.post<{ user: User }>('/api/auth/login', formData);
       dispatch({ type: 'LOGIN_SUCCESS', payload: res.data.user });
+      localStorage.setItem('isAuthenticated', 'true');
       toast.success('Login successful!', { containerId: 'global' });
     } catch (err) {
       dispatch({ type: 'AUTH_ERROR' });
+      localStorage.removeItem('isAuthenticated');
       const axiosError = err as AxiosError<ApiErrorResponse>;
       const message =
         typeof axiosError.response?.data?.message === 'string'
@@ -176,6 +186,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await api.post('/api/auth/logout');
     } finally {
       dispatch({ type: 'LOGOUT' });
+      localStorage.removeItem('isAuthenticated');
     }
   };
 

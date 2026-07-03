@@ -119,6 +119,27 @@
   display: inline-block;
 }
 
+/* Forgot Password link styling */
+.forgot-password-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+  margin-bottom: 18px;
+}
+
+.forgot-password-link {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+}
+
+.forgot-password-link:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .auth-form {
     padding: 30px 20px;

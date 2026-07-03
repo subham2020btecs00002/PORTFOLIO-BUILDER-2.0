@@ -16,11 +16,17 @@ export class User extends Document {
   refreshTokenHash?: string;
 
   /** Custom public URL slug — e.g. "john-doe" → /p/john-doe */
-  @Prop({ unique: true, sparse: true, default: null })
+  @Prop({ unique: true, sparse: true })
   username?: string;
 
   @Prop({ default: 'user' })
   role?: string;
+
+  @Prop({ default: null })
+  resetPasswordToken?: string;
+
+  @Prop({ default: null })
+  resetPasswordExpires?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

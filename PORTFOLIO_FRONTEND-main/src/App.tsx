@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Register from './components/Auth/Register';
 import Login from './components/Auth/Login';
+import ForgotPassword from './components/Auth/ForgotPassword';
+import ResetPassword from './components/Auth/ResetPassword';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/Admin/AdminRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -39,6 +41,8 @@ const MainApp: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/portfolio"
             element={<PrivateRoute element={<CreatePortfolio />} />}
