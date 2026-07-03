@@ -1655,3 +1655,348 @@
   }
 }
 
+/* ==========================================================================
+   PROFILE AVATAR STYLES & OVERRIDES
+   ========================================================================== */
+.theme-avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.theme-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #10b981;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.theme-avatar:hover {
+  transform: scale(1.05);
+}
+
+.classic-green-theme .theme-avatar {
+  border-color: #10b981;
+}
+
+.neobrutalism-theme .theme-avatar {
+  border: 4px solid #1a1a1a;
+  border-radius: 0px;
+  box-shadow: 6px 6px 0px #1a1a1a;
+}
+
+.cyberpunk-theme .theme-avatar {
+  border: 3px solid #00ff66;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.5);
+}
+
+.minimalist-theme .theme-avatar {
+  border: 2px solid var(--border-color, #e2e8f0);
+  padding: 4px;
+  background: var(--bg-primary, #ffffff);
+}
+
+.dark-pro-theme .theme-avatar {
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 2 Interactive Enhancements & Animations
+   --------------------------------------------------------------------------- */
+
+/* Scroll Reveal classes */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Specific template variations of scroll reveals */
+.cyberpunk-theme .reveal-on-scroll.revealed {
+  animation: cyberpunkGlitchReveal 0.5s ease-out;
+}
+
+.neobrutalism-theme .reveal-on-scroll {
+  transform: translate(12px, 12px);
+}
+.neobrutalism-theme .reveal-on-scroll.revealed {
+  transform: translate(0, 0);
+}
+
+/* Keyframe Animations */
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes avatarZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cyberpunkGlitchReveal {
+  0% {
+    opacity: 0;
+    transform: skewX(-5deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: skewX(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: skewX(0);
+  }
+}
+
+/* Skills visual progress bar layout */
+.skill-item-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.skill-progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.skill-progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary-color, #10b981);
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 0; /* will animate to style width */
+}
+
+/* Theme variations for skill progress trackers */
+.classic-green-theme .skill-progress-bar {
+  background: #10b981;
+}
+
+.dark-pro-theme .skill-progress-track {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.dark-pro-theme .skill-progress-bar {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.creative-theme .skill-progress-bar {
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+}
+
+.minimalist-theme .skill-progress-track {
+  height: 4px;
+  border-radius: 0;
+  background-color: #e2e8f0;
+}
+.minimalist-theme .skill-progress-bar {
+  border-radius: 0;
+  background: #1a1a1a;
+}
+
+.cyberpunk-theme .skill-progress-track {
+  border: 1px solid #00ff66;
+  background-color: #0c1020;
+  border-radius: 0;
+  height: 10px;
+}
+.cyberpunk-theme .skill-progress-bar {
+  border-radius: 0;
+  background: #00ff66;
+  box-shadow: 0 0 10px #00ff66;
+}
+
+.neobrutalism-theme .skill-progress-track {
+  border: 2px solid #1a1a1a;
+  background-color: #ffffff;
+  border-radius: 0;
+  height: 12px;
+}
+.neobrutalism-theme .skill-progress-bar {
+  border-radius: 0;
+  background: #fde047;
+  border-right: 2px solid #1a1a1a;
+}
+
+/* Premium Floating Contact Form Input styles */
+.floating-form-group {
+  position: relative;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.floating-form-group input,
+.floating-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+  border-radius: 8px;
+  color: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.floating-form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.floating-form-group label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.95rem;
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.floating-form-group textarea ~ label {
+  top: 20px;
+  transform: none;
+}
+
+/* Floating label states on focus / value present */
+.floating-form-group input:focus ~ label,
+.floating-form-group input:not(:placeholder-shown) ~ label,
+.floating-form-group textarea:focus ~ label,
+.floating-form-group textarea:not(:placeholder-shown) ~ label {
+  top: 0;
+  left: 10px;
+  transform: translateY(-50%) scale(0.85);
+  background: var(--bg-card, #1e293b);
+  padding: 0 6px;
+  color: var(--primary-color, #10b981);
+  font-weight: 500;
+}
+
+/* Floating label states customized per theme */
+.classic-green-theme .floating-form-group input:focus,
+.classic-green-theme .floating-form-group textarea:focus {
+  border-color: #10b981;
+}
+.classic-green-theme .floating-form-group input:focus ~ label,
+.classic-green-theme .floating-form-group textarea:focus ~ label {
+  color: #10b981;
+  background: #ffffff;
+}
+
+.dark-pro-theme .floating-form-group input:focus,
+.dark-pro-theme .floating-form-group textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+}
+.dark-pro-theme .floating-form-group input:focus ~ label,
+.dark-pro-theme .floating-form-group textarea:focus ~ label {
+  color: #3b82f6;
+  background: #0f172a;
+}
+
+.creative-theme .floating-form-group input:focus,
+.creative-theme .floating-form-group textarea:focus {
+  border-color: #a855f7;
+}
+.creative-theme .floating-form-group input:focus ~ label,
+.creative-theme .floating-form-group textarea:focus ~ label {
+  color: #a855f7;
+  background: #0f172a;
+}
+
+.minimalist-theme .floating-form-group input,
+.minimalist-theme .floating-form-group textarea {
+  border-radius: 0;
+  border-width: 0 0 1px 0;
+  border-color: #e2e8f0;
+}
+.minimalist-theme .floating-form-group input:focus,
+.minimalist-theme .floating-form-group textarea:focus {
+  border-color: #1a1a1a;
+}
+.minimalist-theme .floating-form-group input:focus ~ label,
+.minimalist-theme .floating-form-group textarea:focus ~ label {
+  color: #1a1a1a;
+  background: #ffffff;
+}
+
+.cyberpunk-theme .floating-form-group input,
+.cyberpunk-theme .floating-form-group textarea {
+  border-radius: 0;
+  border: 1px solid #00ff66;
+  background: rgba(0, 255, 102, 0.05);
+}
+.cyberpunk-theme .floating-form-group input:focus,
+.cyberpunk-theme .floating-form-group textarea:focus {
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+}
+.cyberpunk-theme .floating-form-group input:focus ~ label,
+.cyberpunk-theme .floating-form-group textarea:focus ~ label {
+  color: #00ff66;
+  background: #0c1020;
+}
+
+.neobrutalism-theme .floating-form-group input,
+.neobrutalism-theme .floating-form-group textarea {
+  border-radius: 0;
+  border: 2px solid #1a1a1a;
+  box-shadow: 4px 4px 0px #1a1a1a;
+}
+.neobrutalism-theme .floating-form-group input:focus,
+.neobrutalism-theme .floating-form-group textarea:focus {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #1a1a1a;
+}
+.neobrutalism-theme .floating-form-group input:focus ~ label,
+.neobrutalism-theme .floating-form-group textarea:focus ~ label {
+  color: #1a1a1a;
+  background: #fde047;
+}
+
+/* Clickable elements */
+.theme-avatar {
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.theme-avatar:hover {
+  transform: scale(1.05);
+}
+
+.theme-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+

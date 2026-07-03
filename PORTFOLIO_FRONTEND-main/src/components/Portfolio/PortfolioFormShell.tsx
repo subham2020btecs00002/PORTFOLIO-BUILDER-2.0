@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner, FaBars, FaPalette, FaFont, FaShapes, FaTshirt } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner, FaBars, FaPalette, FaFont, FaShapes, FaTshirt, FaTimes } from 'react-icons/fa';
 import api from '../api';
 import { usePortfolioForm } from '../../hooks/usePortfolioForm';
 import { useAuth } from '../context/AuthContext';
+import { ImageCropperModal } from '../common/ImageCropperModal';
 import type { Portfolio } from '../../types';
 import ComboBox from '../common/ComboBox';
+import { baseUrl } from '../url';
 import {
   HEADLINE_SUGGESTIONS,
   SKILL_SUGGESTIONS,
@@ -51,12 +53,85 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     handlers,
   } = usePortfolioForm(initialData);
 
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [cropperSrc, setCropperSrc] = useState<string>('');
+  const [cropperFileName, setCropperFileName] = useState<string>('');
+  const [avatarSizeError, setAvatarSizeError] = useState<string>('');
+  const [pdfSizeError, setPdfSizeError] = useState<string>('');
+
+  useEffect(() => {
+    let url = '';
+    if (formData.avatar && (formData.avatar instanceof File || formData.avatar instanceof Blob)) {
+      url = URL.createObjectURL(formData.avatar);
+      setAvatarPreview(url);
+    } else {
+      setAvatarPreview('');
+    }
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [formData.avatar]);
+
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit: 2MB
+    const limit = 2 * 1024 * 1024;
+    if (file.size > limit) {
+      setAvatarSizeError('Image size exceeds 2MB limit. Please upload a smaller image.');
+      toast.error('Image size exceeds 2MB limit. Please upload a smaller image.');
+      e.target.value = '';
+      return;
+    }
+
+    setAvatarSizeError('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setCropperSrc(reader.result);
+        setCropperFileName(file.name);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handlePdfFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit: 2MB
+    const limit = 2 * 1024 * 1024;
+    if (file.size > limit) {
+      setPdfSizeError('PDF file size exceeds 2MB limit. Please upload a smaller resume.');
+      toast.error('PDF file size exceeds 2MB limit. Please upload a smaller resume.');
+      e.target.value = '';
+      handlers.handleFileChange(e);
+      return;
+    }
+
+    setPdfSizeError('');
+    handlers.handleFileChange(e);
+  };
+
   useEffect(() => {
     if (initialData) {
       setFormValues(initialData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
+
+  // Scroll back to top of form pane and window when the step changes
+  useEffect(() => {
+    const pane = document.querySelector('.builder-left-form-pane');
+    if (pane) {
+      pane.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
 
   // Utility: scroll to the first field-error in the current step
   const scrollToFirstError = () => {
@@ -131,6 +206,10 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         payload.append('pdf', formData.pdf);
       }
 
+      if (formData.avatar && (formData.avatar instanceof File || formData.avatar instanceof Blob)) {
+        payload.append('avatar', formData.avatar);
+      }
+
       formData.skills.forEach((skill, index) => {
         if (skill.name.trim()) {
           payload.append(`skills[${index}][name]`, skill.name);
@@ -144,6 +223,9 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
           payload.append(`projects[${index}][title]`, project.title);
           payload.append(`projects[${index}][description]`, project.description || '');
           payload.append(`projects[${index}][link]`, project.link ?? '');
+          (project.technologies || []).forEach((tech, tIdx) => {
+            payload.append(`projects[${index}][technologies][${tIdx}]`, tech);
+          });
         }
       });
 
@@ -185,6 +267,9 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
             `professionalHistory[${index}][isCurrentEmployee]`,
             String(history.isCurrentEmployee),
           );
+          (history.technologies || []).forEach((tech, tIdx) => {
+            payload.append(`professionalHistory[${index}][technologies][${tIdx}]`, tech);
+          });
         }
       });
 
@@ -234,6 +319,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
       themeColor: formData.themeColor,
       fontFamily: formData.fontFamily,
       borderRadius: formData.borderRadius,
+      avatarUrl: avatarPreview || (formData.avatar && (formData.avatar as any).contentType && formData._id ? `${baseUrl}/api/portfolio/avatar/${formData._id}` : ''),
     };
 
     const contactProps = {
@@ -351,6 +437,30 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
               <div className="wizard-step-section animated fade-in">
                 <h2>Basic Portfolio Details</h2>
                 <p className="step-subtitle">Introduce yourself with a professional title and summary.</p>
+
+                <div className="form-group avatar-upload-group" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+                  <div className="avatar-preview-circle" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: '#cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--primary-color)', flexShrink: 0 }}>
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (formData.avatar && (formData.avatar as any).contentType && formData._id) ? (
+                      <img src={`${baseUrl}/api/portfolio/avatar/${formData._id}`} alt="Avatar Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#475569', textAlign: 'center', fontWeight: 500 }}>No Image</span>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="avatar-file" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Profile Picture / Photo</label>
+                    <input
+                      id="avatar-file"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileSelect}
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '4px' }}>Recommended: Square JPG/PNG image (Max 2MB)</span>
+                    {avatarSizeError && <span className="field-error-msg" style={{ display: 'block', marginTop: '4px', color: '#ef4444' }}>{avatarSizeError}</span>}
+                  </div>
+                </div>
                 
                 <div className="form-group">
                   <label htmlFor="title">Headline Title *</label>
@@ -496,6 +606,76 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                             placeholder="e.g. https://github.com/..."
                           />
                           {errors.projects[index]?.link && <span className="field-error-msg">{errors.projects[index].link}</span>}
+                        </div>
+                        <div className="form-group select-span-2">
+                          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Technologies Used</label>
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            border: '1px solid var(--border-color, #cbd5e1)',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            background: 'rgba(255, 255, 255, 0.03)'
+                          }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {(proj.technologies || []).map((tech, tIdx) => (
+                                <span key={tIdx} style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  background: 'var(--primary-color, #10b981)',
+                                  color: '#ffffff',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 500
+                                }}>
+                                  {tech}
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const updatedTech = (proj.technologies || []).filter((_, idx) => idx !== tIdx);
+                                      handlers.handleProjectCustomChange('technologies', updatedTech, index);
+                                    }} 
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      cursor: 'pointer',
+                                      fontSize: '0.75rem',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }}
+                                  >
+                                    <FaTimes />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Type technology name (e.g. React) and press Enter..."
+                              style={{ border: 'none', background: 'none', outline: 'none', padding: '4px', width: '100%', fontSize: '0.85rem', color: 'inherit' }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const val = e.currentTarget.value.trim();
+                                  if (val) {
+                                    const currentTech = proj.technologies || [];
+                                    if (!currentTech.includes(val)) {
+                                      handlers.handleProjectCustomChange('technologies', [...currentTech, val], index);
+                                    }
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                            Press Enter after typing each technology.
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -695,6 +875,76 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                             Presently working here?
                           </label>
                         </div>
+                        <div className="form-group select-span-2">
+                          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Technologies / Stack Used</label>
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            border: '1px solid var(--border-color, #cbd5e1)',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            background: 'rgba(255, 255, 255, 0.03)'
+                          }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {(history.technologies || []).map((tech, tIdx) => (
+                                <span key={tIdx} style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  background: 'var(--primary-color, #10b981)',
+                                  color: '#ffffff',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 500
+                                }}>
+                                  {tech}
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const updatedTech = (history.technologies || []).filter((_, idx) => idx !== tIdx);
+                                      handlers.handleProfessionalHistoryCustomChange('technologies', updatedTech, index);
+                                    }} 
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      cursor: 'pointer',
+                                      fontSize: '0.75rem',
+                                      padding: 0,
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }}
+                                  >
+                                    <FaTimes />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Type technology name (e.g. Node.js) and press Enter..."
+                              style={{ border: 'none', background: 'none', outline: 'none', padding: '4px', width: '100%', fontSize: '0.85rem', color: 'inherit' }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const val = e.currentTarget.value.trim();
+                                  if (val) {
+                                    const currentTech = history.technologies || [];
+                                    if (!currentTech.includes(val)) {
+                                      handlers.handleProfessionalHistoryCustomChange('technologies', [...currentTech, val], index);
+                                    }
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                            Press Enter after typing each technology.
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -774,12 +1024,13 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                       type="file"
                       id="pdf-upload"
                       name="pdf"
-                      onChange={handlers.handleFileChange}
+                      onChange={handlePdfFileSelect}
                       accept="application/pdf"
                     />
                     <span className="file-input-info">
                       {formData.pdf ? `Selected: ${formData.pdf.name}` : 'Choose a PDF file...'}
                     </span>
+                    {pdfSizeError && <span className="field-error-msg" style={{ display: 'block', marginTop: '4px', color: '#ef4444' }}>{pdfSizeError}</span>}
                   </div>
                 </div>
               </div>
@@ -963,6 +1214,17 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
           </div>
         </div>
       </div>
+      {cropperSrc && (
+        <ImageCropperModal
+          imageSrc={cropperSrc}
+          fileName={cropperFileName}
+          onCrop={(croppedFile) => {
+            handlers.handleAvatarChange(croppedFile);
+            setCropperSrc('');
+          }}
+          onClose={() => setCropperSrc('')}
+        />
+      )}
     </div>
   );
 };

@@ -34,6 +34,7 @@ export class PortfolioService {
           yearOfJoining: hist.yearOfJoining ? new Date(hist.yearOfJoining) : undefined,
           yearOfLeaving: hist.yearOfLeaving ? new Date(hist.yearOfLeaving) : undefined,
           isCurrentEmployee: hist.isCurrentEmployee === true || hist.isCurrentEmployee === 'true',
+          technologies: hist.technologies || [],
         }))
       : [];
 
@@ -42,6 +43,7 @@ export class PortfolioService {
           title: proj.title,
           description: proj.description || '',
           link: proj.link || '',
+          technologies: proj.technologies || [],
         }))
       : [];
 
@@ -65,7 +67,12 @@ export class PortfolioService {
     return { education, professionalHistory, projects, portfolioLinks, skills };
   }
 
-  async create(userId: string, dto: CreatePortfolioDto, file?: Express.Multer.File): Promise<Portfolio> {
+  async create(
+    userId: string,
+    dto: CreatePortfolioDto,
+    file?: Express.Multer.File,
+    avatarFile?: Express.Multer.File,
+  ): Promise<Portfolio> {
     const existing = await this.portfolioModel.findOne({ user: userId });
     if (existing) {
       throw new BadRequestException('Portfolio already exists');
@@ -75,6 +82,10 @@ export class PortfolioService {
 
     const pdf = file
       ? { data: file.buffer, contentType: file.mimetype }
+      : null;
+
+    const avatar = avatarFile
+      ? { data: avatarFile.buffer, contentType: avatarFile.mimetype }
       : null;
 
     const portfolio = new this.portfolioModel({
@@ -92,12 +103,18 @@ export class PortfolioService {
       professionalHistory,
       skills,
       pdf,
+      avatar,
     });
 
     return portfolio.save();
   }
 
-  async update(userId: string, dto: CreatePortfolioDto, file?: Express.Multer.File): Promise<Portfolio> {
+  async update(
+    userId: string,
+    dto: CreatePortfolioDto,
+    file?: Express.Multer.File,
+    avatarFile?: Express.Multer.File,
+  ): Promise<Portfolio> {
     const portfolio = await this.portfolioModel.findOne({ user: userId });
     if (!portfolio) {
       throw new NotFoundException('Portfolio not found');
@@ -108,6 +125,10 @@ export class PortfolioService {
     const pdf = file
       ? { data: file.buffer, contentType: file.mimetype }
       : portfolio.pdf;
+
+    const avatar = avatarFile
+      ? { data: avatarFile.buffer, contentType: avatarFile.mimetype }
+      : portfolio.avatar;
 
     portfolio.title = dto.title;
     portfolio.description = dto.description || '';
@@ -122,6 +143,7 @@ export class PortfolioService {
     portfolio.professionalHistory = professionalHistory as any;
     portfolio.skills = skills as any;
     portfolio.pdf = pdf;
+    portfolio.avatar = avatar;
 
     return portfolio.save();
   }
@@ -137,6 +159,20 @@ export class PortfolioService {
     return {
       data: portfolio.pdf.data,
       contentType: portfolio.pdf.contentType,
+    };
+  }
+
+  async getAvatar(id: string): Promise<{ data: Buffer; contentType: string }> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Avatar not found');
+    }
+    const portfolio = await this.portfolioModel.findById(id);
+    if (!portfolio || !portfolio.avatar || !portfolio.avatar.data) {
+      throw new NotFoundException('Avatar not found');
+    }
+    return {
+      data: portfolio.avatar.data,
+      contentType: portfolio.avatar.contentType,
     };
   }
 
