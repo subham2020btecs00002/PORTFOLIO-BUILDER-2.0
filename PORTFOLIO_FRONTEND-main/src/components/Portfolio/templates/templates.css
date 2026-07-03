@@ -174,6 +174,7 @@
   font-weight: 500;
 }
 
+
 /* Links & Contact */
 .social-links-row {
   display: flex;
@@ -211,11 +212,41 @@
   z-index: 100;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 24px;
   padding: 12px 24px;
   margin-bottom: 40px;
   border-radius: var(--radius-md);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+.navbar-theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.navbar-theme-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  transform: scale(1.05);
+}
+
+.navbar-theme-toggle-btn .sun-icon {
+  color: #fbbf24;
+}
+
+.navbar-theme-toggle-btn .moon-icon {
+  color: #60a5fa;
 }
 
 .theme-nav-links {
@@ -811,101 +842,364 @@
 }
 
 /* ==========================================================================
-   THEME 4: MINIMALIST
+   THEME 4: MINIMALIST (Clean Corporate CV style)
    ========================================================================== */
 .minimalist-theme {
-  background-color: #ffffff;
-  color: #1c1917;
-  font-family: 'Playfair Display', Georgia, serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+.minimalist-theme .theme-content-wrapper {
+  max-width: 840px;
 }
 
 .minimalist-theme .theme-nav {
-  background: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid #e7e5e4;
-  border-radius: 0;
-  top: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  top: 16px;
 }
 
 .minimalist-theme .theme-nav-links li {
-  color: #78716c;
+  color: var(--text-secondary);
 }
 
 .minimalist-theme .theme-nav-links li:hover {
-  color: #1c1917;
+  color: var(--text-primary);
 }
 
-.minimalist-theme .theme-hero h1 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 600;
-  color: #1c1917;
+.minimalist-theme .theme-hero {
+  text-align: left;
+  border-bottom: 2px solid var(--text-primary);
+  padding: 60px 0 30px;
+  margin-bottom: 50px;
+}
+
+.minimalist-theme .hero-name-minimal {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .minimalist-theme .theme-hero-subtitle {
   font-family: 'Inter', sans-serif;
-  color: var(--accent-primary, #78716c);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 8px;
 }
 
-.minimalist-theme .theme-card {
-  background: #fafaf9;
-  border: none;
-  border-bottom: 1px solid #e7e5e4;
-  padding: 20px 0;
-}
-
-.minimalist-theme .theme-card:hover {
-  transform: none;
-  background: #fafaf9;
-  border-bottom-color: var(--accent-primary, #1c1917);
-}
-
-.minimalist-theme .theme-card-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 600;
-  color: #1c1917 !important;
-}
-
-.minimalist-theme .theme-card-subtitle {
-  color: #44403c;
-}
-
-.minimalist-theme .theme-card-meta {
-  color: #78716c;
-}
-
-.minimalist-theme .skill-badge {
-  background: #f5f5f4 !important;
-  border: 1px solid #e7e5e4 !important;
-  color: #1c1917 !important;
+.minimalist-theme .social-links-row {
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .minimalist-theme .social-link-icon-btn {
-  background: #ffffff;
-  border: 1px solid #e7e5e4;
-  color: #1c1917;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 42px;
+  height: 42px;
+  font-size: 1.1rem;
 }
 
 .minimalist-theme .social-link-icon-btn:hover {
-  background: #1c1917 !important;
-  color: #ffffff !important;
+  background: var(--text-primary) !important;
+  color: var(--bg-primary) !important;
+  border-color: var(--text-primary);
 }
 
-.minimalist-theme .theme-contact-form-card {
-  background: #ffffff;
-  border: 1px solid #e7e5e4;
-}
-
-.minimalist-theme .theme-contact-form-card input,
-.minimalist-theme .theme-contact-form-card textarea {
-  background-color: #fafaf9;
-  border: 1px solid #e7e5e4;
-  color: #1c1917;
-}
-
-.minimalist-theme .theme-contact-form-card button {
-  background: #1c1917 !important;
-  color: #ffffff;
+/* Stepped section headers */
+.minimalist-theme .section-title-minimal {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+}
+.minimalist-theme .section-title-minimal::after {
+  display: none !important; /* remove the underline accent line */
+}
+
+/* Profile summary details */
+.minimalist-theme .minimalist-about-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 40px;
+}
+
+@media (max-width: 768px) {
+  .minimalist-theme .minimalist-about-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.minimalist-theme .theme-bio {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.minimalist-theme .sub-title-minimal {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.minimalist-theme .education-list-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.minimalist-theme .education-item-minimal {
+  border-left: 2px solid var(--border-color);
+  padding-left: 14px;
+}
+
+.minimalist-theme .edu-header-minimal {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.minimalist-theme .edu-degree {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.minimalist-theme .edu-grade {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Skills section overrides */
+.minimalist-theme .skills-card-minimal {
+  background: transparent;
+  padding: 0;
+}
+
+.minimalist-theme .skills-badge-list-minimal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.minimalist-theme .skill-badge-minimal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.minimalist-theme .skill-level-minimal {
+  font-size: 0.72rem;
+  background: var(--border-color);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Professional experience timeline overrides */
+.minimalist-theme .timeline-wrapper-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.minimalist-theme .job-card-minimal {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.minimalist-theme .job-header-minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .minimalist-theme .job-header-minimal {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.minimalist-theme .job-company {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.minimalist-theme .job-position {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.minimalist-theme .job-dates {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.minimalist-theme .job-responsibilities {
+  list-style: square;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.minimalist-theme .job-responsibilities li {
+  margin-bottom: 6px;
+}
+
+/* Selected Projects layout */
+.minimalist-theme .projects-grid-minimal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .minimalist-theme .projects-grid-minimal {
+    grid-template-columns: 1fr;
+  }
+}
+
+.minimalist-theme .project-card-minimal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 24px;
+  border-radius: var(--radius-md);
+}
+
+.minimalist-theme .project-header-minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.minimalist-theme .project-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.minimalist-theme .project-link-minimal {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  display: inline-flex;
+  align-items: center;
+}
+
+.minimalist-theme .project-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Inquiries & Contact section overrides */
+.minimalist-theme .contact-card-minimal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .minimalist-theme .contact-card-minimal {
+    padding: 24px 16px;
+  }
+}
+
+.minimalist-theme .contact-form-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.minimalist-theme .form-row-minimal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .minimalist-theme .form-row-minimal {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.minimalist-theme .form-group-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.minimalist-theme .form-group-minimal label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.minimalist-theme .form-group-minimal input,
+.minimalist-theme .form-group-minimal textarea {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 10px 14px;
+}
+
+.minimalist-theme .btn-minimal-submit {
+  background: var(--text-primary) !important;
+  color: var(--bg-primary) !important;
+  border: 1px solid var(--text-primary);
+  font-weight: 700;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.minimalist-theme .btn-minimal-submit:hover {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* ==========================================================================
@@ -1158,7 +1452,7 @@
 
   /* Hide everything except the printable resume */
   .public-portfolio-wrapper, 
-  .floating-share-btn,
+  .public-action-dock,
   .share-modal-overlay,
   .theme-nav,
   .theme-contact-form-card,

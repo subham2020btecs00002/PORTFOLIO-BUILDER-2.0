@@ -2,3 +2,5 @@ node_modules/
 dist/
 .env
 .vercel/
+build/
+PORTFOLIO_FRONTEND-main/build/

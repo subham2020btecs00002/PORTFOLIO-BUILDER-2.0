@@ -2,7 +2,7 @@
 
 .admin-dashboard-wrapper {
   min-height: 100vh;
-  background: radial-gradient(circle at 10% 20%, rgba(20, 24, 38, 0.99) 0%, rgba(8, 10, 16, 0.99) 90%);
+  background: radial-gradient(circle at 10% 20%, var(--bg-secondary) 0%, var(--bg-primary) 90%);
   color: var(--text-primary);
   padding: 40px 20px;
 }
@@ -33,15 +33,14 @@
   opacity: 0.85;
 }
 
-/* TAB NAVIGATION */
 .admin-tab-nav {
   display: flex;
   gap: 12px;
   padding: 8px;
   margin-bottom: 32px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  background: var(--surface-1);
   width: fit-content;
 }
 
@@ -98,7 +97,8 @@
   gap: 20px;
   padding: 24px;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  background: var(--surface-1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
@@ -114,8 +114,8 @@
   height: 56px;
   border-radius: var(--radius-md);
   font-size: 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
+  border: 1px solid var(--border-color);
 }
 
 .kpi-details h3 {
@@ -167,12 +167,11 @@
   box-shadow: inset 0 0 12px rgba(245, 158, 11, 0.1);
 }
 
-/* ADMIN PANEL SECTIONS */
 .admin-section {
   padding: 28px;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border-color);
+  background: var(--surface-1);
   margin-bottom: 32px;
   backdrop-filter: blur(20px);
 }
@@ -611,7 +610,7 @@
 
 .admin-data-table th {
   padding: 16px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 2px solid var(--border-color);
   color: var(--text-secondary);
   font-weight: 700;
   font-size: 0.85rem;
@@ -621,7 +620,7 @@
 
 .admin-data-table td {
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
 }
 
@@ -630,7 +629,7 @@
 }
 
 .admin-data-table tr:hover td {
-  background: rgba(255, 255, 255, 0.01);
+  background: var(--surface-1);
 }
 
 /* CELLS LAYOUT */

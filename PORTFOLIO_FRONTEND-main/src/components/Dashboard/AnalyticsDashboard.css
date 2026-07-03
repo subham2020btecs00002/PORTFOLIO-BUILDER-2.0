@@ -2,6 +2,7 @@
 
 .dashboard-wrapper {
   margin-top: 40px;
+  animation: fadeIn 0.4s ease;
 }
 
 .dashboard-header {
@@ -13,7 +14,7 @@
 
 .dashboard-header h1 {
   font-size: 2.25rem;
-  background: linear-gradient(135deg, #ffffff 0%, #d1d5db 100%);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -75,11 +76,27 @@
   gap: 20px;
   padding: 28px;
   transition: var(--transition-smooth);
+  cursor: default;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-4px);
+}
+
+/* Colored glow per card type */
+.stat-card:has(.icon-blue):hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+}
+
+.stat-card:has(.icon-green):hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+
+.stat-card:has(.icon-purple):hover {
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 8px 24px rgba(167, 139, 250, 0.15);
 }
 
 .stat-icon {
@@ -199,5 +216,30 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+  .dashboard-action-buttons {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .dashboard-action-buttons .btn-primary,
+  .dashboard-action-buttons .btn-secondary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .stat-card {
+    padding: 20px;
+  }
+  .dashboard-link-input-group {
+    flex-direction: column;
+  }
+  .dashboard-link-input-group button {
+    padding: 12px;
+    justify-content: center;
   }
 }

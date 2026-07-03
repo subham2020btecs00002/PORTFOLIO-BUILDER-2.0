@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaShareAlt, FaCopy, FaQrcode, FaTimes, FaLinkedin, FaTwitter } from 'react-icons/fa';
+import { useTheme } from '../context/ThemeContext';
 import LoadingSpinner from '../common/LoadingSpinner';
 import QRCode from 'qrcode';
 import { baseUrl } from '../url';
@@ -26,6 +27,7 @@ interface PublicPortfolioProps {
 const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false }) => {
   const { username, userId } = useParams<{ username?: string; userId?: string }>();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +154,8 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       handleInputChange,
       handleSubmit,
       handleScrollTo,
+      theme,
+      toggleTheme,
     };
 
     switch (portfolio.templateId) {
@@ -183,7 +187,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
     <div className="public-portfolio-wrapper">
       {renderTemplate()}
 
-      {/* Floating Share Button */}
+      {/* Floating Share Button (original style) */}
       <button className="floating-share-btn" onClick={() => setIsShareModalOpen(true)}>
         <FaShareAlt /> Share Portfolio
       </button>
