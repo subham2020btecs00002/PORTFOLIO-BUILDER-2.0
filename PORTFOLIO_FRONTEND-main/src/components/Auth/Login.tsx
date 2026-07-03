@@ -56,6 +56,11 @@ const Login: React.FC = () => {
           placeholder="Password"
           required
         />
+        <div className="forgot-password-container">
+          <a href="/forgot-password" className="forgot-password-link">
+            Forgot Password?
+          </a>
+        </div>
         <button type="submit" className="submit-btn" disabled={loginLoading}>
           {loginLoading ? <span className="loading-spinner" /> : 'Login'}
         </button>

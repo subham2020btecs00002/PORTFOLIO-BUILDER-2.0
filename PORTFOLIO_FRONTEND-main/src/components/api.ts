@@ -21,8 +21,14 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // Session expired — redirect to login (only if not already there)
-      if (!window.location.pathname.includes('/login')) {
+      // Don't redirect to login if we are already on a public page
+      const publicPaths = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+      const isPublicPath =
+        publicPaths.includes(window.location.pathname) ||
+        window.location.pathname.startsWith('/p/') ||
+        window.location.pathname.startsWith('/portfolio/public/');
+
+      if (!isPublicPath) {
         toast.error('Session expired. Please log in again.');
         window.location.href = '/login';
       }
