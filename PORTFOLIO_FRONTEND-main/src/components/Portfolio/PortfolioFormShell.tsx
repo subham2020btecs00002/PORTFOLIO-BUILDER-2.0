@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner, FaBars, FaPalette, FaFont, FaShapes, FaTshirt, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaCheck, FaSpinner, FaBars, FaPalette, FaFont, FaShapes, FaTshirt, FaTimes, FaDownload } from 'react-icons/fa';
 import api from '../api';
 import { usePortfolioForm } from '../../hooks/usePortfolioForm';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +39,155 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
   const [submitting, setSubmitting] = useState(false);
   const [nextBtnShake, setNextBtnShake] = useState(false);
   const [saveBtnShake, setSaveBtnShake] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<any>(null);
+  const [parsingResume, setParsingResume] = useState(false);
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Please upload a PDF file.');
+      return;
+    }
+
+    setParsingResume(true);
+    const toastId = toast.loading('Parsing resume PDF and auto-filling portfolio form...');
+    
+    const filePayload = new FormData();
+    filePayload.append('file', file);
+
+    try {
+      const { data } = await api.post('/api/portfolio/ai/parse-resume', filePayload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Update form values with AI-parsed structure
+      setFormValues({
+        ...formData,
+        title: data.title || formData.title,
+        description: data.description || formData.description,
+        skills: data.skills && data.skills.length ? data.skills : formData.skills,
+        projects: data.projects && data.projects.length ? data.projects : formData.projects,
+        education: data.education && data.education.length ? data.education : formData.education,
+        professionalHistory: data.professionalHistory && data.professionalHistory.length ? data.professionalHistory : formData.professionalHistory,
+        portfolioLinks: {
+          github: data.portfolioLinks?.github || formData.portfolioLinks?.github || '',
+          leetcode: data.portfolioLinks?.leetcode || formData.portfolioLinks?.leetcode || '',
+          gfg: data.portfolioLinks?.gfg || formData.portfolioLinks?.gfg || '',
+          linkedin: data.portfolioLinks?.linkedin || formData.portfolioLinks?.linkedin || '',
+        },
+      });
+
+      toast.update(toastId, {
+        render: 'Resume imported and form auto-filled successfully!',
+        type: 'success',
+        isLoading: false,
+        autoClose: 5000
+      });
+    } catch (err) {
+      console.error('Failed to import resume:', err);
+      toast.update(toastId, {
+        render: 'Failed to parse resume. Please check format or try again.',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000
+      });
+    } finally {
+      setParsingResume(false);
+      e.target.value = ''; // clear file input
+    }
+  };
+
+  const enhanceBioWithAi = async () => {
+    if (!formData.description) return;
+    setEnhancing(true);
+    try {
+      const { data } = await api.post('/api/portfolio/ai/enhance', { text: formData.description });
+      if (data && data.enhanced) {
+        setFormValues({
+          ...formData,
+          description: data.enhanced,
+        });
+        toast.success('Bio enhanced by AI successfully!');
+      }
+    } catch (err) {
+      console.error('AI enhancement failed:', err);
+      toast.error('AI enhancement failed. Please try again.');
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const applyAiSuggestions = async () => {
+    if (!aiSuggestion) return;
+    setFormValues({
+      ...formData,
+      templateId: aiSuggestion.templateId ? aiSuggestion.templateId.toLowerCase() : formData.templateId,
+      themeColor: aiSuggestion.themeColor || formData.themeColor,
+      fontFamily: aiSuggestion.fontFamily || formData.fontFamily,
+      borderRadius: aiSuggestion.borderRadius || formData.borderRadius,
+      sectionOrder: aiSuggestion.sectionOrder || formData.sectionOrder,
+      description: aiSuggestion.enhancedDescription || formData.description,
+    });
+    setAiSuggestion(null);
+    toast.success('Applied AI theme recommendations! Review them and click Save.');
+
+    try {
+      await api.delete('/api/portfolio/ai/recommendations');
+    } catch (err) {
+      console.error('Failed to clear recommendations:', err);
+    }
+  };
+
+  const discardAiSuggestions = async () => {
+    setAiSuggestion(null);
+    toast.info('Discarded AI recommendations.');
+
+    try {
+      await api.delete('/api/portfolio/ai/recommendations');
+    } catch (err) {
+      console.error('Failed to clear recommendations:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (initialData && initialData.aiRecommendations) {
+      setAiSuggestion(initialData.aiRecommendations);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (!user?._id) return;
+    
+    // Connect to Server-Sent Events stream for background AI updates
+    const eventSource = new EventSource(`${baseUrl}/api/portfolio/ai/stream/${user._id}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        console.log('[SSE] Received AI update:', payload);
+        if (payload.recommendations) {
+          setAiSuggestion(payload.recommendations);
+          toast.info('✨ AI has generated layout recommendations for you!', {
+            autoClose: 6000,
+          });
+        }
+      } catch (err) {
+        console.error('[SSE] Error parsing event data:', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error('[SSE] EventSource failed:', err);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [user?._id]);
   
   const {
     formData,
@@ -432,11 +581,134 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
           
           <form onSubmit={handleSubmit} className="portfolio-wizard-form card-glass">
             
+            {aiSuggestion && (
+              <div 
+                className="ai-suggestion-alert-card"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(168, 85, 247, 0.1))',
+                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    ✨ AI Style Recommendation Ready
+                  </h4>
+                  <button 
+                    type="button" 
+                    onClick={discardAiSuggestions}
+                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <div style={{ margin: 0, fontSize: '0.85rem', color: '#cbd5e1', lineHeight: '1.4' }}>
+                  Our AI analyzed your profile and generated an optimized layout recommendation:
+                  <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+                    <li><strong>Layout:</strong> {aiSuggestion.templateId || aiSuggestion.template}</li>
+                    <li><strong>Theme Color:</strong> {aiSuggestion.themeColor}</li>
+                    <li><strong>Typography:</strong> {aiSuggestion.fontFamily}</li>
+                    <li><strong>Borders:</strong> {aiSuggestion.borderRadius}</li>
+                  </ul>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={applyAiSuggestions}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '0.8rem',
+                      background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
+                    }}
+                  >
+                    Apply AI Styling
+                  </button>
+                  <button
+                    type="button"
+                    onClick={discardAiSuggestions}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '0.8rem',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#cbd5e1',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    Discard Suggestions
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {/* STEP 1: BASIC INFO */}
             {currentStep === 1 && (
               <div className="wizard-step-section animated fade-in">
                 <h2>Basic Portfolio Details</h2>
                 <p className="step-subtitle">Introduce yourself with a professional title and summary.</p>
+
+                <div 
+                  className="ai-importer-card" 
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(168, 85, 247, 0.05))',
+                    border: '1px dashed rgba(168, 85, 247, 0.4)',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    marginBottom: '24px',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}
+                >
+                  <h4 style={{ margin: '0 0 4px 0', color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    ✨ AI Resume Auto-Importer
+                  </h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+                    Upload your existing resume PDF to instantly auto-fill all portfolio steps.
+                  </p>
+                  <label 
+                    htmlFor="resume-importer-file" 
+                    className="btn-primary"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 20px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      background: 'var(--accent-gradient)',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      fontWeight: 600,
+                      pointerEvents: parsingResume ? 'none' : 'auto',
+                      opacity: parsingResume ? 0.6 : 1
+                    }}
+                  >
+                    {parsingResume ? <FaSpinner className="spin" /> : <FaDownload />} 
+                    {parsingResume ? 'AI Parsing...' : 'Select Resume PDF'}
+                  </label>
+                  <input
+                    id="resume-importer-file"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleResumeUpload}
+                    disabled={parsingResume}
+                    style={{ display: 'none' }}
+                  />
+                </div>
 
                 <div className="form-group avatar-upload-group" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
                   <div className="avatar-preview-circle" style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', background: '#cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--primary-color)', flexShrink: 0 }}>
@@ -477,7 +749,32 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="description">Professional Summary *</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label htmlFor="description" style={{ margin: 0 }}>Professional Summary *</label>
+                    {formData.description && formData.description.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={enhanceBioWithAi}
+                        className="btn-ai-enhance"
+                        disabled={enhancing}
+                        style={{
+                          padding: '4px 10px',
+                          fontSize: '0.75rem',
+                          background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                          border: 'none',
+                          color: '#fff',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {enhancing ? <FaSpinner className="spin" size={10} /> : '✨ AI Polish'}
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     id="description"
                     name="description"

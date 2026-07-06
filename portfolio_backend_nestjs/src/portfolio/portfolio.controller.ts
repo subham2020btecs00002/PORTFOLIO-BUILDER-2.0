@@ -10,8 +10,14 @@ import {
   UploadedFile,
   UploadedFiles,
   Res,
+  BadRequestException,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Observable } from 'rxjs';
+import { AiStreamService } from './ai-stream.service';
+import { EventPattern, Payload } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
@@ -21,7 +27,10 @@ import { NestedFieldsInterceptor } from '../common/interceptors/nested-fields.in
 
 @Controller('api/portfolio')
 export class PortfolioController {
-  constructor(private portfolioService: PortfolioService) {}
+  constructor(
+    private portfolioService: PortfolioService,
+    private aiStreamService: AiStreamService,
+  ) {}
 
   @Post()
   @UseInterceptors(
@@ -118,5 +127,75 @@ export class PortfolioController {
   async delete(@CurrentUser() user: { id: string }) {
     await this.portfolioService.deletePortfolio(user.id);
     return { message: 'Portfolio successfully deleted.' };
+  }
+
+  @EventPattern('ml_analysis_completed')
+  async handleMlAnalysisCompleted(@Payload() data: any) {
+    console.log(`[PortfolioController] Received ml_analysis_completed event for: ${data.portfolioId}`);
+    await this.portfolioService.updateRecommendations(
+      data.portfolioId,
+      data.recommendations,
+      data.enhancedDescription
+    );
+  }
+
+  @Sse('ai/stream/:userId')
+  streamAiUpdates(@Param('userId') userId: string): Observable<MessageEvent> {
+    const { filter, map } = require('rxjs/operators');
+    return this.aiStreamService.getStream().pipe(
+      filter((event: any) => event.userId === userId),
+      map((event: any) => ({ data: event } as MessageEvent)),
+    );
+  }
+
+  @Post('ai/enhance')
+  async enhanceText(@Body() body: { text: string }) {
+    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+    try {
+      const res = await fetch(`${mlUrl}/api/ml/enhance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: body.text }),
+      });
+      if (!res.ok) {
+        throw new Error('AI Service returned non-200');
+      }
+      return await res.json();
+    } catch (err) {
+      console.error('[PortfolioController] Error communicating with ML service:', err);
+      throw new BadRequestException('Failed to communicate with AI service');
+    }
+  }
+
+  @Post('ai/parse-resume')
+  @UseInterceptors(FileInterceptor('file'))
+  async parseResume(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No resume file uploaded');
+    }
+    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+    
+    const formData = new FormData();
+    const blob = new Blob([new Uint8Array(file.buffer)], { type: file.mimetype });
+    formData.append('file', blob, file.originalname);
+    
+    try {
+      const res = await fetch(`${mlUrl}/api/ml/parse-resume`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        throw new Error('AI Service returned non-200');
+      }
+      return await res.json();
+    } catch (err) {
+      console.error('[PortfolioController] Error parsing resume from ML service:', err);
+      throw new BadRequestException('Failed to process and parse resume');
+    }
+  }
+
+  @Delete('ai/recommendations')
+  async clearRecommendations(@CurrentUser('id') userId: string) {
+    return this.portfolioService.clearRecommendations(userId);
   }
 }
