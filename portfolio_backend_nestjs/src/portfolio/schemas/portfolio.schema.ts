@@ -166,6 +166,17 @@ export class Portfolio extends Document {
   @Prop({ default: 'default' })
   borderRadius: string;
 
+  @Prop({ type: Object, default: null })
+  aiRecommendations: {
+    templateId?: string;
+    themeColor?: string;
+    fontFamily?: string;
+    borderRadius?: string;
+    sectionOrder?: string[];
+    enhancedDescription?: string;
+    suggestedAt?: Date;
+  };
+
   @Prop({ type: PdfDataSchema })
   pdf: PdfData;
 

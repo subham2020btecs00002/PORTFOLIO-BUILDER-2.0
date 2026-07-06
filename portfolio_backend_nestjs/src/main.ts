@@ -55,8 +55,25 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT') || 5000;
 
+  // Configure RabbitMQ microservice connection
+  const rabbitmqUrl = configService.get<string>('RABBITMQ_URL') || 'amqp://localhost:5672';
+  const { Transport } = require('@nestjs/microservices');
+  app.connectMicroservice({
+    transport: Transport.RMQ,
+    options: {
+      urls: [rabbitmqUrl],
+      queue: 'portfolio_backend_queue',
+      queueOptions: {
+        durable: false,
+      },
+    },
+  });
+
+  await app.startAllMicroservices();
+  console.log(`[Monolith] RabbitMQ microservice listening on queue: portfolio_backend_queue`);
+
   await app.listen(port);
-  console.log(`[Monolith] Running on: http://localhost:${port} (internal only)`);
+  console.log(`[Monolith] Running HTTP on: http://localhost:${port} (internal only)`);
   console.log(`[Monolith] API Gateway expected at: ${gatewayUrl}`);
 }
 bootstrap();

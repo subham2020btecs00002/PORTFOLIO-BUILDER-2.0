@@ -138,6 +138,7 @@ export interface Portfolio {
   themeColor?: string;
   fontFamily?: string;
   borderRadius?: string;
+  aiRecommendations?: any;
   analytics?: AnalyticsData;
   pdf?: { contentType: string } | null;
   avatar?: { contentType: string } | null;
@@ -167,6 +168,7 @@ export interface PortfolioFormData {
   pdf: File | null;
   /** File selected for profile avatar upload; null when no file chosen. */
   avatar: File | { contentType: string } | null;
+  aiRecommendations?: any;
 }
 
 // ---------------------------------------------------------------------------

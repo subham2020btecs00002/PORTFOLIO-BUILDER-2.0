@@ -29,6 +29,7 @@ const EditPortfolio: React.FC = () => {
           borderRadius: data.borderRadius || 'default',
           pdf: null,
           avatar: data.avatar || null,
+          aiRecommendations: data.aiRecommendations || null,
           portfolioLinks: {
             github: data.portfolioLinks?.github || '',
             leetcode: data.portfolioLinks?.leetcode || '',

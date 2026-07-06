@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PortfolioService } from './portfolio.service';
 import { PortfolioController } from './portfolio.controller';
+import { AiStreamService } from './ai-stream.service';
 import { Portfolio, PortfolioSchema } from './schemas/portfolio.schema';
 import { User, UserSchema } from '../common/schemas/user.schema';
 
@@ -22,10 +24,23 @@ import { User, UserSchema } from '../common/schemas/user.schema';
       { name: Portfolio.name, schema: PortfolioSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    ClientsModule.register([
+      {
+        name: 'ML_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: 'portfolio_ml_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+    ]),
   ],
   controllers: [PortfolioController],
-  providers: [PortfolioService],
-  exports: [PortfolioService],
+  providers: [PortfolioService, AiStreamService],
+  exports: [PortfolioService, AiStreamService],
 })
 export class PortfolioModule {}
 

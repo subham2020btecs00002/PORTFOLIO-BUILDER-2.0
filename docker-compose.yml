@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: portfolio-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management UI dashboard port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - portfolio-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml-service:
+    build:
+      context: ./ml-service-python
+      dockerfile: Dockerfile
+    container_name: portfolio-ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - PORT=8000
+    env_file:
+      - ./ml-service-python/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - portfolio-network
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  portfolio-network:
+    driver: bridge

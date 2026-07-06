@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { ClientProxy } from '@nestjs/microservices';
 import { Portfolio } from './schemas/portfolio.schema';
 import { User } from '../common/schemas/user.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
+import { AiStreamService } from './ai-stream.service';
 
 
 @Injectable()
@@ -11,6 +13,8 @@ export class PortfolioService {
   constructor(
     @InjectModel(Portfolio.name) private portfolioModel: Model<Portfolio>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @Inject('ML_SERVICE') private readonly mlClient: ClientProxy,
+    private readonly aiStreamService: AiStreamService,
   ) {}
 
 
@@ -106,7 +110,9 @@ export class PortfolioService {
       avatar,
     });
 
-    return portfolio.save();
+    const saved = await portfolio.save();
+    this.triggerMlAnalysis(saved);
+    return saved;
   }
 
   async update(
@@ -145,7 +151,75 @@ export class PortfolioService {
     portfolio.pdf = pdf;
     portfolio.avatar = avatar;
 
-    return portfolio.save();
+    const saved = await portfolio.save();
+    this.triggerMlAnalysis(saved);
+    return saved;
+  }
+
+  private triggerMlAnalysis(portfolio: Portfolio) {
+    try {
+      const payload = {
+        portfolioId: (portfolio as any)._id.toString(),
+        userId: portfolio.user.toString(),
+        industry: portfolio.title || 'Software Development',
+        skills: portfolio.skills ? portfolio.skills.map((s) => s.name) : [],
+        description: portfolio.description || '',
+      };
+      this.mlClient.emit('portfolio_updated', payload);
+      console.log(`[PortfolioService] Emitted portfolio_updated event for portfolio ID: ${(portfolio as any)._id}`);
+    } catch (err) {
+      console.error('[PortfolioService] Error emitting portfolio_updated event', err);
+    }
+  }
+
+  async updateRecommendations(
+    portfolioId: string,
+    recommendations: {
+      template?: string;
+      themeColor?: string;
+      fontFamily?: string;
+      borderRadius?: string;
+      sectionOrder?: string[];
+    },
+    enhancedDescription?: string,
+  ): Promise<Portfolio> {
+    const portfolio = await this.portfolioModel.findById(portfolioId);
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found for AI recommendations');
+    }
+
+    portfolio.aiRecommendations = {
+      templateId: recommendations?.template ? recommendations.template.toLowerCase() : undefined,
+      themeColor: recommendations?.themeColor,
+      fontFamily: recommendations?.fontFamily,
+      borderRadius: recommendations?.borderRadius,
+      sectionOrder: recommendations?.sectionOrder,
+      enhancedDescription: enhancedDescription,
+      suggestedAt: new Date(),
+    };
+
+    portfolio.markModified('aiRecommendations');
+
+    const saved = await portfolio.save();
+    console.log(`[PortfolioService] Successfully saved AI recommendations to portfolio recommendations field: ${portfolioId}`);
+
+    // Broadcast the real-time AI updates to the connected frontend client via SSE
+    this.aiStreamService.emit(portfolio.user.toString(), {
+      recommendations: portfolio.aiRecommendations,
+    });
+
+    return saved;
+  }
+
+  async clearRecommendations(userId: string): Promise<Portfolio> {
+    const portfolio = await this.portfolioModel.findOne({ user: userId });
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found for recommendations cleanup');
+    }
+
+    portfolio.aiRecommendations = null as any;
+    portfolio.markModified('aiRecommendations');
+    return await portfolio.save();
   }
 
   async getPdf(id: string): Promise<{ data: Buffer; contentType: string }> {
