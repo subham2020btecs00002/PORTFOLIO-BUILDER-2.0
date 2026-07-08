@@ -17,6 +17,10 @@ import { Creative } from './templates/Creative';
 import { Minimalist } from './templates/Minimalist';
 import { Cyberpunk } from './templates/Cyberpunk';
 import { Neobrutalism } from './templates/Neobrutalism';
+import { DevTerminal } from './templates/DevTerminal';
+import { BentoGrid } from './templates/BentoGrid';
+import { AcademicLaTeX } from './templates/AcademicLaTeX';
+import { GamifiedRPG } from './templates/GamifiedRPG';
 import { ResumePrint } from './templates/ResumePrint';
 import './templates/templates.css';
 
@@ -27,7 +31,7 @@ interface PublicPortfolioProps {
 const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false }) => {
   const { username, userId } = useParams<{ username?: string; userId?: string }>();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +159,6 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       handleSubmit,
       handleScrollTo,
       theme,
-      toggleTheme,
     };
 
     switch (portfolio.templateId) {
@@ -169,6 +172,14 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
         return <Cyberpunk {...props} />;
       case 'neobrutalism':
         return <Neobrutalism {...props} />;
+      case 'cli':
+        return <DevTerminal {...props} />;
+      case 'bento':
+        return <BentoGrid {...props} />;
+      case 'latex':
+        return <AcademicLaTeX {...props} />;
+      case 'rpg':
+        return <GamifiedRPG {...props} />;
       case 'classic-green':
       default:
         return <ClassicGreen {...props} />;

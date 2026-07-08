@@ -11,12 +11,8 @@ import {
   UploadedFiles,
   Res,
   BadRequestException,
-  Sse,
-  MessageEvent,
 } from '@nestjs/common';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
-import { Observable } from 'rxjs';
-import { AiStreamService } from './ai-stream.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
@@ -29,7 +25,6 @@ import { NestedFieldsInterceptor } from '../common/interceptors/nested-fields.in
 export class PortfolioController {
   constructor(
     private portfolioService: PortfolioService,
-    private aiStreamService: AiStreamService,
   ) {}
 
   @Post()
@@ -139,13 +134,9 @@ export class PortfolioController {
     );
   }
 
-  @Sse('ai/stream/:userId')
-  streamAiUpdates(@Param('userId') userId: string): Observable<MessageEvent> {
-    const { filter, map } = require('rxjs/operators');
-    return this.aiStreamService.getStream().pipe(
-      filter((event: any) => event.userId === userId),
-      map((event: any) => ({ data: event } as MessageEvent)),
-    );
+  @Post('ai/recommendations')
+  async getAiRecommendations(@CurrentUser() user: { id: string }) {
+    return this.portfolioService.generateAiRecommendations(user.id);
   }
 
   @Post('ai/enhance')
@@ -195,7 +186,7 @@ export class PortfolioController {
   }
 
   @Delete('ai/recommendations')
-  async clearRecommendations(@CurrentUser('id') userId: string) {
-    return this.portfolioService.clearRecommendations(userId);
+  async clearRecommendations(@CurrentUser() user: { id: string }) {
+    return this.portfolioService.clearRecommendations(user.id);
   }
 }

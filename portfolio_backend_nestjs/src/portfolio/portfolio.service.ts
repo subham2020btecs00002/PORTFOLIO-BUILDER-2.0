@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ClientProxy } from '@nestjs/microservices';
 import { Portfolio } from './schemas/portfolio.schema';
 import { User } from '../common/schemas/user.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
-import { AiStreamService } from './ai-stream.service';
+
 
 
 @Injectable()
@@ -13,8 +12,6 @@ export class PortfolioService {
   constructor(
     @InjectModel(Portfolio.name) private portfolioModel: Model<Portfolio>,
     @InjectModel(User.name) private userModel: Model<User>,
-    @Inject('ML_SERVICE') private readonly mlClient: ClientProxy,
-    private readonly aiStreamService: AiStreamService,
   ) {}
 
 
@@ -111,7 +108,6 @@ export class PortfolioService {
     });
 
     const saved = await portfolio.save();
-    this.triggerMlAnalysis(saved);
     return saved;
   }
 
@@ -152,24 +148,7 @@ export class PortfolioService {
     portfolio.avatar = avatar;
 
     const saved = await portfolio.save();
-    this.triggerMlAnalysis(saved);
     return saved;
-  }
-
-  private triggerMlAnalysis(portfolio: Portfolio) {
-    try {
-      const payload = {
-        portfolioId: (portfolio as any)._id.toString(),
-        userId: portfolio.user.toString(),
-        industry: portfolio.title || 'Software Development',
-        skills: portfolio.skills ? portfolio.skills.map((s) => s.name) : [],
-        description: portfolio.description || '',
-      };
-      this.mlClient.emit('portfolio_updated', payload);
-      console.log(`[PortfolioService] Emitted portfolio_updated event for portfolio ID: ${(portfolio as any)._id}`);
-    } catch (err) {
-      console.error('[PortfolioService] Error emitting portfolio_updated event', err);
-    }
   }
 
   async updateRecommendations(
@@ -202,12 +181,6 @@ export class PortfolioService {
 
     const saved = await portfolio.save();
     console.log(`[PortfolioService] Successfully saved AI recommendations to portfolio recommendations field: ${portfolioId}`);
-
-    // Broadcast the real-time AI updates to the connected frontend client via SSE
-    this.aiStreamService.emit(portfolio.user.toString(), {
-      recommendations: portfolio.aiRecommendations,
-    });
-
     return saved;
   }
 
@@ -220,6 +193,60 @@ export class PortfolioService {
     portfolio.aiRecommendations = null as any;
     portfolio.markModified('aiRecommendations');
     return await portfolio.save();
+  }
+
+  async generateAiRecommendations(userId: string): Promise<any> {
+    const portfolio = await this.portfolioModel.findOne({ user: userId });
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+
+    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+    const skillsList = portfolio.skills ? portfolio.skills.map((s) => s.name) : [];
+    const industry = portfolio.title || 'Software Development';
+
+    try {
+      const res = await fetch(`${mlUrl}/api/ml/recommend-theme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          industry,
+          skills: skillsList,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('AI Service theme recommendation request failed');
+      }
+
+      const data = await res.json();
+
+      let enhancedDescription = '';
+      if (portfolio.description && portfolio.description.trim().length > 5) {
+        try {
+          const enhanceRes = await fetch(`${mlUrl}/api/ml/enhance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: portfolio.description }),
+          });
+          if (enhanceRes.ok) {
+            const enhanceData = await enhanceRes.json();
+            enhancedDescription = enhanceData.enhanced;
+          }
+        } catch (e) {
+          console.error('[PortfolioService] Description auto-enhance failed:', e);
+        }
+      }
+
+      // Update recommendations in the DB and return the updated sub-document
+      const updated = await this.updateRecommendations(portfolio._id.toString(), data, enhancedDescription);
+      return {
+        recommendations: updated.aiRecommendations,
+      };
+    } catch (err) {
+      console.error('[PortfolioService] Error generating AI recommendations:', err);
+      throw new BadRequestException('Failed to generate AI recommendations');
+    }
   }
 
   async getPdf(id: string): Promise<{ data: Buffer; contentType: string }> {

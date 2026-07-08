@@ -136,7 +136,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
                             padding: '3px 8px',
                             borderRadius: '12px',
                             backgroundColor: 'rgba(128, 128, 128, 0.12)',
-                            color: 'var(--primary-color, #1a1a1a)',
+                            color: 'var(--text-primary)',
                             fontWeight: 600,
                             border: '1px solid rgba(128, 128, 128, 0.2)'
                           }}>
@@ -175,7 +175,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
                           padding: '3px 8px',
                           borderRadius: '12px',
                           backgroundColor: 'rgba(128, 128, 128, 0.12)',
-                          color: 'var(--primary-color, #1a1a1a)',
+                          color: 'var(--text-primary)',
                           fontWeight: 600,
                           border: '1px solid rgba(128, 128, 128, 0.2)'
                         }}>

@@ -26,6 +26,10 @@ import { Creative } from './templates/Creative';
 import { Minimalist } from './templates/Minimalist';
 import { Cyberpunk } from './templates/Cyberpunk';
 import { Neobrutalism } from './templates/Neobrutalism';
+import { DevTerminal } from './templates/DevTerminal';
+import { BentoGrid } from './templates/BentoGrid';
+import { AcademicLaTeX } from './templates/AcademicLaTeX';
+import { GamifiedRPG } from './templates/GamifiedRPG';
 import './templates/templates.css';
 
 interface PortfolioFormShellProps {
@@ -42,6 +46,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
   const [enhancing, setEnhancing] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<any>(null);
   const [parsingResume, setParsingResume] = useState(false);
+  const [fetchingRecommendations, setFetchingRecommendations] = useState(false);
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,36 +163,39 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     }
   }, [initialData]);
 
-  useEffect(() => {
-    if (!user?._id) return;
-    
-    // Connect to Server-Sent Events stream for background AI updates
-    const eventSource = new EventSource(`${baseUrl}/api/portfolio/ai/stream/${user._id}`);
-    
-    eventSource.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        console.log('[SSE] Received AI update:', payload);
-        if (payload.recommendations) {
-          setAiSuggestion(payload.recommendations);
-          toast.info('✨ AI has generated layout recommendations for you!', {
-            autoClose: 6000,
-          });
-        }
-      } catch (err) {
-        console.error('[SSE] Error parsing event data:', err);
+  const getAiRecommendations = async () => {
+    setFetchingRecommendations(true);
+    const toastId = toast.loading('Consulting AI design models for theme & layout recommendations...');
+    try {
+      const { data } = await api.post('/api/portfolio/ai/recommendations');
+      if (data && data.recommendations) {
+        setAiSuggestion(data.recommendations);
+        toast.update(toastId, {
+          render: '✨ AI has generated custom layout recommendations for you!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 6000
+        });
+      } else {
+        toast.update(toastId, {
+          render: 'AI did not return any recommendations. Please try again.',
+          type: 'info',
+          isLoading: false,
+          autoClose: 5000
+        });
       }
-    };
-
-    eventSource.onerror = (err) => {
-      console.error('[SSE] EventSource failed:', err);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [user?._id]);
+    } catch (err) {
+      console.error('Failed to get AI recommendations:', err);
+      toast.update(toastId, {
+        render: 'Failed to fetch AI design suggestions. Make sure backend & ML service are active.',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000
+      });
+    } finally {
+      setFetchingRecommendations(false);
+    }
+  };
   
   const {
     formData,
@@ -207,6 +215,9 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
   const [cropperFileName, setCropperFileName] = useState<string>('');
   const [avatarSizeError, setAvatarSizeError] = useState<string>('');
   const [pdfSizeError, setPdfSizeError] = useState<string>('');
+  const [animationsEnabled, setAnimationsEnabled] = useState<boolean>(
+    localStorage.getItem('portfolio_disable_animations') !== 'true'
+  );
 
   useEffect(() => {
     let url = '';
@@ -497,6 +508,14 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         return <Cyberpunk {...contactProps} />;
       case 'neobrutalism':
         return <Neobrutalism {...contactProps} />;
+      case 'cli':
+        return <DevTerminal {...contactProps} />;
+      case 'bento':
+        return <BentoGrid {...contactProps} />;
+      case 'latex':
+        return <AcademicLaTeX {...contactProps} />;
+      case 'rpg':
+        return <GamifiedRPG {...contactProps} />;
       case 'classic-green':
       default:
         return <ClassicGreen {...contactProps} />;
@@ -1336,8 +1355,42 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
             {/* STEP 7: THEME & LAYOUT CUSTOMIZER */}
             {currentStep === 7 && (
               <div className="wizard-step-section animated fade-in">
-                <h2>Theme & Custom Layout Builder</h2>
-                <p className="step-subtitle">Configure design styling presets and drag sections to reorder them.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+                  <div>
+                    <h2>Theme & Custom Layout Builder</h2>
+                    <p className="step-subtitle" style={{ margin: 0 }}>Configure design styling presets and drag sections to reorder them.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={getAiRecommendations}
+                    disabled={fetchingRecommendations}
+                    className="ai-recommend-btn"
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid #3b82f6',
+                      color: '#3b82f6',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {fetchingRecommendations ? (
+                      <>
+                        <FaSpinner className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> Fetching Suggestions...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Ask AI for Layout Ideas
+                      </>
+                    )}
+                  </button>
+                </div>
 
                 {/* TEMPLATE PICKER */}
                 <div style={{ marginBottom: '24px' }}>
@@ -1366,6 +1419,22 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                     <div className={`template-select-card ${formData.templateId === 'neobrutalism' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('neobrutalism')}>
                       <div className="template-preview-bar neobrutalism-bar"></div>
                       <div className="template-info"><h3>Neobrutalism</h3><p>Bold outlines and retro flat shadows.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'cli' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('cli')}>
+                      <div className="template-preview-bar cli-bar" style={{ background: '#00ff66' }}></div>
+                      <div className="template-info"><h3>Dev Terminal (CLI)</h3><p>Interactive hacker shell console theme.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'bento' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('bento')}>
+                      <div className="template-preview-bar bento-bar" style={{ background: '#3b82f6' }}></div>
+                      <div className="template-info"><h3>Bento Box</h3><p>Modern modular grid with 3D tilts.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'latex' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('latex')}>
+                      <div className="template-preview-bar latex-bar" style={{ background: '#111827' }}></div>
+                      <div className="template-info"><h3>LaTeX Academic</h3><p>Scholarly serif layout, optimized for printing.</p></div>
+                    </div>
+                    <div className={`template-select-card ${formData.templateId === 'rpg' ? 'selected' : ''}`} onClick={() => handlers.handleTemplateChange('rpg')}>
+                      <div className="template-preview-bar rpg-bar" style={{ background: '#fde047' }}></div>
+                      <div className="template-info"><h3>Gamified (RPG)</h3><p>Retro 8-bit characters and quest timelines.</p></div>
                     </div>
                   </div>
                 </div>
@@ -1419,6 +1488,28 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                           {opt.label}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  <div className="style-control-group" style={{ marginTop: '20px' }}>
+                    <h4>🎨 Animation Settings</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="checkbox"
+                        id="toggle-animations-btn"
+                        checked={animationsEnabled}
+                        onChange={(e) => {
+                          const enabled = e.target.checked;
+                          localStorage.setItem('portfolio_disable_animations', enabled ? 'false' : 'true');
+                          setAnimationsEnabled(enabled);
+                          // Dispatch event to trigger direct visual react update in hooks
+                          window.dispatchEvent(new Event('animations_toggle_changed'));
+                        }}
+                        style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+                      />
+                      <label htmlFor="toggle-animations-btn" style={{ cursor: 'pointer', fontSize: '0.9rem', userSelect: 'none' }}>
+                        Enable interactive 3D Tilts & scroll reveals (reloads preview)
+                      </label>
                     </div>
                   </div>
                 </div>
