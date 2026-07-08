@@ -152,6 +152,17 @@ input, textarea, select {
   width: 100%;
 }
 
+/* Reset checkbox and radio styles to prevent distortion from global input styles */
+input[type="checkbox"], input[type="radio"] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: initial;
+  box-shadow: none;
+}
+
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent-color);

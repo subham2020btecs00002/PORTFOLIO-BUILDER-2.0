@@ -219,43 +219,66 @@ const validateStep1 = (formData: PortfolioFormData): Partial<FormErrors> => {
 };
 
 const validateStep2 = (formData: PortfolioFormData): Partial<FormErrors> => {
-  const skillsErrors = formData.skills.map((skill) => ({
-    name: validateSkillName(skill.name),
-    level: '',
-    category: '',
-  }));
+  const skillsErrors = formData.skills.map((skill) => {
+    const isEmpty = !skill.name.trim();
+    return {
+      name: isEmpty ? '' : validateSkillName(skill.name),
+      level: '',
+      category: '',
+    };
+  });
   return { skills: skillsErrors };
 };
 
 const validateStep3 = (formData: PortfolioFormData): Partial<FormErrors> => {
-  const projectErrors = formData.projects.map((proj) => ({
-    title: validateProjectTitle(proj.title),
-    description: validateProjectDescription(proj.description),
-    link: validateLink(proj.link ?? ''),
-  }));
+  const projectErrors = formData.projects.map((proj) => {
+    const isEmpty = !proj.title.trim() && !proj.description.trim() && !(proj.link ?? '').trim();
+    return {
+      title: isEmpty ? '' : validateProjectTitle(proj.title),
+      description: isEmpty ? '' : validateProjectDescription(proj.description),
+      link: isEmpty ? '' : validateLink(proj.link ?? ''),
+    };
+  });
   return { projects: projectErrors };
 };
 
 const validateStep4 = (formData: PortfolioFormData): Partial<FormErrors> => {
-  const educationErrors = formData.education.map((edu) => ({
-    collegeName: validateEducationField('collegeName', edu.collegeName),
-    degree: validateEducationField('degree', edu.degree),
-    branch: validateEducationField('branch', edu.branch),
-    cgpaOrPercentage: validateEducationField('cgpaOrPercentage', edu.cgpaOrPercentage),
-    yearOfJoining: validateEducationField('yearOfJoining', edu.yearOfJoining),
-    yearOfPassing: validateEducationField('yearOfPassing', edu.yearOfPassing, edu),
-  }));
+  const educationErrors = formData.education.map((edu) => {
+    const isEmpty =
+      !edu.collegeName.trim() &&
+      !edu.degree.trim() &&
+      !edu.branch.trim() &&
+      !edu.cgpaOrPercentage.trim() &&
+      !edu.yearOfJoining.trim() &&
+      !edu.yearOfPassing.trim();
+    return {
+      collegeName: isEmpty ? '' : validateEducationField('collegeName', edu.collegeName),
+      degree: isEmpty ? '' : validateEducationField('degree', edu.degree),
+      branch: isEmpty ? '' : validateEducationField('branch', edu.branch),
+      cgpaOrPercentage: isEmpty ? '' : validateEducationField('cgpaOrPercentage', edu.cgpaOrPercentage),
+      yearOfJoining: isEmpty ? '' : validateEducationField('yearOfJoining', edu.yearOfJoining),
+      yearOfPassing: isEmpty ? '' : validateEducationField('yearOfPassing', edu.yearOfPassing, edu),
+    };
+  });
   return { education: educationErrors };
 };
 
 const validateStep5 = (formData: PortfolioFormData): Partial<FormErrors> => {
-  const historyErrors = formData.professionalHistory.map((hist) => ({
-    companyName: validateProfessionalHistoryField('companyName', hist.companyName, hist),
-    position: validateProfessionalHistoryField('position', hist.position, hist),
-    responsibility: validateProfessionalHistoryField('responsibility', hist.responsibility, hist),
-    yearOfJoining: validateProfessionalHistoryField('yearOfJoining', hist.yearOfJoining, hist),
-    yearOfLeaving: validateProfessionalHistoryField('yearOfLeaving', hist.yearOfLeaving ?? '', hist),
-  }));
+  const historyErrors = formData.professionalHistory.map((hist) => {
+    const isEmpty =
+      !hist.companyName.trim() &&
+      !hist.position.trim() &&
+      !hist.responsibility.trim() &&
+      !hist.yearOfJoining.trim() &&
+      !(hist.yearOfLeaving ?? '').trim();
+    return {
+      companyName: isEmpty ? '' : validateProfessionalHistoryField('companyName', hist.companyName, hist),
+      position: isEmpty ? '' : validateProfessionalHistoryField('position', hist.position, hist),
+      responsibility: isEmpty ? '' : validateProfessionalHistoryField('responsibility', hist.responsibility, hist),
+      yearOfJoining: isEmpty ? '' : validateProfessionalHistoryField('yearOfJoining', hist.yearOfJoining, hist),
+      yearOfLeaving: isEmpty ? '' : validateProfessionalHistoryField('yearOfLeaving', hist.yearOfLeaving ?? '', hist),
+    };
+  });
   return { professionalHistory: historyErrors };
 };
 
