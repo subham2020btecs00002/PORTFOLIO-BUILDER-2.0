@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { ImageCropperModal } from '../common/ImageCropperModal';
 import type { Portfolio } from '../../types';
 import ComboBox from '../common/ComboBox';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { baseUrl } from '../url';
 import {
   HEADLINE_SUGGESTIONS,
@@ -593,6 +594,22 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
 
   return (
     <div className="portfolio-builder-split-container">
+      {/* Full-Page AI Processing Overlays */}
+      {parsingResume && (
+        <LoadingSpinner
+          fullPage={true}
+          size="lg"
+          message="✨ AI is parsing your resume PDF and auto-filling your portfolio sections..."
+        />
+      )}
+      {fetchingRecommendations && (
+        <LoadingSpinner
+          fullPage={true}
+          size="lg"
+          message="✨ Consulting AI design models for theme and layout recommendations..."
+        />
+      )}
+
       {/* LEFT COLUMN: BUILDER FORM */}
       <div className="builder-left-form-pane">
         <div className="portfolio-wizard-container">
@@ -705,7 +722,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                       alignItems: 'center',
                       gap: '8px',
                       padding: '10px 20px',
-                      cursor: 'pointer',
+                      cursor: parsingResume ? 'not-allowed' : 'pointer',
                       fontSize: '0.85rem',
                       background: 'var(--accent-gradient)',
                       border: 'none',
@@ -713,12 +730,27 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                       borderRadius: '6px',
                       fontWeight: 600,
                       pointerEvents: parsingResume ? 'none' : 'auto',
-                      opacity: parsingResume ? 0.6 : 1
+                      opacity: parsingResume ? 0.7 : 1
                     }}
                   >
-                    {parsingResume ? <FaSpinner className="spin" /> : <FaDownload />} 
-                    {parsingResume ? 'AI Parsing...' : 'Select Resume PDF'}
+                    {parsingResume ? (
+                      <>
+                        <FaSpinner className="spinner-icon" />
+                        <span>AI Parsing Resume...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaDownload />
+                        <span>Select Resume PDF</span>
+                      </>
+                    )}
                   </label>
+                  {parsingResume && (
+                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#c084fc', fontSize: '0.82rem' }}>
+                      <FaSpinner className="spinner-icon" />
+                      <span>Extracting text & mapping skills, experience, and education...</span>
+                    </div>
+                  )}
                   <input
                     id="resume-importer-file"
                     type="file"
@@ -1366,23 +1398,25 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                     disabled={fetchingRecommendations}
                     className="ai-recommend-btn"
                     style={{
-                      background: 'rgba(59, 130, 246, 0.1)',
+                      background: fetchingRecommendations ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
                       border: '1px solid #3b82f6',
                       color: '#3b82f6',
                       padding: '8px 16px',
                       borderRadius: '8px',
                       fontSize: '0.85rem',
                       fontWeight: 600,
-                      cursor: 'pointer',
+                      cursor: fetchingRecommendations ? 'not-allowed' : 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      opacity: fetchingRecommendations ? 0.75 : 1
                     }}
                   >
                     {fetchingRecommendations ? (
                       <>
-                        <FaSpinner className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> Fetching Suggestions...
+                        <FaSpinner className="spinner-icon" />
+                        <span>Analyzing with AI...</span>
                       </>
                     ) : (
                       <>

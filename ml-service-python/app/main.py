@@ -1,72 +1,54 @@
-import os
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel, Field
-from typing import List
-from app.services import gemini_service, pdf_service
-
-app = FastAPI(
-    title="Portfolio Builder ML Service",
-    description="Python FastAPI service handling LLM rephrasing and parametric design recommendations.",
-    version="1.0.0"
+import time
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.core.logging import logger
+from app.core.exceptions import (
+    BaseAppException,
+    app_exception_handler,
+    global_exception_handler,
 )
+from app.api.router import root_router
 
-# Request validation schemas
-class EnhanceRequest(BaseModel):
-    text: str = Field(..., min_length=5, description="The raw portfolio text to polish.")
-
-class EnhanceResponse(BaseModel):
-    original: str
-    enhanced: str
-
-class ThemeRecommendationRequest(BaseModel):
-    industry: str = Field(..., description="The user's primary professional field.")
-    skills: List[str] = Field(default_factory=list, description="List of user's core skills.")
-
-class ThemeRecommendationResponse(BaseModel):
-    template: str
-    themeColor: str
-    fontFamily: str
-    borderRadius: str
-    sectionOrder: List[str]
-
-@app.on_event("startup")
-def startup_event():
-    from app.events.rabbitmq_client import start_background_consumer
-    start_background_consumer()
-
-@app.get("/health")
-def health_check():
-    """Simple service health verification."""
-    return {"status": "healthy", "service": "portfolio-ml-service"}
-
-@app.post("/api/ml/enhance", response_model=EnhanceResponse)
-def enhance_portfolio_text(payload: EnhanceRequest):
+def create_app() -> FastAPI:
     """
-    Polishes and rephrases resume draft sentences or descriptions to make them sound
-    industry-grade and professional.
+    Application factory initializing middleware, routes, and exception handlers.
     """
-    enhanced = gemini_service.enhance_text(payload.text)
-    return EnhanceResponse(original=payload.text, enhanced=enhanced)
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        version=settings.PROJECT_VERSION,
+        description="Production FastAPI service providing LLM resume parsing, text polishing, and theme generation.",
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
 
-@app.post("/api/ml/recommend-theme", response_model=ThemeRecommendationResponse)
-def recommend_layout_theme(payload: ThemeRecommendationRequest):
-    """
-    Analyzes user profession and skill vectors, recommending matching page layouts
-    and visual variables.
-    """
-    recommendation = gemini_service.recommend_theme(payload.industry, payload.skills)
-    return ThemeRecommendationResponse(**recommendation)
+    # 1. Timing & Request Logging Middleware
+    @app.middleware("http")
+    async def add_process_time_header(request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        response.headers["X-Process-Time"] = f"{process_time:.4f}s"
+        logger.info(f"{request.method} {request.url.path} - completed in {process_time:.3f}s [status={response.status_code}]")
+        return response
 
-@app.post("/api/ml/parse-resume")
-async def parse_resume(file: UploadFile = File(...)):
-    """
-    Extracts raw text from an uploaded resume PDF and parses it
-    into a structured portfolio JSON structure.
-    """
-    file_bytes = await file.read()
-    raw_text = pdf_service.extract_text_from_pdf(file_bytes)
-    if not raw_text:
-        raise HTTPException(status_code=400, detail="Failed to extract text from PDF")
-    
-    parsed_json = gemini_service.parse_resume_text(raw_text)
-    return parsed_json
+    # 2. CORS Middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # 3. Exception Handlers
+    app.add_exception_handler(BaseAppException, app_exception_handler)
+    app.add_exception_handler(Exception, global_exception_handler)
+
+    # 4. API Routes
+    app.include_router(root_router)
+
+    logger.info(f"Initialized {settings.PROJECT_NAME} (environment: {settings.ENVIRONMENT})")
+    return app
+
+app = create_app()
