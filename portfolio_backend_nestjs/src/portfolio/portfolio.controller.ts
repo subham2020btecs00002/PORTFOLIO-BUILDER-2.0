@@ -13,7 +13,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
-import { EventPattern, Payload } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
@@ -122,16 +121,6 @@ export class PortfolioController {
   async delete(@CurrentUser() user: { id: string }) {
     await this.portfolioService.deletePortfolio(user.id);
     return { message: 'Portfolio successfully deleted.' };
-  }
-
-  @EventPattern('ml_analysis_completed')
-  async handleMlAnalysisCompleted(@Payload() data: any) {
-    console.log(`[PortfolioController] Received ml_analysis_completed event for: ${data.portfolioId}`);
-    await this.portfolioService.updateRecommendations(
-      data.portfolioId,
-      data.recommendations,
-      data.enhancedDescription
-    );
   }
 
   @Post('ai/recommendations')

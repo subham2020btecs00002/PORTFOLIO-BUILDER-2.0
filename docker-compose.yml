@@ -1,43 +1,9 @@
-version: '3.8'
-
-services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: portfolio-rabbitmq
-    ports:
-      - "5672:5672"   # AMQP protocol port
-      - "15672:15672" # Management UI dashboard port
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - portfolio-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  ml-service:
-    build:
-      context: ./ml-service-python
-      dockerfile: Dockerfile
-    container_name: portfolio-ml-service
-    ports:
-      - "8000:8000"
-    environment:
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - PORT=8000
-    env_file:
-      - ./ml-service-python/.env
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - portfolio-network
-
-volumes:
-  rabbitmq_data:
-
-networks:
-  portfolio-network:
-    driver: bridge
+# Docker Compose is optional / disabled.
+# All services run locally on the host machine via node and python:
+# - API Gateway:        npm run start:dev (port 3001)
+# - Auth Service:       npm run start:dev (port 5001)
+# - Portfolio Monolith: npm run start:dev (port 5000)
+# - ML Service:         uvicorn app.main:app --port 8000 (port 8000)
+# - Frontend:           npm start (port 3000)
+#
+# RabbitMQ was removed to simplify architecture in favor of direct HTTP/REST.

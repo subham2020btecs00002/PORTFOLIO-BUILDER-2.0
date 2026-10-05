@@ -1,22 +1,33 @@
-from pypdf import PdfReader
 import io
+from pypdf import PdfReader
+from app.core.config import settings
+from app.core.logging import logger
+from app.core.exceptions import PDFProcessingError
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """
-    Parses a PDF file from a bytes buffer and extracts all readable text,
-    including underlying hyperlink annotations.
+    Parses a PDF file buffer and extracts all readable text and embedded hyperlink annotations.
+    Limits scanning to MAX_PDF_PAGES to prevent server denial-of-service on massive documents.
     """
+    if not file_bytes:
+        raise PDFProcessingError("Empty file buffer provided.")
+
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
+        total_pages = len(reader.pages)
+        pages_to_read = min(total_pages, settings.MAX_PDF_PAGES)
+        logger.info(f"Extracting text from PDF ({pages_to_read}/{total_pages} pages)...")
+
         text = ""
         links = []
-        
-        for i, page in enumerate(reader.pages):
+
+        for i in range(pages_to_read):
+            page = reader.pages[i]
             # 1. Extract regular visible text
             page_text = page.extract_text()
             if page_text:
                 text += page_text + "\n"
-            
+
             # 2. Extract underlying hyperlinks from annotations
             if "/Annots" in page:
                 for annot in page["/Annots"]:
@@ -26,18 +37,20 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
                         if action:
                             uri = action.get("/URI")
                             if uri:
-                                # Clean potential byte wrapper or spaces
                                 uri_str = str(uri).strip()
                                 if uri_str not in links:
                                     links.append(uri_str)
-                                    
-        # Append found links at the end so the LLM knows their existence and can map them
+
+        # Append hyperlinks at end for LLM context
         if links:
             text += "\n\nExtracted Hyperlinks / URLs from Document:\n"
             for link in links:
                 text += f"- {link}\n"
-                
-        return text.strip()
+
+        extracted_text = text.strip()
+        logger.info(f"Successfully extracted {len(extracted_text)} characters from PDF.")
+        return extracted_text
+
     except Exception as e:
-        print(f"Error extracting text from PDF: {e}")
-        return ""
+        logger.error(f"Error extracting text from PDF: {e}")
+        raise PDFProcessingError(f"Failed to extract readable text from PDF: {str(e)}")
