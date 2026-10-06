@@ -26,12 +26,23 @@ async function bootstrap() {
   );
   app.use(cookieParser());
 
-  /**
-   * In production the monolith should only accept requests from the API Gateway.
-   * The CORS origin is set to the gateway URL, not the frontend directly.
-   */
+  const isAllowedOrigin = (origin: string | undefined): boolean => {
+    if (!origin) return true;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
+    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
+    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+    if (gatewayUrl && origin === gatewayUrl) return true;
+    if (frontendUrl && origin === frontendUrl) return true;
+    return false;
+  };
+
   app.enableCors({
-    origin: gatewayUrl,
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      callback(null, false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -39,6 +50,9 @@ async function bootstrap() {
       'Authorization',
       'X-Internal-Secret',
       'X-User-Id',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
     ],
   });
 

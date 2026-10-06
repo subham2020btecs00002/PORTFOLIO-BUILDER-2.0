@@ -70,11 +70,15 @@ export class AppModule implements NestModule {
     };
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const allowedOrigins = [
-      frontendUrl,
-      'http://localhost:3000',
-      'http://localhost:3002',
-    ].filter(Boolean) as string[];
+
+    const isAllowedOrigin = (origin: string | undefined): boolean => {
+      if (!origin) return true;
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
+      if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
+      if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+      if (frontendUrl && origin === frontendUrl) return true;
+      return false;
+    };
 
     /**
      * Strip CORS headers from the upstream response and rewrite them with the
@@ -87,7 +91,7 @@ export class AppModule implements NestModule {
      */
     const rewriteCorsHeaders = (proxyRes: any, req: any) => {
       const browserOrigin: string = req.headers?.origin ?? '';
-      const isAllowed = allowedOrigins.includes(browserOrigin);
+      const isAllowed = isAllowedOrigin(browserOrigin);
 
       // Strip whatever the upstream sent
       delete proxyRes.headers['access-control-allow-origin'];

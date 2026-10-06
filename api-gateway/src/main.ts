@@ -27,16 +27,26 @@ async function bootstrap() {
   // ── Cookie parsing (needed to extract access_token cookie) ───────────────
   app.use(cookieParser());
 
-  // ── CORS — gateway is the only origin the frontend talks to ─────────────
+  // ── CORS — dynamically accept any vercel.app, onrender.com, or localhost origin ──
+  const isAllowedOrigin = (origin: string | undefined): boolean => {
+    if (!origin) return true;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
+    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
+    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+    if (frontendUrl && origin === frontendUrl) return true;
+    return false;
+  };
+
   app.enableCors({
-    origin: [
-      frontendUrl,
-      'http://localhost:3000',
-      'http://localhost:3002',
-    ],
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      callback(null, false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     exposedHeaders: ['Set-Cookie'],
   });
 
