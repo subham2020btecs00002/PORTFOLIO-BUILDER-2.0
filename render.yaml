@@ -1,0 +1,85 @@
+services:
+  # ── 1. API Gateway ──────────────────────────────────────────────────────────
+  - type: web
+    name: portfolio-api-gateway
+    env: node
+    plan: free
+    rootDir: api-gateway
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false
+      - key: INTERNAL_SECRET
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  # ── 2. Auth Service ─────────────────────────────────────────────────────────
+  - type: web
+    name: portfolio-auth-service
+    env: node
+    plan: free
+    rootDir: auth-service
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: INTERNAL_SECRET
+        sync: false
+      - key: GATEWAY_URL
+        sync: false
+      - key: EMAIL
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: RECEIVER_EMAIL
+        sync: false
+
+  # ── 3. Portfolio Backend ────────────────────────────────────────────────────
+  - type: web
+    name: portfolio-backend
+    env: node
+    plan: free
+    rootDir: portfolio_backend_nestjs
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: INTERNAL_SECRET
+        sync: false
+      - key: GATEWAY_URL
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: EMAIL
+        sync: false
+      - key: PASSWORD
+        sync: false
+      - key: RECEIVER_EMAIL
+        sync: false

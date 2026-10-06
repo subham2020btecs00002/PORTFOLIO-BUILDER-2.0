@@ -12,6 +12,8 @@ export interface RouteDefinition {
 
 /** Exact routes that do NOT require a JWT access token */
 export const PUBLIC_ROUTES: RouteDefinition[] = [
+  { path: '/health', method: 'GET' },
+  { path: '/', method: 'GET' },
   { path: '/api/auth/register', method: 'POST' },
   { path: '/api/auth/login', method: 'POST' },
   { path: '/api/auth/refresh', method: 'POST' },
