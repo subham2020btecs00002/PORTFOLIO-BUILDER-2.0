@@ -115,10 +115,10 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       case 'about':
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// PROFILE SUMMARY</h3>
+            <h3 className="terminal-output-info">{"//"} PROFILE SUMMARY</h3>
             <p>{portfolio.description || 'No bio description provided.'}</p>
             
-            <h3 className="terminal-output-info" style={{ marginTop: '15px' }}>// EDUCATION</h3>
+            <h3 className="terminal-output-info" style={{ marginTop: '15px' }}>{"//"} EDUCATION</h3>
             {portfolio.education && portfolio.education.length > 0 ? (
               portfolio.education.map((edu, idx) => (
                 <div key={idx} style={{ marginTop: '10px' }}>
@@ -139,7 +139,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       case 'skills':
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// TECHNICAL COMPETENCIES</h3>
+            <h3 className="terminal-output-info">{"//"} TECHNICAL COMPETENCIES</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
               {portfolio.skills && portfolio.skills.length > 0 ? (
                 portfolio.skills.map((skill, idx) => {
@@ -181,7 +181,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         const sortedJobs = getSortedHistory(portfolio.professionalHistory);
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// EMPLOYMENT HISTORY</h3>
+            <h3 className="terminal-output-info">{"//"} EMPLOYMENT HISTORY</h3>
             {sortedJobs.length > 0 ? (
               sortedJobs.map((job, idx) => (
                 <div key={idx} style={{ marginBottom: '20px', borderBottom: '1px dashed rgba(0, 255, 102, 0.1)', paddingBottom: '12px' }}>
@@ -212,7 +212,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       case 'projects':
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// NOTABLE PROJECTS</h3>
+            <h3 className="terminal-output-info">{"//"} NOTABLE PROJECTS</h3>
             {portfolio.projects && portfolio.projects.length > 0 ? (
               portfolio.projects.map((proj, idx) => (
                 <div key={idx} style={{ marginBottom: '20px', borderBottom: '1px dashed rgba(0, 255, 102, 0.1)', paddingBottom: '12px' }}>
@@ -240,7 +240,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       case 'contact':
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// CONTACT OPTIONS</h3>
+            <h3 className="terminal-output-info">{"//"} CONTACT OPTIONS</h3>
             <p>Email: <strong className="terminal-output-accent">{portfolio.user?.email || 'N/A'}</strong></p>
             <p style={{ marginTop: '10px' }}>Fill out the message form below or submit using standard console commands.</p>
             
@@ -303,7 +303,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       case 'socials':
         output = (
           <div className="terminal-output">
-            <h3 className="terminal-output-info">// CONNECT</h3>
+            <h3 className="terminal-output-info">{"//"} CONNECT</h3>
             <div style={{ display: 'flex', gap: '15px', flexDirection: 'column', marginTop: '10px' }}>
               {portfolio.portfolioLinks?.github && (
                 <p>🐱 GitHub: <a href={portfolio.portfolioLinks.github} target="_blank" rel="noreferrer" style={{ color: '#00ccff' }}>{portfolio.portfolioLinks.github}</a></p>
