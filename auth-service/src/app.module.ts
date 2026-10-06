@@ -2,6 +2,8 @@ import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { InternalSecretMiddleware } from './common/middleware/internal-secret.middleware';
 
@@ -37,6 +39,8 @@ import { InternalSecretMiddleware } from './common/middleware/internal-secret.mi
 
     AuthModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {
   /**
