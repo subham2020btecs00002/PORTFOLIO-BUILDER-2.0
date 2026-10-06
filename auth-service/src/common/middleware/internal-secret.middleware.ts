@@ -27,9 +27,18 @@ export class InternalSecretMiddleware implements NestMiddleware {
       return next();
     }
 
-    const incomingSecret = req.headers['x-internal-secret'];
+    const clean = (val: any) =>
+      String(Array.isArray(val) ? val[0] : val || '')
+        .trim()
+        .replace(/^["']|["']$/g, '');
 
-    if (!incomingSecret || incomingSecret !== this.secret) {
+    const incomingSecret = clean(req.headers['x-internal-secret']);
+    const expectedSecret = clean(process.env.INTERNAL_SECRET || this.secret);
+
+    if (!incomingSecret || incomingSecret !== expectedSecret) {
+      console.warn(
+        `[AuthService][InternalSecret] 403 Forbidden on ${req.method} ${req.path}! Incoming secret present: ${!!incomingSecret} (len: ${incomingSecret.length}), Expected configured: ${!!expectedSecret} (len: ${expectedSecret.length})`,
+      );
       throw new ForbiddenException(
         'Direct access to this service is not allowed. Use the API Gateway.',
       );

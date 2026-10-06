@@ -46,7 +46,8 @@ export class AppModule implements NestModule {
   constructor(private readonly configService: ConfigService) {}
 
   configure(consumer: MiddlewareConsumer): void {
-    const internalSecret = this.configService.get<string>('INTERNAL_SECRET')!;
+    const rawSecret = this.configService.get<string>('INTERNAL_SECRET') || process.env.INTERNAL_SECRET;
+    const internalSecret = String(rawSecret || '').trim().replace(/^["']|["']$/g, '');
     const authServiceUrl = this.configService.get<string>('AUTH_SERVICE_URL')!;
     const backendUrl = this.configService.get<string>('BACKEND_URL')!;
 
