@@ -3,6 +3,8 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
+  Param,
   Body,
   UseGuards,
   Req,
@@ -91,5 +93,24 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  // ── Inter-Service Internal Endpoints (Protected by X-Internal-Secret) ─────
+
+  @Patch('internal/users/:userId/role')
+  async updateInternalUserRole(
+    @Param('userId') userId: string,
+    @Body('adminId') adminId: string,
+    @Body('role') role: string,
+  ) {
+    return this.authService.updateUserRole(adminId, userId, role);
+  }
+
+  @Delete('internal/users/:userId')
+  async deleteInternalUser(
+    @Param('userId') userId: string,
+    @Body('adminId') adminId: string,
+  ) {
+    return this.authService.deleteUserAccount(adminId, userId);
   }
 }
