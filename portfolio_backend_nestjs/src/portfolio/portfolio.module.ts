@@ -5,6 +5,7 @@ import { PortfolioController } from './portfolio.controller';
 import { AiStreamService } from './ai-stream.service';
 import { Portfolio, PortfolioSchema } from './schemas/portfolio.schema';
 import { User, UserSchema } from '../common/schemas/user.schema';
+import { MlClientService } from './ml-client.service';
 
 /**
  * Portfolio Module (Phase 3)
@@ -25,8 +26,8 @@ import { User, UserSchema } from '../common/schemas/user.schema';
     ]),
   ],
   controllers: [PortfolioController],
-  providers: [PortfolioService, AiStreamService],
-  exports: [PortfolioService, AiStreamService],
+  providers: [PortfolioService, AiStreamService, MlClientService],
+  exports: [PortfolioService, AiStreamService, MlClientService],
 })
 export class PortfolioModule {}
 

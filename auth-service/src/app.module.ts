@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { InternalSecretMiddleware } from './common/middleware/internal-secret.middleware';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -44,12 +45,17 @@ import { InternalSecretMiddleware } from './common/middleware/internal-secret.mi
 })
 export class AppModule {
   /**
-   * Protect all auth-service routes with the internal secret middleware.
-   * Only the API Gateway (which sets X-Internal-Secret) can reach this service.
+   * 1. CorrelationIdMiddleware: ensures X-Correlation-Id is extracted and mirrored.
+   * 2. InternalSecretMiddleware: rejects direct external requests (while allowing /health and /).
    */
   configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CorrelationIdMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
     consumer
       .apply(InternalSecretMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
+

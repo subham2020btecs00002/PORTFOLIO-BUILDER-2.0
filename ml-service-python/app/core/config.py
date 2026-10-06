@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
 
+    # Security
+    INTERNAL_SECRET: str = Field(default="", description="Shared secret for inter-service communication")
+
     # AI / LLM configuration
     GEMINI_API_KEY: str = ""
     PRIMARY_LLM_MODEL: str = "gemini-3.5-flash-lite"

@@ -4,9 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
 
   const configService = app.get(ConfigService);
   const gatewayUrl =
@@ -15,6 +19,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const isAllowedOrigin = (origin: string | undefined): boolean => {
     if (!origin) return true;
@@ -39,10 +44,13 @@ async function bootstrap() {
       'Authorization',
       'X-Internal-Secret',
       'X-User-Id',
+      'X-User-Role',
+      'X-Correlation-Id',
       'X-Requested-With',
       'Accept',
       'Origin',
     ],
+    exposedHeaders: ['X-Correlation-Id'],
   });
 
   app.useGlobalPipes(

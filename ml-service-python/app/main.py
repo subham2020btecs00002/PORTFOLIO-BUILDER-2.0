@@ -22,14 +22,26 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # 1. Timing & Request Logging Middleware
+    # 1. Timing, Correlation ID & Request Logging Middleware
     @app.middleware("http")
-    async def add_process_time_header(request: Request, call_next):
+    async def add_process_time_and_tracing(request: Request, call_next):
+        correlation_id = (
+            request.headers.get("x-correlation-id")
+            or request.headers.get("x-request-id")
+            or ""
+        )
         start_time = time.time()
         response = await call_next(request)
         process_time = time.time() - start_time
         response.headers["X-Process-Time"] = f"{process_time:.4f}s"
-        logger.info(f"{request.method} {request.url.path} - completed in {process_time:.3f}s [status={response.status_code}]")
+        if correlation_id:
+            response.headers["X-Correlation-Id"] = correlation_id
+
+        # Suppress logging /health to prevent 5-minute cron clutter
+        if request.url.path != "/health":
+            logger.info(
+                f"{request.method} {request.url.path} - completed in {process_time:.3f}s [status={response.status_code}] [correlationId={correlation_id or '-'}]"
+            )
         return response
 
     # 2. CORS Middleware
@@ -37,8 +49,9 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
+        expose_headers=["X-Correlation-Id", "X-Process-Time"],
     )
 
     # 3. Exception Handlers

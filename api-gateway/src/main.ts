@@ -3,12 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     // Disable NestJS body parsing — http-proxy-middleware needs the raw stream
     bodyParser: false,
   });
+
+  // Enable trusting reverse proxy headers from Render & Cloudflare edge
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
 
   const configService = app.get(ConfigService);
   const frontendUrl =
@@ -26,6 +31,9 @@ async function bootstrap() {
 
   // ── Cookie parsing (needed to extract access_token cookie) ───────────────
   app.use(cookieParser());
+
+  // ── Global Exception Filter (standard RFC 7807 problem details) ──────────
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // ── CORS — dynamically accept any vercel.app, onrender.com, or localhost origin ──
   const isAllowedOrigin = (origin: string | undefined): boolean => {
@@ -46,8 +54,15 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-    exposedHeaders: ['Set-Cookie'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'X-Correlation-Id',
+    ],
+    exposedHeaders: ['Set-Cookie', 'X-Correlation-Id', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
   });
 
   await app.listen(port);

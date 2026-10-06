@@ -4,14 +4,14 @@ import { Model, Types } from 'mongoose';
 import { Portfolio } from './schemas/portfolio.schema';
 import { User } from '../common/schemas/user.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
-
-
+import { MlClientService } from './ml-client.service';
 
 @Injectable()
 export class PortfolioService {
   constructor(
     @InjectModel(Portfolio.name) private portfolioModel: Model<Portfolio>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private readonly mlClientService: MlClientService,
   ) {}
 
 
@@ -201,38 +201,17 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio not found');
     }
 
-    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
     const skillsList = portfolio.skills ? portfolio.skills.map((s) => s.name) : [];
     const industry = portfolio.title || 'Software Development';
 
     try {
-      const res = await fetch(`${mlUrl}/api/ml/recommend-theme`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          industry,
-          skills: skillsList,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('AI Service theme recommendation request failed');
-      }
-
-      const data = await res.json();
+      const data = await this.mlClientService.recommendTheme(industry, skillsList);
 
       let enhancedDescription = '';
       if (portfolio.description && portfolio.description.trim().length > 5) {
         try {
-          const enhanceRes = await fetch(`${mlUrl}/api/ml/enhance`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: portfolio.description }),
-          });
-          if (enhanceRes.ok) {
-            const enhanceData = await enhanceRes.json();
-            enhancedDescription = enhanceData.enhanced;
-          }
+          const enhanceData = await this.mlClientService.enhanceText(portfolio.description);
+          enhancedDescription = enhanceData.enhanced;
         } catch (e) {
           console.error('[PortfolioService] Description auto-enhance failed:', e);
         }
