@@ -23,6 +23,11 @@ export class InternalSecretMiddleware implements NestMiddleware {
   }
 
   use(req: Request, _res: Response, next: NextFunction): void {
+    // Health checks and root probes must always bypass internal secret verification
+    if (req.path === '/health' || req.path === '/') {
+      return next();
+    }
+
     const incomingSecret = req.headers['x-internal-secret'];
 
     if (!incomingSecret || incomingSecret !== this.secret) {

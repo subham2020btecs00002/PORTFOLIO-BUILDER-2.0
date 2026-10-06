@@ -8,16 +8,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import * as Joi from 'joi';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
+import { AppController } from './app.controller';
 import { JwtVerifyMiddleware } from './middleware/jwt-verify.middleware';
 import { RateLimiterMiddleware } from './middleware/rate-limiter.middleware';
 
-/** Origins that the gateway will accept and forward CORS headers for */
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:3002',
-];
-
 @Module({
+  controllers: [AppController],
   imports: [
     // ── Config ──────────────────────────────────────────────────────────────
     ConfigModule.forRoot({
@@ -73,6 +69,13 @@ export class AppModule implements NestModule {
       }
     };
 
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const allowedOrigins = [
+      frontendUrl,
+      'http://localhost:3000',
+      'http://localhost:3002',
+    ].filter(Boolean) as string[];
+
     /**
      * Strip CORS headers from the upstream response and rewrite them with the
      * correct browser origin. This is critical because:
@@ -84,7 +87,7 @@ export class AppModule implements NestModule {
      */
     const rewriteCorsHeaders = (proxyRes: any, req: any) => {
       const browserOrigin: string = req.headers?.origin ?? '';
-      const isAllowed = ALLOWED_ORIGINS.includes(browserOrigin);
+      const isAllowed = allowedOrigins.includes(browserOrigin);
 
       // Strip whatever the upstream sent
       delete proxyRes.headers['access-control-allow-origin'];
