@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../common/schemas/user.schema';
 import { Portfolio } from '../portfolio/schemas/portfolio.schema';
+import { AuthClientService } from '../common/services/auth-client.service';
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
     @InjectModel(Portfolio.name) private readonly portfolioModel: Model<Portfolio>,
+    private readonly authClientService: AuthClientService,
   ) {}
 
   async getAdminStats() {
@@ -176,23 +178,28 @@ export class AdminService {
       throw new BadRequestException('Self-demotion or changing your own role is not allowed.');
     }
 
-    const targetUser = await this.userModel.findById(userId);
-    if (!targetUser) {
-      throw new NotFoundException('User not found');
+    try {
+      const result = await this.authClientService.updateUserRole(adminId, userId, role);
+      return result.user || result;
+    } catch {
+      // Safe fallback to direct model if auth-service internal endpoint is not yet online
+      const targetUser = await this.userModel.findById(userId);
+      if (!targetUser) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (targetUser.role === 'admin' && role === 'user') {
+        throw new BadRequestException('Demoting other admin accounts is not allowed.');
+      }
+
+      const updatedUser = await this.userModel.findByIdAndUpdate(
+        userId,
+        { $set: { role } },
+        { new: true },
+      ).select('-password');
+
+      return updatedUser;
     }
-
-    // Block demotion of admin accounts
-    if (targetUser.role === 'admin' && role === 'user') {
-      throw new BadRequestException('Demoting other admin accounts is not allowed.');
-    }
-
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      userId,
-      { $set: { role } },
-      { new: true },
-    ).select('-password');
-
-    return updatedUser;
   }
 
   async deleteUser(adminId: string, userId: string) {
@@ -212,8 +219,12 @@ export class AdminService {
     // Cascade delete portfolio if it exists
     await this.portfolioModel.deleteOne({ user: userId });
 
-    // Delete user account
-    await this.userModel.findByIdAndDelete(userId);
+    try {
+      await this.authClientService.deleteUserAccount(adminId, userId);
+    } catch {
+      // Safe fallback
+      await this.userModel.findByIdAndDelete(userId);
+    }
 
     return { message: `User "${targetUser.name}" (${targetUser.email}) and their portfolio were successfully deleted.` };
   }

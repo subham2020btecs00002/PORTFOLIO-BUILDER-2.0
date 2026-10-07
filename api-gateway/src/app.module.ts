@@ -11,6 +11,8 @@ import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { AppController } from './app.controller';
 import { JwtVerifyMiddleware } from './middleware/jwt-verify.middleware';
 import { RateLimiterMiddleware } from './middleware/rate-limiter.middleware';
+import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware';
+import { RequestLoggerMiddleware } from './middleware/request-logger.middleware';
 
 @Module({
   controllers: [AppController],
@@ -53,11 +55,18 @@ export class AppModule implements NestModule {
 
     /**
      * Add gateway-specific headers to every upstream request:
-     * - X-Internal-Secret: proves request came from gateway
-     * - X-User-Id:         injected by JwtVerifyMiddleware after token verification
+     * - X-Internal-Secret:  proves request came from gateway
+     * - X-Correlation-Id:    distributed tracing ID
+     * - X-User-Id:          injected by JwtVerifyMiddleware after token verification
+     * - X-User-Role:        injected role claim
      */
     const addGatewayHeaders = (proxyReq: any, req: any) => {
       proxyReq.setHeader('x-internal-secret', internalSecret);
+
+      const correlationId = req.headers['x-correlation-id'];
+      if (correlationId) {
+        proxyReq.setHeader('x-correlation-id', correlationId);
+      }
 
       const userId = req.headers['x-user-id'];
       if (userId) {
@@ -82,42 +91,63 @@ export class AppModule implements NestModule {
     };
 
     /**
-     * Strip CORS headers from the upstream response and rewrite them with the
-     * correct browser origin. This is critical because:
-     *  - auth-service sets  Access-Control-Allow-Origin: http://localhost:3001 (gateway)
-     *  - http-proxy-middleware forwards that header to the browser as-is
-     *  - browser rejects it because it doesn't match the actual frontend origin
-     *
-     * Solution: delete upstream CORS headers and set the correct ones ourselves.
+     * Strip CORS headers from upstream response and rewrite them for the browser origin.
      */
     const rewriteCorsHeaders = (proxyRes: any, req: any) => {
       const browserOrigin: string = req.headers?.origin ?? '';
       const isAllowed = isAllowedOrigin(browserOrigin);
 
-      // Strip whatever the upstream sent
       delete proxyRes.headers['access-control-allow-origin'];
       delete proxyRes.headers['access-control-allow-credentials'];
       delete proxyRes.headers['access-control-allow-methods'];
       delete proxyRes.headers['access-control-allow-headers'];
 
-      // Set correct values for the actual browser origin
       if (isAllowed) {
         proxyRes.headers['access-control-allow-origin'] = browserOrigin;
         proxyRes.headers['access-control-allow-credentials'] = 'true';
       }
     };
 
-    // ── 1. Rate Limiter ───────────────────────────────────────────────────
+    const handleProxyError = (targetName: string) => (err: any, req: any, res: any) => {
+      const correlationId = req.headers?.['x-correlation-id'] || '';
+      console.error(
+        `[API Gateway][ProxyError] Upstream error talking to ${targetName}: ${err.message} [correlationId: ${correlationId}]`,
+      );
+      if (!res.headersSent && typeof res.writeHead === 'function') {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            statusCode: 502,
+            error: 'Bad Gateway',
+            message: `Service temporarily unavailable. Please try again.`,
+            correlationId,
+            timestamp: new Date().toISOString(),
+          }),
+        );
+      }
+    };
+
+    // ── 1. Distributed Tracing: Injects X-Correlation-Id ──────────────────
+    consumer
+      .apply(CorrelationIdMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
+    // ── 2. Request Logger (suppresses /health noise) ──────────────────────
+    consumer
+      .apply(RequestLoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
+    // ── 3. Rate Limiter (exempts /health & /) ──────────────────────────────
     consumer
       .apply(RateLimiterMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
 
-    // ── 2. JWT Verification ──────────────────────────────────────────────
+    // ── 4. JWT Verification ──────────────────────────────────────────────
     consumer
       .apply(JwtVerifyMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
 
-    // ── 3. Proxy: Auth Service (/api/auth/*) ─────────────────────────────
+    // ── 5. Proxy: Auth Service (/api/auth/*) ─────────────────────────────
     consumer
       .apply(
         createProxyMiddleware({
@@ -131,12 +161,13 @@ export class AppModule implements NestModule {
             proxyRes: (proxyRes, req) => {
               rewriteCorsHeaders(proxyRes, req);
             },
+            error: handleProxyError('Auth Service'),
           },
         }),
       )
       .forRoutes({ path: '/api/auth/*path', method: RequestMethod.ALL });
 
-    // ── 4. Proxy: Portfolio & Contact (Monolith) ─────────────────────────
+    // ── 6. Proxy: Portfolio & Contact (Monolith) ─────────────────────────
     consumer
       .apply(
         createProxyMiddleware({
@@ -150,14 +181,15 @@ export class AppModule implements NestModule {
             proxyRes: (proxyRes, req) => {
               rewriteCorsHeaders(proxyRes, req);
             },
+            error: handleProxyError('Portfolio Monolith'),
           },
         }),
       )
       .forRoutes(
-        // Exact base paths (e.g. POST /api/portfolio, PUT /api/portfolio)
+        // Exact base paths
         { path: '/api/portfolio', method: RequestMethod.ALL },
         { path: '/api/contact', method: RequestMethod.ALL },
-        // Sub-paths (e.g. GET /api/portfolio/exists, GET /api/portfolio/public/:id)
+        // Sub-paths
         { path: '/api/portfolio/*path', method: RequestMethod.ALL },
         { path: '/api/contact/*path', method: RequestMethod.ALL },
         { path: '/api/admin/*path', method: RequestMethod.ALL },

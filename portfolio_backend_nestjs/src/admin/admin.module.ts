@@ -4,6 +4,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { User, UserSchema } from '../common/schemas/user.schema';
 import { Portfolio, PortfolioSchema } from '../portfolio/schemas/portfolio.schema';
+import { AuthClientService } from '../common/services/auth-client.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { Portfolio, PortfolioSchema } from '../portfolio/schemas/portfolio.schem
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, AuthClientService],
 })
 export class AdminModule {}

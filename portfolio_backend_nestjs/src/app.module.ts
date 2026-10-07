@@ -8,12 +8,13 @@ import { PortfolioModule } from './portfolio/portfolio.module';
 import { ContactModule } from './contact/contact.module';
 import { AdminModule } from './admin/admin.module';
 import { InternalSecretMiddleware } from './common/middleware/internal-secret.middleware';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 /**
  * App Module (Monolith — Phase 3)
  *
  * Auth has been extracted into the standalone auth-service (port 5001).
- * This monolith now only handles Portfolio and Contact functionality.
+ * This monolith now handles Portfolio, Contact, and Admin functionality.
  * JWT verification and rate limiting are handled by the API Gateway (port 3001).
  * All requests must arrive via the gateway (X-Internal-Secret enforced).
  */
@@ -49,10 +50,14 @@ import { InternalSecretMiddleware } from './common/middleware/internal-secret.mi
 })
 export class AppModule {
   /**
-   * Apply InternalSecretMiddleware globally.
-   * Rejects any request not arriving from the API Gateway.
+   * 1. CorrelationIdMiddleware: captures X-Correlation-Id for distributed tracing.
+   * 2. InternalSecretMiddleware: blocks direct external requests (permits / and /health).
    */
   configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CorrelationIdMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+
     consumer
       .apply(InternalSecretMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });

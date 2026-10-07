@@ -310,4 +310,60 @@ export class AuthService {
 
     return { message: 'Password has been reset successfully' };
   }
+
+  async updateUserRole(
+    adminId: string,
+    userId: string,
+    role: string,
+  ): Promise<{ message: string; user: User }> {
+    if (role !== 'admin' && role !== 'user') {
+      throw new BadRequestException(
+        'Invalid role. Allowed roles are admin or user',
+      );
+    }
+
+    if (adminId === userId) {
+      throw new BadRequestException(
+        'Self-demotion or changing your own role is not allowed.',
+      );
+    }
+
+    const targetUser = await this.userModel.findById(userId);
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    targetUser.role = role;
+    await targetUser.save();
+
+    return {
+      message: `User role successfully updated to ${role}`,
+      user: targetUser,
+    };
+  }
+
+  async deleteUserAccount(
+    adminId: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    if (adminId === userId) {
+      throw new BadRequestException('Self-deletion is not allowed.');
+    }
+
+    const targetUser = await this.userModel.findById(userId);
+    if (!targetUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    if (targetUser.role === 'admin') {
+      throw new BadRequestException(
+        'Deleting other admin accounts is not allowed.',
+      );
+    }
+
+    await this.userModel.findByIdAndDelete(userId);
+    return {
+      message: `User "${targetUser.name}" (${targetUser.email}) account was successfully deleted.`,
+    };
+  }
 }

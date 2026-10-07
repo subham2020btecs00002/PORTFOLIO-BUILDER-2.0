@@ -19,11 +19,15 @@ import { CreatePortfolioDto } from './dto/portfolio.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 import { NestedFieldsInterceptor } from '../common/interceptors/nested-fields.interceptor';
+import { MlClientService } from './ml-client.service';
+import type { Request } from 'express';
+import { Req } from '@nestjs/common';
 
 @Controller('api/portfolio')
 export class PortfolioController {
   constructor(
     private portfolioService: PortfolioService,
+    private mlClientService: MlClientService,
   ) {}
 
   @Post()
@@ -129,49 +133,27 @@ export class PortfolioController {
   }
 
   @Post('ai/enhance')
-  async enhanceText(@Body() body: { text: string }) {
-    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
-    try {
-      const res = await fetch(`${mlUrl}/api/ml/enhance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: body.text }),
-      });
-      if (!res.ok) {
-        throw new Error('AI Service returned non-200');
-      }
-      return await res.json();
-    } catch (err) {
-      console.error('[PortfolioController] Error communicating with ML service:', err);
-      throw new BadRequestException('Failed to communicate with AI service');
+  async enhanceText(@Body() body: { text: string }, @Req() req: Request) {
+    if (!body?.text || body.text.trim().length < 5) {
+      throw new BadRequestException('Text must be at least 5 characters long');
     }
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    return this.mlClientService.enhanceText(body.text, correlationId);
   }
 
   @Post('ai/parse-resume')
   @UseInterceptors(FileInterceptor('file'))
-  async parseResume(@UploadedFile() file: Express.Multer.File) {
+  async parseResume(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
     if (!file) {
       throw new BadRequestException('No resume file uploaded');
     }
-    const mlUrl = process.env.ML_SERVICE_URL || 'http://localhost:8000';
-    
-    const formData = new FormData();
-    const blob = new Blob([new Uint8Array(file.buffer)], { type: file.mimetype });
-    formData.append('file', blob, file.originalname);
-    
-    try {
-      const res = await fetch(`${mlUrl}/api/ml/parse-resume`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) {
-        throw new Error('AI Service returned non-200');
-      }
-      return await res.json();
-    } catch (err) {
-      console.error('[PortfolioController] Error parsing resume from ML service:', err);
-      throw new BadRequestException('Failed to process and parse resume');
-    }
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    return this.mlClientService.parseResume(
+      file.buffer,
+      file.mimetype,
+      file.originalname,
+      correlationId,
+    );
   }
 
   @Delete('ai/recommendations')
