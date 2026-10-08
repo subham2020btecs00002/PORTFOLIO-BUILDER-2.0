@@ -13,10 +13,9 @@ const Navbar: React.FC = () => {
 
   const handleScrollToDeveloper = () => {
     if (window.location.pathname !== '/') {
-      navigate('/#meet-developer');
+      navigate('/#developer');
     } else {
-      const el = document.getElementById('meet-developer');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      window.dispatchEvent(new CustomEvent('open-meet-developer'));
     }
     setMenuOpen(false);
   };
