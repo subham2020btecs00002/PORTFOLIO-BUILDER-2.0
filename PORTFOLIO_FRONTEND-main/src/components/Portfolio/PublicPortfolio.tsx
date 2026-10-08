@@ -23,6 +23,7 @@ import { AcademicLaTeX } from './templates/AcademicLaTeX';
 import { GamifiedRPG } from './templates/GamifiedRPG';
 import { ResumePrint } from './templates/ResumePrint';
 import './templates/templates.css';
+import './PublicPortfolio.css';
 
 interface PublicPortfolioProps {
   isResumeMode?: boolean;
@@ -229,7 +230,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
         href="/"
         target="_blank"
         rel="noopener noreferrer"
-        className="portfolio-brand-badge"
+        className="portfolio-brand-badge no-print"
         title="Create your own free developer portfolio with PortfolioBuilder"
       >
         <span className="brand-badge-sparkle">⚡</span>
@@ -240,7 +241,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       </a>
 
       {/* Floating Share Button */}
-      <button className="floating-share-btn" onClick={() => setIsShareModalOpen(true)}>
+      <button className="floating-share-btn no-print" onClick={() => setIsShareModalOpen(true)}>
         <FaShareAlt /> Share Portfolio
       </button>
 

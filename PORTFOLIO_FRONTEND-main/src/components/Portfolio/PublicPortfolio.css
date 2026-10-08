@@ -246,4 +246,10 @@
   .brand-badge-cta {
     display: none;
   }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
