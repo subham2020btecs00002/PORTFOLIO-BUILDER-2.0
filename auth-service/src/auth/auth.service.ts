@@ -272,6 +272,42 @@ export class AuthService {
         `,
       };
 
+      const resendApiKey = (
+        this.configService.get<string>('RESEND_API_KEY') ||
+        process.env.RESEND_API_KEY ||
+        ''
+      ).trim();
+
+      if (resendApiKey) {
+        try {
+          const from =
+            (
+              this.configService.get<string>('RESEND_FROM_EMAIL') ||
+              process.env.RESEND_FROM_EMAIL ||
+              'PortfolioBuilder <onboarding@resend.dev>'
+            ).trim();
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from,
+              to: [email],
+              subject: 'Password Reset Request',
+              html: mailOptions.html,
+            }),
+          });
+          return {
+            message:
+              'If a matching account exists, a password reset link has been sent to your email.',
+          };
+        } catch (error) {
+          console.error('Error sending reset email via Resend:', error);
+        }
+      }
+
       try {
         await this.transporter.sendMail(mailOptions);
       } catch (error) {

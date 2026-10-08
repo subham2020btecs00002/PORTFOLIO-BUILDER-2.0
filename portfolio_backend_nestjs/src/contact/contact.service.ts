@@ -31,11 +31,27 @@ export class ContactService {
     this.defaultReceiver = rawReceiver.trim().replace(/^["']|["']$/g, '');
 
     if (this.senderEmail && this.senderPass) {
+      const smtpHost = (
+        this.configService.get<string>('SMTP_HOST') ||
+        process.env.SMTP_HOST ||
+        'smtp.gmail.com'
+      ).trim();
+      const smtpPort =
+        Number(
+          this.configService.get<string>('SMTP_PORT') ||
+            process.env.SMTP_PORT ||
+            465,
+        ) || 465;
+      const smtpSecure =
+        this.configService.get<string>('SMTP_SECURE') !== undefined
+          ? this.configService.get<string>('SMTP_SECURE') === 'true'
+          : smtpPort === 465;
+
       this.transporter = nodemailer.createTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        service: smtpHost === 'smtp.gmail.com' ? 'gmail' : undefined,
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
         auth: {
           user: this.senderEmail,
           pass: this.senderPass,
@@ -45,7 +61,7 @@ export class ContactService {
         socketTimeout: 15_000,
       });
       this.logger.log(
-        `Nodemailer transporter initialized for sender: ${this.senderEmail}`,
+        `Nodemailer transporter initialized for sender: ${this.senderEmail} (${smtpHost}:${smtpPort})`,
       );
     } else {
       this.logger.warn(
@@ -54,15 +70,116 @@ export class ContactService {
     }
   }
 
+  private async sendViaResend(
+    apiKey: string,
+    recipient: string,
+    replyToEmail: string,
+    replyToName: string,
+    subject: string,
+    text: string,
+    html: string,
+  ): Promise<void> {
+    const from =
+      (
+        this.configService.get<string>('RESEND_FROM_EMAIL') ||
+        process.env.RESEND_FROM_EMAIL ||
+        'PortfolioBuilder <onboarding@resend.dev>'
+      ).trim();
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [recipient],
+        reply_to: replyToEmail,
+        subject,
+        text,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      this.logger.error(`Resend API error (${response.status}): ${errorBody}`);
+      throw new Error(`Resend API returned ${response.status}: ${errorBody}`);
+    }
+
+    const result = (await response.json().catch(() => ({}))) as any;
+    this.logger.log(
+      `Email dispatched via Resend HTTPS API (id: ${result.id || 'ok'}) to ${recipient}`,
+    );
+  }
+
+  private async sendViaBrevo(
+    apiKey: string,
+    recipient: string,
+    replyToEmail: string,
+    replyToName: string,
+    subject: string,
+    text: string,
+    html: string,
+  ): Promise<void> {
+    const senderEmail = (
+      this.configService.get<string>('BREVO_SENDER_EMAIL') ||
+      process.env.BREVO_SENDER_EMAIL ||
+      this.senderEmail ||
+      'contact@portfoliobuilder.com'
+    ).trim();
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'PortfolioBuilder', email: senderEmail },
+        to: [{ email: recipient }],
+        replyTo: { email: replyToEmail, name: replyToName },
+        subject,
+        textContent: text,
+        htmlContent: html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      this.logger.error(`Brevo API error (${response.status}): ${errorBody}`);
+      throw new Error(`Brevo API returned ${response.status}: ${errorBody}`);
+    }
+
+    const result = (await response.json().catch(() => ({}))) as any;
+    this.logger.log(
+      `Email dispatched via Brevo HTTPS API (messageId: ${result.messageId || 'ok'}) to ${recipient}`,
+    );
+  }
+
   async sendEmail(dto: ContactDto): Promise<void> {
     const { name, email, phone, reason, userId } = dto;
 
-    if (!this.transporter) {
+    const resendApiKey = (
+      this.configService.get<string>('RESEND_API_KEY') ||
+      process.env.RESEND_API_KEY ||
+      ''
+    ).trim();
+
+    const brevoApiKey = (
+      this.configService.get<string>('BREVO_API_KEY') ||
+      process.env.BREVO_API_KEY ||
+      ''
+    ).trim();
+
+    if (!this.transporter && !resendApiKey && !brevoApiKey) {
       this.logger.error(
-        'Cannot send email: SMTP credentials (EMAIL/PASSWORD) are missing on Render.',
+        'Cannot send email: Neither RESEND_API_KEY nor SMTP credentials (EMAIL/PASSWORD) are configured.',
       );
       throw new InternalServerErrorException(
-        'Email service is not configured. Please ensure EMAIL and PASSWORD (Google App Password) are configured in Render environment variables.',
+        'Email service is not configured. Please add RESEND_API_KEY (from https://resend.com) or EMAIL and PASSWORD in Render environment variables.',
       );
     }
 
@@ -103,7 +220,7 @@ export class ContactService {
     ).trim();
 
     const mailOptions = {
-      from: `"${name} (via PortfolioBuilder)" <${this.senderEmail}>`,
+      from: `"${name} (via PortfolioBuilder)" <${this.senderEmail || 'notifications@portfoliobuilder.com'}>`,
       replyTo: email,
       to: targetRecipient,
       subject: `New Portfolio Contact: ${name}`,
@@ -160,6 +277,55 @@ Powered by PortfolioBuilder 2.0 (${appUrl})
       `.trim(),
     };
 
+    // Priority 1: Resend HTTPS API (Port 443 — never blocked by Render)
+    if (resendApiKey) {
+      try {
+        await this.sendViaResend(
+          resendApiKey,
+          targetRecipient,
+          email,
+          name,
+          mailOptions.subject,
+          mailOptions.text,
+          mailOptions.html,
+        );
+        return;
+      } catch (err: any) {
+        this.logger.error(`Resend API dispatch failed: ${err.message}`);
+        throw new InternalServerErrorException(
+          `Failed to send email via Resend API: ${err.message}`,
+        );
+      }
+    }
+
+    // Priority 2: Brevo HTTPS API (Port 443 — never blocked by Render)
+    if (brevoApiKey) {
+      try {
+        await this.sendViaBrevo(
+          brevoApiKey,
+          targetRecipient,
+          email,
+          name,
+          mailOptions.subject,
+          mailOptions.text,
+          mailOptions.html,
+        );
+        return;
+      } catch (err: any) {
+        this.logger.error(`Brevo API dispatch failed: ${err.message}`);
+        throw new InternalServerErrorException(
+          `Failed to send email via Brevo API: ${err.message}`,
+        );
+      }
+    }
+
+    // Priority 3: Fallback to Nodemailer SMTP (for local dev or paid Render instances)
+    if (!this.transporter) {
+      throw new InternalServerErrorException(
+        'Email service is not configured. Please add RESEND_API_KEY (from https://resend.com) or EMAIL and PASSWORD in Render environment variables.',
+      );
+    }
+
     try {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(
@@ -170,7 +336,19 @@ Powered by PortfolioBuilder 2.0 (${appUrl})
         `Failed to send email via SMTP: ${error.message}`,
         error.stack,
       );
-      if (error.code === 'EAUTH' || (error.response && error.response.includes('535'))) {
+      if (
+        error.message?.includes('Connection timeout') ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ESOCKET'
+      ) {
+        throw new InternalServerErrorException(
+          "SMTP Connection Timeout: Render's Free Tier blocks outbound SMTP traffic (ports 25, 465, 587). To send emails from Render without port restrictions, add RESEND_API_KEY (from https://resend.com) to your Render environment variables to send over HTTPS (port 443), or upgrade to a paid Render plan.",
+        );
+      }
+      if (
+        error.code === 'EAUTH' ||
+        (error.response && error.response.includes('535'))
+      ) {
         throw new InternalServerErrorException(
           'SMTP authentication failed. If using Gmail, please verify that you generated a 16-character App Password under Google Account Security.',
         );
