@@ -199,6 +199,11 @@ export class ContactService {
     if (!response.ok) {
       const errorBody = await response.text();
       this.logger.error(`Brevo API error (${response.status}): ${errorBody}`);
+      if (apiKey.startsWith('xsmtpsib-')) {
+        throw new Error(
+          `Configured BREVO_API_KEY starts with 'xsmtpsib-' (which is an SMTP key, not a REST API key). For HTTPS dispatch over port 443, please generate a REST API key from Brevo's 'API Keys' tab (starts with 'xkeysib-') at https://app.brevo.com/settings/keys/api`,
+        );
+      }
       throw new Error(`Brevo API returned ${response.status}: ${errorBody}`);
     }
 
@@ -225,10 +230,10 @@ export class ContactService {
 
     if (!this.transporter && !resendApiKey && !brevoApiKey) {
       this.logger.error(
-        'Cannot send email: Neither RESEND_API_KEY nor SMTP credentials (EMAIL/PASSWORD) are configured.',
+        'Cannot send email: Neither BREVO_API_KEY, RESEND_API_KEY nor SMTP credentials (EMAIL/PASSWORD) are configured.',
       );
       throw new InternalServerErrorException(
-        'Email service is not configured. Please add RESEND_API_KEY (from https://resend.com) or EMAIL and PASSWORD in Render environment variables.',
+        'Email service is not configured. Please add BREVO_API_KEY (from https://app.brevo.com/settings/keys/api) or RESEND_API_KEY in Render environment variables.',
       );
     }
 
@@ -326,7 +331,31 @@ Powered by PortfolioBuilder 2.0 (${appUrl})
       `.trim(),
     };
 
-    // Priority 1: Resend HTTPS API (Port 443 — never blocked by Render)
+    // Priority 1: Brevo HTTPS API (Can send to ANY email address in the world without a custom domain)
+    if (brevoApiKey) {
+      try {
+        await this.sendViaBrevo(
+          brevoApiKey,
+          targetRecipient,
+          email,
+          name,
+          mailOptions.subject,
+          mailOptions.text,
+          mailOptions.html,
+        );
+        return;
+      } catch (err: any) {
+        this.logger.error(`Brevo API dispatch failed: ${err.message}`);
+        // If Brevo fails and Resend is available, fall through to Resend
+        if (!resendApiKey) {
+          throw new InternalServerErrorException(
+            `Failed to send email via Brevo API: ${err.message}`,
+          );
+        }
+      }
+    }
+
+    // Priority 2: Resend HTTPS API (with automatic sandbox fallback)
     if (resendApiKey) {
       try {
         await this.sendViaResend(
@@ -347,31 +376,10 @@ Powered by PortfolioBuilder 2.0 (${appUrl})
       }
     }
 
-    // Priority 2: Brevo HTTPS API (Port 443 — never blocked by Render)
-    if (brevoApiKey) {
-      try {
-        await this.sendViaBrevo(
-          brevoApiKey,
-          targetRecipient,
-          email,
-          name,
-          mailOptions.subject,
-          mailOptions.text,
-          mailOptions.html,
-        );
-        return;
-      } catch (err: any) {
-        this.logger.error(`Brevo API dispatch failed: ${err.message}`);
-        throw new InternalServerErrorException(
-          `Failed to send email via Brevo API: ${err.message}`,
-        );
-      }
-    }
-
     // Priority 3: Fallback to Nodemailer SMTP (for local dev or paid Render instances)
     if (!this.transporter) {
       throw new InternalServerErrorException(
-        'Email service is not configured. Please add RESEND_API_KEY (from https://resend.com) or EMAIL and PASSWORD in Render environment variables.',
+        'Email service is not configured. Please add BREVO_API_KEY (from https://app.brevo.com/settings/keys/api) or RESEND_API_KEY in Render environment variables.',
       );
     }
 
