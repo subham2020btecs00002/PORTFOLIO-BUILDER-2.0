@@ -9,6 +9,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import QRCode from 'qrcode';
 import { baseUrl } from '../url';
 import type { Portfolio, ContactFormData } from '../../types';
+import { useDraggableFloating } from '../../hooks/useDraggableFloating';
 
 // Import templates & template CSS
 import { ClassicGreen } from './templates/ClassicGreen';
@@ -38,6 +39,13 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  
+  const shareDraggable = useDraggableFloating<HTMLButtonElement>({
+    storageKey: 'public_share_btn_pos',
+  });
+  const brandDraggable = useDraggableFloating<HTMLAnchorElement>({
+    storageKey: 'public_brand_badge_pos',
+  });
   
   const [contactForm, setContactForm] = useState<ContactFormData>({
     name: '',
@@ -227,11 +235,14 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
 
       {/* Sleek Floating Branding Pill (Increases reach & virality) */}
       <a
+        ref={brandDraggable.ref}
         href="/"
         target="_blank"
         rel="noopener noreferrer"
-        className="portfolio-brand-badge no-print"
-        title="Create your own free developer portfolio with PortfolioBuilder"
+        className={`portfolio-brand-badge no-print ${brandDraggable.isDragging ? 'is-dragging' : ''}`}
+        style={brandDraggable.style}
+        {...brandDraggable.props}
+        title="Create your own free developer portfolio with PortfolioBuilder (Drag to reposition)"
       >
         <span className="brand-badge-sparkle">⚡</span>
         <span className="brand-badge-text">
@@ -241,7 +252,18 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       </a>
 
       {/* Floating Share Button */}
-      <button className="floating-share-btn no-print" onClick={() => setIsShareModalOpen(true)}>
+      <button
+        ref={shareDraggable.ref}
+        className={`floating-share-btn no-print ${shareDraggable.isDragging ? 'is-dragging' : ''}`}
+        style={shareDraggable.style}
+        {...shareDraggable.props}
+        onClick={() => {
+          if (!shareDraggable.isDragging) {
+            setIsShareModalOpen(true);
+          }
+        }}
+        title="Share Portfolio (Drag to reposition)"
+      >
         <FaShareAlt /> Share Portfolio
       </button>
 

@@ -13,6 +13,7 @@ import {
   FaTimes,
   FaLaptopCode,
 } from 'react-icons/fa';
+import { useDraggableFloating } from '../../hooks/useDraggableFloating';
 import './MeetDeveloper.css';
 
 export const MeetDeveloper: React.FC = () => {
@@ -27,6 +28,10 @@ export const MeetDeveloper: React.FC = () => {
   });
   const [isExiting, setIsExiting] = useState<boolean>(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const draggable = useDraggableFloating<HTMLElement>({
+    storageKey: 'meet_developer_widget_pos',
+  });
 
   const handleDismiss = (e?: React.MouseEvent) => {
     if (e) {
@@ -134,15 +139,22 @@ export const MeetDeveloper: React.FC = () => {
       {/* ================= FLOATING ANIMATED TRIGGER WIDGET ================= */}
       {!isDismissed && (
         <aside
+          ref={draggable.ref}
           aria-label="Meet Developer floating shortcut"
-          className={`holo-float-trigger-wrapper ${isExiting ? 'is-exiting' : ''}`}
+          className={`holo-float-trigger-wrapper ${isExiting ? 'is-exiting' : ''} ${draggable.isDragging ? 'is-dragging' : ''}`}
+          style={draggable.style}
+          {...draggable.props}
         >
           <div className="holo-float-trigger-pill">
             <button
               type="button"
               className="holo-float-trigger"
-              onClick={() => setIsOpen(true)}
-              title="Meet the Developer of PortfolioBuilder 2.0"
+              onClick={() => {
+                if (!draggable.isDragging) {
+                  setIsOpen(true);
+                }
+              }}
+              title="Meet the Developer of PortfolioBuilder 2.0 (Drag to reposition)"
               aria-label="Open Meet the Developer Modal"
             >
               {/* Pulsing Aura Rings */}

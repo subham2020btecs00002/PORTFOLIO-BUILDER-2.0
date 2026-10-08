@@ -18,17 +18,24 @@
   padding: 12px 20px;
   border-radius: var(--radius-full);
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-  cursor: pointer;
+  cursor: grab;
+  user-select: none;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.95rem;
-  transition: var(--transition-smooth);
+  transition: box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .floating-share-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+.floating-share-btn.is-dragging {
+  cursor: grabbing !important;
+  z-index: 1000;
+  box-shadow: 0 14px 34px rgba(59, 130, 246, 0.7) !important;
+  transform: scale(1.05);
 }
 
 @media (max-width: 600px) {
@@ -195,15 +202,23 @@
   text-decoration: none;
   font-size: 0.85rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 1px 1px rgba(99, 102, 241, 0.25);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
 }
 
 .portfolio-brand-badge:hover {
-  transform: translateY(-2px);
   background: rgba(15, 23, 42, 0.95);
   border-color: rgba(129, 140, 248, 0.6);
   box-shadow: 0 12px 36px rgba(99, 102, 241, 0.35);
   color: #ffffff;
+}
+
+.portfolio-brand-badge.is-dragging {
+  cursor: grabbing !important;
+  z-index: 1000;
+  box-shadow: 0 16px 42px rgba(99, 102, 241, 0.6) !important;
+  transform: scale(1.05);
 }
 
 .brand-badge-sparkle {
