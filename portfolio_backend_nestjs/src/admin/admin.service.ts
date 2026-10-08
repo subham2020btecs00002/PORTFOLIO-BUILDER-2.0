@@ -122,6 +122,8 @@ export class AdminService {
       ];
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+
     return this.userModel.aggregate([
       { $match: matchStage },
       {
@@ -133,6 +135,25 @@ export class AdminService {
         },
       },
       {
+        $lookup: {
+          from: 'ai_usages',
+          let: { uid: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$userId', '$$uid'] },
+                    { $eq: ['$date', today] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'todayAiUsage',
+        },
+      },
+      {
         $project: {
           _id: 1,
           name: 1,
@@ -141,6 +162,26 @@ export class AdminService {
           username: 1,
           createdAt: 1,
           hasPortfolio: { $gt: [{ $size: '$portfolio' }, 0] },
+          aiUsage: {
+            $let: {
+              vars: {
+                usedCount: { $ifNull: [{ $arrayElemAt: ['$todayAiUsage.count', 0] }, 0] },
+                isAdminUser: { $eq: ['$role', 'admin'] },
+              },
+              in: {
+                used: '$$usedCount',
+                limit: 4,
+                remaining: {
+                  $cond: {
+                    if: '$$isAdminUser',
+                    then: 'Unlimited',
+                    else: { $max: [0, { $subtract: [4, '$$usedCount'] }] },
+                  },
+                },
+                isAdmin: '$$isAdminUser',
+              },
+            },
+          },
           portfolioStats: {
             $cond: {
               if: { $gt: [{ $size: '$portfolio' }, 0] },

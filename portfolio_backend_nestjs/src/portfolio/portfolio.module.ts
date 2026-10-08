@@ -5,6 +5,7 @@ import { PortfolioController } from './portfolio.controller';
 import { AiStreamService } from './ai-stream.service';
 import { Portfolio, PortfolioSchema } from './schemas/portfolio.schema';
 import { User, UserSchema } from '../common/schemas/user.schema';
+import { AiUsage, AiUsageSchema } from './schemas/ai-usage.schema';
 import { MlClientService } from './ml-client.service';
 
 /**
@@ -23,6 +24,7 @@ import { MlClientService } from './ml-client.service';
     MongooseModule.forFeature([
       { name: Portfolio.name, schema: PortfolioSchema },
       { name: User.name, schema: UserSchema },
+      { name: AiUsage.name, schema: AiUsageSchema },
     ]),
   ],
   controllers: [PortfolioController],

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload, FaSpinner } from 'react-icons/fa';
 import type { Portfolio, ContactFormData, Project } from '../../../types';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
@@ -18,6 +18,7 @@ interface TemplateProps {
   isPreview?: boolean;
   theme?: string;
   toggleTheme?: () => void;
+  isSendingEmail?: boolean;
 }
 
 interface BentoCardProps {
@@ -43,6 +44,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   useScrollReveal();
 
@@ -262,8 +264,27 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                   <div className="bento-form-group">
                     <textarea name="reason" value={contactForm.reason} onChange={handleInputChange} placeholder="Describe your inquiry..." rows={4} required />
                   </div>
-                  <button type="submit" className="bento-btn-primary" style={{ width: '100%' }}>
-                    Send Message
+                  <button
+                    type="submit"
+                    className="bento-btn-primary"
+                    disabled={isSendingEmail}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                      opacity: isSendingEmail ? 0.7 : 1,
+                    }}
+                  >
+                    {isSendingEmail ? (
+                      <>
+                        <FaSpinner className="spinner-icon" /> Sending Message...
+                      </>
+                    ) : (
+                      'Send Message'
+                    )}
                   </button>
                 </form>
               </div>

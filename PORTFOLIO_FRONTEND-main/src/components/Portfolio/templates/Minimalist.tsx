@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaGraduationCap, FaSun, FaMoon } from 'react-icons/fa';
+import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaGraduationCap, FaSun, FaMoon, FaSpinner } from 'react-icons/fa';
 import type { Portfolio, ContactFormData, Project } from '../../../types';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
@@ -17,6 +17,7 @@ interface TemplateProps {
   isPreview?: boolean;
   theme?: string;
   toggleTheme?: () => void;
+  isSendingEmail?: boolean;
 }
 
 export const Minimalist: React.FC<TemplateProps> = ({
@@ -28,6 +29,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   useScrollReveal();
 
@@ -211,8 +213,30 @@ export const Minimalist: React.FC<TemplateProps> = ({
                   <textarea name="reason" value={contactForm.reason} onChange={handleInputChange} placeholder=" " rows={4} required />
                   <label>Reason of Contact</label>
                 </div>
-                <button type="submit" className="btn-minimal-submit" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', cursor: 'pointer', fontWeight: 600 }}>
-                  <FaEnvelope /> Send Message
+                <button
+                  type="submit"
+                  className="btn-minimal-submit"
+                  disabled={isSendingEmail}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '12px',
+                    cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                    fontWeight: 600,
+                    opacity: isSendingEmail ? 0.7 : 1,
+                  }}
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <FaSpinner className="spinner-icon" /> Sending Message...
+                    </>
+                  ) : (
+                    <>
+                      <FaEnvelope /> Send Message
+                    </>
+                  )}
                 </button>
               </form>
             </div>

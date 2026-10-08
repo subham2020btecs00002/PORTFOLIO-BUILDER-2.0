@@ -48,6 +48,31 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
   const [aiSuggestion, setAiSuggestion] = useState<any>(null);
   const [parsingResume, setParsingResume] = useState(false);
   const [fetchingRecommendations, setFetchingRecommendations] = useState(false);
+  const [aiQuota, setAiQuota] = useState<{
+    used: number;
+    remaining: number | string;
+    limit: number;
+    isAdmin: boolean;
+  } | null>(null);
+  const [parsedSummary, setParsedSummary] = useState<{
+    skillsCount: number;
+    projectsCount: number;
+    historyCount: number;
+    educationCount: number;
+  } | null>(null);
+
+  const fetchAiQuota = async () => {
+    try {
+      const { data } = await api.get('/api/portfolio/ai/usage');
+      setAiQuota(data);
+    } catch (err) {
+      // Non-blocking fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchAiQuota();
+  }, []);
 
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,6 +80,18 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
 
     if (file.type !== 'application/pdf') {
       toast.error('Please upload a PDF file.');
+      return;
+    }
+
+    if (
+      aiQuota &&
+      !aiQuota.isAdmin &&
+      typeof aiQuota.remaining === 'number' &&
+      aiQuota.remaining <= 0
+    ) {
+      toast.error(
+        'Daily AI resume import limit reached (4/4). Your free quota resets at 00:00 UTC.',
+      );
       return;
     }
 
@@ -86,16 +123,33 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         },
       });
 
+      const skillsCount = (data.skills && data.skills.length) || 0;
+      const projectsCount = (data.projects && data.projects.length) || 0;
+      const historyCount = (data.professionalHistory && data.professionalHistory.length) || 0;
+      const educationCount = (data.education && data.education.length) || 0;
+
+      setParsedSummary({
+        skillsCount,
+        projectsCount,
+        historyCount,
+        educationCount,
+      });
+
+      void fetchAiQuota();
+
       toast.update(toastId, {
-        render: 'Resume imported and form auto-filled successfully!',
+        render: '🎉 Resume imported and form auto-filled successfully!',
         type: 'success',
         isLoading: false,
         autoClose: 5000
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to import resume:', err);
+      const errMsg =
+        err.response?.data?.message ||
+        'Failed to parse resume. Please check format or try again.';
       toast.update(toastId, {
-        render: 'Failed to parse resume. Please check format or try again.',
+        render: errMsg,
         type: 'error',
         isLoading: false,
         autoClose: 5000
@@ -711,9 +765,28 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                   <h4 style={{ margin: '0 0 4px 0', color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     ✨ AI Resume Auto-Importer
                   </h4>
-                  <p style={{ margin: '0 0 16px 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '0.8rem', color: '#94a3b8' }}>
                     Upload your existing resume PDF to instantly auto-fill all portfolio steps.
                   </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 600, background: aiQuota?.isAdmin ? 'rgba(192, 132, 252, 0.15)' : (typeof aiQuota?.remaining === 'number' && aiQuota.remaining === 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)'), color: aiQuota?.isAdmin ? '#c084fc' : (typeof aiQuota?.remaining === 'number' && aiQuota.remaining === 0 ? '#f87171' : '#a5b4fc'), border: `1px solid ${aiQuota?.isAdmin ? 'rgba(192, 132, 252, 0.3)' : (typeof aiQuota?.remaining === 'number' && aiQuota.remaining === 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)')}` }}>
+                      {aiQuota?.isAdmin ? (
+                        <span>⚡ Admin Account: Unlimited Imports</span>
+                      ) : (
+                        <span>
+                          Daily Quota: {aiQuota?.remaining ?? 4} / 4 remaining today
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {aiQuota && !aiQuota.isAdmin && typeof aiQuota.remaining === 'number' && aiQuota.remaining <= 0 && (
+                    <div style={{ margin: '0 0 14px', color: '#f87171', fontSize: '0.82rem', fontWeight: 500 }}>
+                      ⚠️ Daily limit of 4 imports reached for today. Your quota refreshes at 00:00 UTC.
+                    </div>
+                  )}
+
                   <label 
                     htmlFor="resume-importer-file" 
                     className="btn-primary"
@@ -722,15 +795,15 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                       alignItems: 'center',
                       gap: '8px',
                       padding: '10px 20px',
-                      cursor: parsingResume ? 'not-allowed' : 'pointer',
+                      cursor: (parsingResume || (aiQuota && !aiQuota.isAdmin && typeof aiQuota.remaining === 'number' && aiQuota.remaining <= 0)) ? 'not-allowed' : 'pointer',
                       fontSize: '0.85rem',
                       background: 'var(--accent-gradient)',
                       border: 'none',
                       color: '#fff',
                       borderRadius: '6px',
                       fontWeight: 600,
-                      pointerEvents: parsingResume ? 'none' : 'auto',
-                      opacity: parsingResume ? 0.7 : 1
+                      pointerEvents: (parsingResume || (aiQuota && !aiQuota.isAdmin && typeof aiQuota.remaining === 'number' && aiQuota.remaining <= 0)) ? 'none' : 'auto',
+                      opacity: (parsingResume || (aiQuota && !aiQuota.isAdmin && typeof aiQuota.remaining === 'number' && aiQuota.remaining <= 0)) ? 0.6 : 1
                     }}
                   >
                     {parsingResume ? (
@@ -751,12 +824,34 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                       <span>Extracting text & mapping skills, experience, and education...</span>
                     </div>
                   )}
+
+                  {parsedSummary && (
+                    <div className="animated fade-in" style={{ marginTop: '18px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '8px', padding: '14px 18px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <strong style={{ color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <FaCheck /> Resume Parsed Successfully!
+                        </strong>
+                        <button
+                          type="button"
+                          onClick={() => setParsedSummary(null)}
+                          style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+                          title="Dismiss notification"
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                      <p style={{ margin: '8px 0 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                        Form fields auto-filled with <strong>{parsedSummary.skillsCount} skills</strong>, <strong>{parsedSummary.projectsCount} projects</strong>, <strong>{parsedSummary.historyCount} work history entries</strong>, and <strong>{parsedSummary.educationCount} education records</strong>. Review each step below and customize as desired!
+                      </p>
+                    </div>
+                  )}
+
                   <input
                     id="resume-importer-file"
                     type="file"
                     accept="application/pdf"
                     onChange={handleResumeUpload}
-                    disabled={parsingResume}
+                    disabled={parsingResume || Boolean(aiQuota && !aiQuota.isAdmin && typeof aiQuota.remaining === 'number' && aiQuota.remaining <= 0)}
                     style={{ display: 'none' }}
                   />
                 </div>

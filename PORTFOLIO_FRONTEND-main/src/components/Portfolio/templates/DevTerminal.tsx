@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTerminal } from 'react-icons/fa';
+import { FaTerminal, FaSpinner } from 'react-icons/fa';
 import type { Portfolio, ContactFormData } from '../../../types';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
 
@@ -12,6 +12,7 @@ interface TemplateProps {
   isPreview?: boolean;
   theme?: string;
   toggleTheme?: () => void;
+  isSendingEmail?: boolean;
 }
 
 interface HistoryItem {
@@ -28,6 +29,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -291,9 +293,28 @@ export const DevTerminal: React.FC<TemplateProps> = ({
               </div>
               <button 
                 type="submit" 
-                style={{ background: 'rgba(0, 255, 102, 0.1)', border: '1px solid #00ff66', color: '#00ff66', padding: '8px 12px', cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}
+                disabled={isSendingEmail}
+                style={{
+                  background: 'rgba(0, 255, 102, 0.1)',
+                  border: '1px solid #00ff66',
+                  color: '#00ff66',
+                  padding: '8px 12px',
+                  cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: isSendingEmail ? 0.7 : 1,
+                }}
               >
-                Send Message
+                {isSendingEmail ? (
+                  <>
+                    <FaSpinner className="spinner-icon" /> Sending Message...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
               </button>
             </form>
           </div>

@@ -4,6 +4,7 @@ import { FaEdit, FaEye, FaArrowRight, FaRocket, FaUser, FaPalette, FaShareAlt } 
 import api from './api';
 import { useAuth } from '../components/context/AuthContext';
 import LoadingSpinner from './common/LoadingSpinner';
+import MeetDeveloper from './MeetDeveloper/MeetDeveloper';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -140,6 +141,9 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Meet the Developer Section */}
+      <MeetDeveloper />
     </div>
   );
 };

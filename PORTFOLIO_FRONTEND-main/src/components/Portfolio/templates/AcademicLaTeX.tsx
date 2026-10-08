@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaSpinner } from 'react-icons/fa';
 import type { Portfolio, ContactFormData, Project } from '../../../types';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
@@ -15,6 +16,7 @@ interface TemplateProps {
   isPreview?: boolean;
   theme?: string;
   toggleTheme?: () => void;
+  isSendingEmail?: boolean;
 }
 
 export const AcademicLaTeX: React.FC<TemplateProps> = ({
@@ -25,6 +27,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   useScrollReveal();
 
@@ -237,8 +240,26 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
                 <label>Nature of Correspondence:</label>
                 <textarea name="reason" value={contactForm.reason} onChange={handleInputChange} rows={4} required />
               </div>
-              <button type="submit" className="latex-btn-submit">
-                [Submit Message]
+              <button
+                type="submit"
+                className="latex-btn-submit"
+                disabled={isSendingEmail}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                  opacity: isSendingEmail ? 0.7 : 1,
+                }}
+              >
+                {isSendingEmail ? (
+                  <>
+                    <FaSpinner className="spinner-icon" /> [Sending Correspondence...]
+                  </>
+                ) : (
+                  '[Submit Message]'
+                )}
               </button>
             </form>
           </div>

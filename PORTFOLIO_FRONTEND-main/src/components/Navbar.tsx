@@ -96,6 +96,22 @@ const Navbar: React.FC = () => {
               <button className="nav-register-btn" onClick={() => navTo('/register')}>
                 Register
               </button>
+              <button
+                className="nav-link-btn"
+                onClick={() => {
+                  if (window.location.pathname !== '/') {
+                    navigate('/#meet-developer');
+                  } else {
+                    const el = document.getElementById('meet-developer');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                  setMenuOpen(false);
+                }}
+                style={{ opacity: 0.85 }}
+                title="Meet the creator of PortfolioBuilder"
+              >
+                Developer
+              </button>
             </>
           )}
         </div>

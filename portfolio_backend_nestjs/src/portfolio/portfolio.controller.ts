@@ -132,6 +132,13 @@ export class PortfolioController {
     return this.portfolioService.generateAiRecommendations(user.id);
   }
 
+  @Get('ai/usage')
+  async getAiUsage(@Req() req: Request) {
+    const userId = (req.headers['x-user-id'] as string) || '';
+    const userRole = (req.headers['x-user-role'] as string) || 'user';
+    return this.portfolioService.getAiUsage(userId, userRole);
+  }
+
   @Post('ai/enhance')
   async enhanceText(@Body() body: { text: string }, @Req() req: Request) {
     if (!body?.text || body.text.trim().length < 5) {
@@ -147,13 +154,32 @@ export class PortfolioController {
     if (!file) {
       throw new BadRequestException('No resume file uploaded');
     }
+    const userId = (req.headers['x-user-id'] as string) || '';
+    const userRole = (req.headers['x-user-role'] as string) || 'user';
     const correlationId = (req.headers['x-correlation-id'] as string) || '';
-    return this.mlClientService.parseResume(
+
+    // Enforce daily rate limit (4 times per day per user, admin unlimited)
+    if (userId) {
+      await this.portfolioService.assertAiImportAllowed(userId, userRole);
+    }
+
+    const parsedData = await this.mlClientService.parseResume(
       file.buffer,
       file.mimetype,
       file.originalname,
       correlationId,
     );
+
+    // Increment AI usage upon successful parse
+    if (userId && userRole !== 'admin') {
+      try {
+        await this.portfolioService.recordAiUsage(userId);
+      } catch (err) {
+        // Non-blocking error handling
+      }
+    }
+
+    return parsedData;
   }
 
   @Delete('ai/recommendations')
