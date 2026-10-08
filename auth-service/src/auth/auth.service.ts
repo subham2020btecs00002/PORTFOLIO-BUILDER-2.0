@@ -286,7 +286,7 @@ export class AuthService {
               process.env.RESEND_FROM_EMAIL ||
               'PortfolioBuilder <onboarding@resend.dev>'
             ).trim();
-          await fetch('https://api.resend.com/emails', {
+          const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${resendApiKey}`,
@@ -299,6 +299,32 @@ export class AuthService {
               html: mailOptions.html,
             }),
           });
+          if (!res.ok) {
+            const errBody = await res.text();
+            if (
+              res.status === 403 &&
+              errBody.includes('only send testing emails to your own email address')
+            ) {
+              const adminEmail =
+                this.configService.get<string>('EMAIL') ||
+                'subhamkumar22082001@gmail.com';
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  from,
+                  to: [adminEmail],
+                  subject: `[Password Reset for ${email}] Password Reset Request`,
+                  html:
+                    `<p style="background: #fef3c7; padding: 10px; border-radius: 6px; font-size: 13px;"><strong>Resend Sandbox Notice:</strong> Delivered to admin (${adminEmail}) because ${email} is unverified in Resend testing mode.</p>` +
+                    mailOptions.html,
+                }),
+              });
+            }
+          }
           return {
             message:
               'If a matching account exists, a password reset link has been sent to your email.',

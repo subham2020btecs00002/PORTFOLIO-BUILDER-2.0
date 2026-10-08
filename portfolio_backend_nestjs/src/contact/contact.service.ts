@@ -104,7 +104,56 @@ export class ContactService {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      this.logger.error(`Resend API error (${response.status}): ${errorBody}`);
+      this.logger.warn(`Resend API error (${response.status}): ${errorBody}`);
+
+      // Handle Resend free tier sandbox restriction:
+      // Resend onboarding@resend.dev only allows sending to the registered account email.
+      // If the portfolio belongs to another user, deliver to the verified admin email
+      // with a clear banner instead of failing with a 500 error!
+      const fallbackEmail = this.defaultReceiver || this.senderEmail;
+      if (
+        response.status === 403 &&
+        errorBody.includes('only send testing emails to your own email address') &&
+        fallbackEmail &&
+        recipient.toLowerCase() !== fallbackEmail.toLowerCase()
+      ) {
+        this.logger.log(
+          `Resend free sandbox limitation: Cannot send to ${recipient}. Rerouting to verified account: ${fallbackEmail}`,
+        );
+
+        const sandboxNoticeHtml = `
+          <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #92400e;">
+            <strong>⚠️ Resend Sandbox Mode Notice:</strong> This message was delivered to admin (<code>${fallbackEmail}</code>) because Resend is in free testing mode.
+            <br/><strong>Intended Portfolio Owner:</strong> <code>${recipient}</code>
+            <br/><span style="font-size: 11px; color: #b45309;">To deliver directly to individual user emails, verify a custom domain at <a href="https://resend.com/domains" style="color: #b45309;">resend.com/domains</a> or use Brevo (set BREVO_API_KEY in Render).</span>
+          </div>
+        `;
+
+        const retryResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from,
+            to: [fallbackEmail],
+            reply_to: replyToEmail,
+            subject: `[Portfolio Contact for ${recipient}] ${subject}`,
+            text: `[Intended Recipient: ${recipient}]\n\n${text}`,
+            html: sandboxNoticeHtml + html,
+          }),
+        });
+
+        if (retryResponse.ok) {
+          const retryResult = (await retryResponse.json().catch(() => ({}))) as any;
+          this.logger.log(
+            `Email successfully delivered via Resend sandbox fallback (id: ${retryResult.id || 'ok'}) to ${fallbackEmail}`,
+          );
+          return;
+        }
+      }
+
       throw new Error(`Resend API returned ${response.status}: ${errorBody}`);
     }
 
