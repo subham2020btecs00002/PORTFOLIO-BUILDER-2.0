@@ -8,6 +8,8 @@ import { getThemeOverrideClasses } from './common/themeUtils';
 import { useTemplateModals } from './common/useTemplateModals';
 import { TemplateModals } from './common/TemplateModals';
 
+import { baseUrl } from '../../url';
+
 export const GamifiedRPG: React.FC<TemplateProps> = ({
   portfolio,
   contactForm,
@@ -20,6 +22,8 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
 }) => {
   useScrollReveal();
   const modals = useTemplateModals();
+  const hasAvatar = Boolean(portfolio.avatarUrl || (portfolio.avatar && portfolio.avatar.contentType));
+  const avatarUrl = portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`;
   
   // Custom timeline draw hook for retro SVG scroll connector path
   const svgPathRef = useTimelineDraw<SVGPathElement>();
@@ -63,9 +67,25 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
         
         {/* Main Hero Header Board */}
         <header className="rpg-header reveal-on-scroll">
-          <div className="rpg-header-left">
-            <h1 className="rpg-char-name">{portfolio.user?.name}</h1>
-            <div className="rpg-char-title">Class: {portfolio.title || 'Developer'}</div>
+          <div className="rpg-header-hero">
+            {hasAvatar && (
+              <div 
+                className="rpg-avatar-frame"
+                onClick={() => modals.setZoomAvatar(true)}
+                title="Click to inspect character portrait"
+              >
+                <img 
+                  src={avatarUrl} 
+                  alt={portfolio.user?.name || 'Character Portrait'} 
+                  className="rpg-avatar-img"
+                />
+                <span className="rpg-avatar-badge">HERO</span>
+              </div>
+            )}
+            <div className="rpg-header-left">
+              <h1 className="rpg-char-name">{portfolio.user?.name}</h1>
+              <div className="rpg-char-title">Class: {portfolio.title || 'Developer'}</div>
+            </div>
           </div>
           <div className="rpg-char-level-badge">
             <div className="badge-lv">LVL</div>
