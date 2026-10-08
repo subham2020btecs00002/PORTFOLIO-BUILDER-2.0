@@ -21,6 +21,9 @@
   font-size: 1.3rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.nav-brand span {
   background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

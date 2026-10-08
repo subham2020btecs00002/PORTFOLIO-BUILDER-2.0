@@ -92,6 +92,16 @@ export class ContactService {
       );
     }
 
+    const appUrl = (
+      this.configService.get<string>('PORTFOLIO_BUILDER_APP_URL') ||
+      this.configService.get<string>('APP_URL') ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      process.env.PORTFOLIO_BUILDER_APP_URL ||
+      process.env.APP_URL ||
+      process.env.FRONTEND_URL ||
+      'https://portfolio-builder-2-0-theta.vercel.app/'
+    ).trim();
+
     const mailOptions = {
       from: `"${name} (via PortfolioBuilder)" <${this.senderEmail}>`,
       replyTo: email,
@@ -106,6 +116,9 @@ Phone Number: ${phone || 'Not provided'}
 
 Message:
 ${reason}
+
+---
+Powered by PortfolioBuilder 2.0 (${appUrl})
       `.trim(),
       html: `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
@@ -140,7 +153,7 @@ ${reason}
   </div>
   <div style="padding: 16px 28px; background: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center;">
     <p style="margin: 0; font-size: 12px; color: #64748b;">
-      Powered by <a href="https://portfolio-builder.vercel.app" style="color: #6366f1; font-weight: 600; text-decoration: none;">PortfolioBuilder 2.0</a>
+      Powered by <a href="${appUrl}" style="color: #6366f1; font-weight: 600; text-decoration: none;">PortfolioBuilder 2.0</a>
     </p>
   </div>
 </div>

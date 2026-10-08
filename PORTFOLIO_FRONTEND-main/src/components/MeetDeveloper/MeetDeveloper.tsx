@@ -18,7 +18,41 @@ import './MeetDeveloper.css';
 export const MeetDeveloper: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hide_meet_developer') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isExiting, setIsExiting] = useState<boolean>(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleDismiss = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsDismissed(true);
+      try {
+        localStorage.setItem('hide_meet_developer', 'true');
+      } catch (err) {
+        // ignore
+      }
+    }, 300);
+  };
+
+  const handleRestore = () => {
+    try {
+      localStorage.removeItem('hide_meet_developer');
+    } catch (err) {
+      // ignore
+    }
+    setIsDismissed(false);
+    setIsExiting(false);
+  };
 
   // Check for hash or custom event to open modal
   useEffect(() => {
@@ -98,31 +132,49 @@ export const MeetDeveloper: React.FC = () => {
   return (
     <>
       {/* ================= FLOATING ANIMATED TRIGGER WIDGET ================= */}
-      <aside aria-label="Meet Developer floating shortcut" className="holo-float-trigger-wrapper">
-        <button
-          type="button"
-          className="holo-float-trigger"
-          onClick={() => setIsOpen(true)}
-          title="Meet the Developer of PortfolioBuilder 2.0"
-          aria-label="Open Meet the Developer Modal"
+      {!isDismissed && (
+        <aside
+          aria-label="Meet Developer floating shortcut"
+          className={`holo-float-trigger-wrapper ${isExiting ? 'is-exiting' : ''}`}
         >
-          {/* Pulsing Aura Rings */}
-          <span className="holo-trigger-aura aura-ring-1"></span>
-          <span className="holo-trigger-aura aura-ring-2"></span>
+          <div className="holo-float-trigger-pill">
+            <button
+              type="button"
+              className="holo-float-trigger"
+              onClick={() => setIsOpen(true)}
+              title="Meet the Developer of PortfolioBuilder 2.0"
+              aria-label="Open Meet the Developer Modal"
+            >
+              {/* Pulsing Aura Rings */}
+              <span className="holo-trigger-aura aura-ring-1"></span>
+              <span className="holo-trigger-aura aura-ring-2"></span>
 
-          {/* Trigger Content */}
-          <div className="holo-trigger-content">
-            <div className="holo-trigger-icon-box">
-              <FaLaptopCode className="trigger-icon" />
-            </div>
-            <div className="holo-trigger-text">
-              <span className="trigger-title">Meet Developer</span>
-              <span className="trigger-sub">Subham Kumar</span>
-            </div>
-            <span className="trigger-status-dot" title="Available for opportunities"></span>
+              {/* Trigger Content */}
+              <div className="holo-trigger-content">
+                <div className="holo-trigger-icon-box">
+                  <FaLaptopCode className="trigger-icon" />
+                </div>
+                <div className="holo-trigger-text">
+                  <span className="trigger-title">Meet Developer</span>
+                  <span className="trigger-sub">Subham Kumar</span>
+                </div>
+                <span className="trigger-status-dot" title="Available for opportunities"></span>
+              </div>
+            </button>
+
+            {/* Remove / Dismiss Option */}
+            <button
+              type="button"
+              className="holo-trigger-dismiss-btn"
+              onClick={handleDismiss}
+              title="Remove Meet Developer widget from screen"
+              aria-label="Remove Meet Developer widget"
+            >
+              <FaTimes />
+            </button>
           </div>
-        </button>
-      </aside>
+        </aside>
+      )}
 
       {/* ================= 3D HOLOGRAPHIC MODAL OVERLAY ================= */}
       {isOpen && (
@@ -346,6 +398,30 @@ export const MeetDeveloper: React.FC = () => {
                       >
                         <FaGithub /> GitHub
                       </a>
+                    </div>
+
+                    {/* Floating widget toggle option */}
+                    <div className="holo-modal-bottom-bar">
+                      {isDismissed ? (
+                        <button
+                          type="button"
+                          className="holo-hide-shortcut-btn"
+                          onClick={handleRestore}
+                        >
+                          <FaSyncAlt style={{ fontSize: '0.72rem' }} /> Restore floating button on screen
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="holo-hide-shortcut-btn"
+                          onClick={() => {
+                            handleDismiss();
+                            setIsOpen(false);
+                          }}
+                        >
+                          <FaTimes style={{ fontSize: '0.72rem' }} /> Don't show floating button on screen
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

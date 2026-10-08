@@ -32,6 +32,8 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
         EMAIL: Joi.string().optional(),
         PASSWORD: Joi.string().optional(),
         RECEIVER_EMAIL: Joi.string().optional(),
+        PORTFOLIO_BUILDER_APP_URL: Joi.string().default('https://portfolio-builder-2-0-theta.vercel.app/'),
+        APP_URL: Joi.string().optional(),
       }),
     }),
     MongooseModule.forRootAsync({

@@ -23,6 +23,81 @@
   }
 }
 
+.holo-float-trigger-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.holo-float-trigger-wrapper.is-exiting {
+  opacity: 0;
+  transform: translateY(20px) scale(0.85);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.holo-trigger-dismiss-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.8;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 0;
+}
+
+.holo-trigger-dismiss-btn:hover {
+  opacity: 1;
+  color: #ffffff;
+  background: #ef4444;
+  border-color: #ef4444;
+  transform: scale(1.18);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.7);
+}
+
+.holo-trigger-dismiss-btn:active {
+  transform: scale(0.95);
+}
+
+.holo-modal-bottom-bar {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.holo-hide-shortcut-btn {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+  font-size: 0.76rem;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.holo-hide-shortcut-btn:hover {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(239, 68, 68, 0.08);
+}
+
 .holo-float-trigger {
   position: relative;
   display: flex;
