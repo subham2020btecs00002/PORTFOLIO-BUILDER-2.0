@@ -399,6 +399,14 @@
   background: rgba(10, 16, 31, 0.96);
 }
 
+.holo-card-3d.is-flipped .holo-face-front {
+  pointer-events: none;
+}
+
+.holo-card-3d:not(.is-flipped) .holo-face-back {
+  pointer-events: none;
+}
+
 /* ==========================================================================
    4. HOLOGRAPHIC FOIL & GLARE SHADERS
    ========================================================================== */

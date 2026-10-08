@@ -21,7 +21,10 @@ export const MeetDeveloper: React.FC = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('hide_meet_developer') === 'true';
+      // Proactively clear legacy permanent localStorage key from previous versions
+      localStorage.removeItem('hide_meet_developer');
+      // Use sessionStorage so dismissal only lasts for the current browser tab session
+      return sessionStorage.getItem('hide_meet_developer') === 'true';
     } catch {
       return false;
     }
@@ -42,7 +45,8 @@ export const MeetDeveloper: React.FC = () => {
     setTimeout(() => {
       setIsDismissed(true);
       try {
-        localStorage.setItem('hide_meet_developer', 'true');
+        sessionStorage.setItem('hide_meet_developer', 'true');
+        localStorage.removeItem('hide_meet_developer');
       } catch (err) {
         // ignore
       }
@@ -51,6 +55,7 @@ export const MeetDeveloper: React.FC = () => {
 
   const handleRestore = () => {
     try {
+      sessionStorage.removeItem('hide_meet_developer');
       localStorage.removeItem('hide_meet_developer');
     } catch (err) {
       // ignore
@@ -59,13 +64,29 @@ export const MeetDeveloper: React.FC = () => {
     setIsExiting(false);
   };
 
+  const handleOpenModal = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't open if clicking the dismiss cross button
+    if (target.closest('button.holo-trigger-dismiss-btn, .holo-trigger-dismiss-btn')) {
+      return;
+    }
+    if (!draggable.isDragging) {
+      setIsOpen(true);
+      setIsFlipped(false);
+    }
+  };
+
   // Check for hash or custom event to open modal
   useEffect(() => {
-    const handleOpen = () => setIsOpen(true);
+    const handleOpen = () => {
+      setIsOpen(true);
+      setIsFlipped(false);
+    };
     window.addEventListener('open-meet-developer', handleOpen);
 
     if (window.location.hash === '#meet-developer' || window.location.hash === '#developer') {
       setIsOpen(true);
+      setIsFlipped(false);
       window.history.replaceState(null, '', window.location.pathname);
     }
 
@@ -134,6 +155,15 @@ export const MeetDeveloper: React.FC = () => {
     setIsFlipped((prev) => !prev);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Don't toggle flip if clicking an interactive element (link, button, input)
+    if (target.closest('a, button, input, textarea, select')) {
+      return;
+    }
+    setIsFlipped((prev) => !prev);
+  };
+
   return (
     <>
       {/* ================= FLOATING ANIMATED TRIGGER WIDGET ================= */}
@@ -143,18 +173,15 @@ export const MeetDeveloper: React.FC = () => {
           aria-label="Meet Developer floating shortcut"
           className={`holo-float-trigger-wrapper ${isExiting ? 'is-exiting' : ''} ${draggable.isDragging ? 'is-dragging' : ''}`}
           style={draggable.style}
+          onClick={handleOpenModal}
           {...draggable.props}
         >
-          <div className="holo-float-trigger-pill">
+          <div className="holo-float-trigger-pill" onClick={handleOpenModal}>
             <button
               type="button"
               className="holo-float-trigger"
-              onClick={() => {
-                if (!draggable.isDragging) {
-                  setIsOpen(true);
-                }
-              }}
-              title="Meet the Developer of PortfolioBuilder 2.0 (Drag to reposition)"
+              onClick={handleOpenModal}
+              title="Meet the Developer of PortfolioBuilder 2.0 (Click to open, drag to reposition)"
               aria-label="Open Meet the Developer Modal"
             >
               {/* Pulsing Aura Rings */}
@@ -179,7 +206,7 @@ export const MeetDeveloper: React.FC = () => {
               type="button"
               className="holo-trigger-dismiss-btn"
               onClick={handleDismiss}
-              title="Remove Meet Developer widget from screen"
+              title="Remove Meet Developer widget from screen for this session"
               aria-label="Remove Meet Developer widget"
             >
               <FaTimes />
@@ -217,6 +244,7 @@ export const MeetDeveloper: React.FC = () => {
               <div
                 ref={cardRef}
                 className={`holo-card-3d ${isFlipped ? 'is-flipped' : ''}`}
+                onClick={handleCardClick}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
               >
@@ -431,7 +459,7 @@ export const MeetDeveloper: React.FC = () => {
                             setIsOpen(false);
                           }}
                         >
-                          <FaTimes style={{ fontSize: '0.72rem' }} /> Don't show floating button on screen
+                          <FaTimes style={{ fontSize: '0.72rem' }} /> Don't show floating button for this session
                         </button>
                       )}
                     </div>

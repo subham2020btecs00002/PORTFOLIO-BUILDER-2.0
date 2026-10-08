@@ -46,6 +46,8 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
   const dragInfoRef = useRef<{
     isDown: boolean;
     hasMoved: boolean;
+    pointerId: number;
+    hasCaptured: boolean;
     startX: number;
     startY: number;
     startOffsetX: number;
@@ -54,6 +56,8 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
   }>({
     isDown: false,
     hasMoved: false,
+    pointerId: -1,
+    hasCaptured: false,
     startX: 0,
     startY: 0,
     startOffsetX: 0,
@@ -97,7 +101,11 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
 
       // Do not initiate drag if user interacted with a dismiss/close button or excluded item
       const target = e.target as HTMLElement;
-      if (target.closest('button.holo-trigger-dismiss-btn, .no-drag, [data-no-drag="true"]')) {
+      if (
+        target.closest(
+          'button.holo-trigger-dismiss-btn, .holo-trigger-dismiss-btn, .no-drag, [data-no-drag="true"]'
+        )
+      ) {
         return;
       }
 
@@ -108,6 +116,8 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
       dragInfoRef.current = {
         isDown: true,
         hasMoved: false,
+        pointerId: e.pointerId,
+        hasCaptured: false,
         startX: e.clientX,
         startY: e.clientY,
         startOffsetX: offset.x,
@@ -115,11 +125,10 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
         baseRect: rect,
       };
 
-      try {
-        el.setPointerCapture(e.pointerId);
-      } catch {
-        // ignore
-      }
+      // NOTE: We do NOT call setPointerCapture here on pointerdown.
+      // Calling setPointerCapture on pointerdown forces the eventual click event
+      // to target the capturing container instead of child buttons.
+      // Pointer capture is deferred until actual movement occurs in handlePointerMove.
     },
     [offset]
   );
@@ -132,10 +141,20 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
       const dx = e.clientX - info.startX;
       const dy = e.clientY - info.startY;
 
-      // Threshold of 5px to distinguish drag from intentional click
-      if (!info.hasMoved && Math.hypot(dx, dy) > 5) {
+      // Threshold of 6px to distinguish drag from intentional click
+      if (!info.hasMoved && Math.hypot(dx, dy) > 6) {
         info.hasMoved = true;
         setIsDragging(true);
+
+        const el = elementRef.current;
+        if (el && !info.hasCaptured) {
+          try {
+            el.setPointerCapture(e.pointerId);
+            info.hasCaptured = true;
+          } catch {
+            // ignore
+          }
+        }
       }
 
       if (info.hasMoved) {
@@ -169,12 +188,13 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
 
       info.isDown = false;
       const el = elementRef.current;
-      if (el) {
+      if (el && info.hasCaptured) {
         try {
           el.releasePointerCapture(e.pointerId);
         } catch {
           // ignore
         }
+        info.hasCaptured = false;
       }
 
       if (info.hasMoved) {
@@ -186,11 +206,11 @@ export function useDraggableFloating<T extends HTMLElement = HTMLElement>(
           }
         }
 
-        // Brief delay before unsetting hasMoved so click events are suppressed
+        // Brief delay before unsetting hasMoved and isDragging so click events from the drag release are suppressed
         setTimeout(() => {
           setIsDragging(false);
           info.hasMoved = false;
-        }, 60);
+        }, 80);
       } else {
         setIsDragging(false);
       }
