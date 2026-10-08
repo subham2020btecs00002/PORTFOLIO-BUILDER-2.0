@@ -16,7 +16,6 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as crypto from 'crypto';
-import * as nodemailer from 'nodemailer';
 
 /**
  * AuthService — migrated verbatim from the monolith.
@@ -27,21 +26,11 @@ import * as nodemailer from 'nodemailer';
  */
 @Injectable()
 export class AuthService {
-  private transporter: nodemailer.Transporter;
-
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: this.configService.get<string>('EMAIL'),
-        pass: this.configService.get<string>('PASSWORD'),
-      },
-    });
-  }
+  ) {}
 
   private issueTokens(userId: string, role: string = 'user'): {
     accessToken: string;
@@ -284,7 +273,7 @@ export class AuthService {
 
       if (brevoApiKey) {
         try {
-          await fetch('https://api.brevo.com/v3/smtp/email', {
+          const res = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
               'api-key': brevoApiKey,
@@ -298,9 +287,17 @@ export class AuthService {
               htmlContent: mailOptions.html,
             }),
           });
+          if (res.ok) {
+            console.log(`Password reset email successfully sent via Brevo to ${email}`);
+          } else {
+            const errBody = await res.text();
+            console.error(`Brevo password reset email error (${res.status}): ${errBody}`);
+          }
         } catch (error) {
           console.error('Error sending reset email via Brevo:', error);
         }
+      } else {
+        console.warn('BREVO_API_KEY is not configured in auth-service environment.');
       }
     }
 
