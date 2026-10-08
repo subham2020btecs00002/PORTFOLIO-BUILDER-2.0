@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
-import { FaLaptopCode, FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon } from 'react-icons/fa';
+import { FaLaptopCode, FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon, FaCode } from 'react-icons/fa';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
@@ -10,6 +10,16 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleScrollToDeveloper = () => {
+    if (window.location.pathname !== '/') {
+      navigate('/#meet-developer');
+    } else {
+      const el = document.getElementById('meet-developer');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMenuOpen(false);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -81,6 +91,13 @@ const Navbar: React.FC = () => {
               >
                 <FaUser /> Profile
               </button>
+              <button
+                className="nav-link-btn nav-developer-btn"
+                onClick={handleScrollToDeveloper}
+                title="Meet the creator of PortfolioBuilder"
+              >
+                <FaCode /> Developer
+              </button>
               <button className="nav-logout-btn" onClick={handleLogout}>
                 <FaSignOutAlt /> Logout
               </button>
@@ -97,20 +114,11 @@ const Navbar: React.FC = () => {
                 Register
               </button>
               <button
-                className="nav-link-btn"
-                onClick={() => {
-                  if (window.location.pathname !== '/') {
-                    navigate('/#meet-developer');
-                  } else {
-                    const el = document.getElementById('meet-developer');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                  setMenuOpen(false);
-                }}
-                style={{ opacity: 0.85 }}
+                className="nav-link-btn nav-developer-btn"
+                onClick={handleScrollToDeveloper}
                 title="Meet the creator of PortfolioBuilder"
               >
-                Developer
+                <FaCode /> Developer
               </button>
             </>
           )}
