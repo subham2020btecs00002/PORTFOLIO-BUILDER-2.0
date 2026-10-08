@@ -272,72 +272,35 @@ export class AuthService {
         `,
       };
 
-      const resendApiKey = (
-        this.configService.get<string>('RESEND_API_KEY') ||
-        process.env.RESEND_API_KEY ||
+      const brevoApiKey = (
+        this.configService.get<string>('BREVO_API_KEY') ||
+        process.env.BREVO_API_KEY ||
         ''
       ).trim();
+      const senderEmail = (
+        this.configService.get<string>('EMAIL') ||
+        'subhamkumar22082001@gmail.com'
+      ).trim();
 
-      if (resendApiKey) {
+      if (brevoApiKey) {
         try {
-          const from =
-            (
-              this.configService.get<string>('RESEND_FROM_EMAIL') ||
-              process.env.RESEND_FROM_EMAIL ||
-              'PortfolioBuilder <onboarding@resend.dev>'
-            ).trim();
-          const res = await fetch('https://api.resend.com/emails', {
+          await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${resendApiKey}`,
+              'api-key': brevoApiKey,
               'Content-Type': 'application/json',
+              accept: 'application/json',
             },
             body: JSON.stringify({
-              from,
-              to: [email],
+              sender: { name: 'PortfolioBuilder', email: senderEmail },
+              to: [{ email }],
               subject: 'Password Reset Request',
-              html: mailOptions.html,
+              htmlContent: mailOptions.html,
             }),
           });
-          if (!res.ok) {
-            const errBody = await res.text();
-            if (
-              res.status === 403 &&
-              errBody.includes('only send testing emails to your own email address')
-            ) {
-              const adminEmail =
-                this.configService.get<string>('EMAIL') ||
-                'subhamkumar22082001@gmail.com';
-              await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${resendApiKey}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  from,
-                  to: [adminEmail],
-                  subject: `[Password Reset for ${email}] Password Reset Request`,
-                  html:
-                    `<p style="background: #fef3c7; padding: 10px; border-radius: 6px; font-size: 13px;"><strong>Resend Sandbox Notice:</strong> Delivered to admin (${adminEmail}) because ${email} is unverified in Resend testing mode.</p>` +
-                    mailOptions.html,
-                }),
-              });
-            }
-          }
-          return {
-            message:
-              'If a matching account exists, a password reset link has been sent to your email.',
-          };
         } catch (error) {
-          console.error('Error sending reset email via Resend:', error);
+          console.error('Error sending reset email via Brevo:', error);
         }
-      }
-
-      try {
-        await this.transporter.sendMail(mailOptions);
-      } catch (error) {
-        console.error('Error sending reset email:', error);
       }
     }
 
