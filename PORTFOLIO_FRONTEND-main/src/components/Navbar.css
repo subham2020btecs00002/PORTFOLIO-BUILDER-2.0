@@ -99,15 +99,6 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-.nav-developer-btn {
-  color: #a5b4fc;
-}
-
-.nav-developer-btn:hover {
-  color: #ffffff;
-  background: rgba(99, 102, 241, 0.15);
-}
-
 .nav-logout-btn {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
