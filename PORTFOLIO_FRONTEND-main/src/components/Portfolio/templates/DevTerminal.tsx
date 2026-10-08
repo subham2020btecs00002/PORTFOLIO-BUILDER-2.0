@@ -1,19 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTerminal, FaSpinner } from 'react-icons/fa';
-import type { Portfolio, ContactFormData } from '../../../types';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
-
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-  isSendingEmail?: boolean;
-}
+import type { TemplateProps } from './common/types';
 
 interface HistoryItem {
   command: string;

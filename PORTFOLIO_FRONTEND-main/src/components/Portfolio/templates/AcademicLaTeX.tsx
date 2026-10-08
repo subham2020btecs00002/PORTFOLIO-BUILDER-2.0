@@ -1,23 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FaSpinner } from 'react-icons/fa';
-import type { Portfolio, ContactFormData, Project } from '../../../types';
-import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
-import { ProjectSpotlightModal } from '../ProjectSpotlightModal';
-import { PdfViewerModal } from '../PdfViewerModal';
-
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-  isSendingEmail?: boolean;
-}
+import type { TemplateProps } from './common/types';
+import { getThemeOverrideClasses } from './common/themeUtils';
+import { useTemplateModals } from './common/useTemplateModals';
+import { TemplateModals } from './common/TemplateModals';
 
 export const AcademicLaTeX: React.FC<TemplateProps> = ({
   portfolio,
@@ -30,15 +18,12 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
   isSendingEmail = false,
 }) => {
   useScrollReveal();
+  const modals = useTemplateModals();
 
-  const [spotlightProject, setSpotlightProject] = useState<Project | null>(null);
-  const [viewPdf, setViewPdf] = useState<boolean>(false);
-
-  const fontClass = portfolio.fontFamily && portfolio.fontFamily !== 'default' ? `font-family-${portfolio.fontFamily}` : '';
-  const colorClass = portfolio.themeColor && portfolio.themeColor !== 'default' ? `color-override-${portfolio.themeColor}` : '';
+  const themeOverrideClasses = getThemeOverrideClasses(portfolio);
 
   return (
-    <div className={`theme-container latex-theme ${fontClass} ${colorClass}`}>
+    <div className={`theme-container latex-theme ${themeOverrideClasses}`}>
       {isPreview && (
         <div style={{
           position: 'fixed',
@@ -81,7 +66,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
           
           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px' }} className="no-print">
             {portfolio.pdf && (
-              <button onClick={() => setViewPdf(true)} className="latex-action-btn">
+              <button onClick={() => modals.setViewPdf(true)} className="latex-action-btn">
                 [View Resume PDF]
               </button>
             )}
@@ -185,7 +170,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
                       <em>Technologies:</em> {proj.technologies.join(', ')}
                     </p>
                   )}
-                  <button onClick={() => setSpotlightProject(proj)} className="latex-link no-print" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontStyle: 'italic', marginTop: '6px' }}>
+                  <button onClick={() => modals.setSpotlightProject(proj)} className="latex-link no-print" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontStyle: 'italic', marginTop: '6px' }}>
                     [Spotlight Details]
                   </button>
                 </div>
@@ -273,16 +258,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
       </footer>
 
       {/* Modals */}
-      {spotlightProject && (
-        <ProjectSpotlightModal project={spotlightProject} onClose={() => setSpotlightProject(null)} />
-      )}
-
-      {viewPdf && portfolio.pdf && (
-        <PdfViewerModal
-          pdfUrl={`${baseUrl}/api/portfolio/pdf/${portfolio._id}`}
-          onClose={() => setViewPdf(false)}
-        />
-      )}
+      <TemplateModals portfolio={portfolio} {...modals} />
     </div>
   );
 };

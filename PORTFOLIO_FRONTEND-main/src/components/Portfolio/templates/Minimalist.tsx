@@ -1,24 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaGraduationCap, FaSun, FaMoon, FaSpinner } from 'react-icons/fa';
-import type { Portfolio, ContactFormData, Project } from '../../../types';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
-import { ProjectSpotlightModal } from '../ProjectSpotlightModal';
-import { PdfViewerModal } from '../PdfViewerModal';
-import { AvatarZoomModal } from '../AvatarZoomModal';
-
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-  isSendingEmail?: boolean;
-}
+import type { TemplateProps } from './common/types';
+import { getThemeOverrideClasses } from './common/themeUtils';
+import { useTemplateModals } from './common/useTemplateModals';
+import { TemplateModals } from './common/TemplateModals';
 
 export const Minimalist: React.FC<TemplateProps> = ({
   portfolio,
@@ -32,16 +20,10 @@ export const Minimalist: React.FC<TemplateProps> = ({
   isSendingEmail = false,
 }) => {
   useScrollReveal();
-
-  const [spotlightProject, setSpotlightProject] = useState<Project | null>(null);
-  const [viewPdf, setViewPdf] = useState<boolean>(false);
-  const [zoomAvatar, setZoomAvatar] = useState<boolean>(false);
+  const modals = useTemplateModals();
 
   const currentJob = portfolio.professionalHistory?.find((job) => job.isCurrentEmployee);
-  
-  const fontClass = portfolio.fontFamily && portfolio.fontFamily !== 'default' ? `font-family-${portfolio.fontFamily}` : '';
-  const radiusClass = portfolio.borderRadius && portfolio.borderRadius !== 'default' ? `radius-override-${portfolio.borderRadius}` : '';
-  const colorClass = portfolio.themeColor && portfolio.themeColor !== 'default' ? `color-override-${portfolio.themeColor}` : '';
+  const themeOverrideClasses = getThemeOverrideClasses(portfolio);
 
   const sectionOrder = portfolio.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'];
 
@@ -159,7 +141,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
             <h2 className="section-title-minimal">Selected Projects</h2>
             <div className="projects-grid-minimal">
               {portfolio.projects?.map((proj, idx) => (
-                <div key={idx} className="project-card-minimal" onClick={() => setSpotlightProject(proj)}>
+                <div key={idx} className="project-card-minimal" onClick={() => modals.setSpotlightProject(proj)}>
                   <div className="project-header-minimal">
                     <h3 className="project-title">{proj.title}</h3>
                     {proj.link && (
@@ -248,7 +230,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
   };
 
   return (
-    <div className={`theme-container minimalist-theme ${fontClass} ${radiusClass} ${colorClass}`}>
+    <div className={`theme-container minimalist-theme ${themeOverrideClasses}`}>
       <div className="theme-content-wrapper">
         
         {/* Navigation */}
@@ -280,7 +262,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
                 src={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
                 alt={portfolio.user.name}
                 className="theme-avatar"
-                onClick={() => setZoomAvatar(true)}
+                onClick={() => modals.setZoomAvatar(true)}
               />
             </div>
           )}
@@ -324,7 +306,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
                   <FaDownload /> Download CV
                 </a>
                 <button 
-                  onClick={() => setViewPdf(true)} 
+                  onClick={() => modals.setViewPdf(true)} 
                   className="btn-secondary" 
                   style={{ display: 'inline-flex', border: '1px solid var(--border-color)', padding: '12px 24px', cursor: 'pointer', fontWeight: 600, alignItems: 'center', gap: '8px' }}
                 >
@@ -346,25 +328,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
       </div>
 
       {/* Presentation Modals */}
-      {spotlightProject && (
-        <ProjectSpotlightModal 
-          project={spotlightProject} 
-          onClose={() => setSpotlightProject(null)} 
-        />
-      )}
-      {viewPdf && portfolio.pdf && (
-        <PdfViewerModal 
-          pdfUrl={`${baseUrl}/api/portfolio/download/${portfolio._id}`} 
-          onClose={() => setViewPdf(false)} 
-        />
-      )}
-      {zoomAvatar && (portfolio.avatarUrl || (portfolio.avatar && portfolio.avatar.contentType)) && (
-        <AvatarZoomModal 
-          avatarUrl={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`} 
-          userName={portfolio.user.name} 
-          onClose={() => setZoomAvatar(false)} 
-        />
-      )}
+      <TemplateModals portfolio={portfolio} {...modals} />
     </div>
   );
 };
