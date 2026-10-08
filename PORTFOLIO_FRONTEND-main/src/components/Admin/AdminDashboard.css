@@ -679,6 +679,58 @@
   border: 1px solid rgba(156, 163, 175, 0.2);
 }
 
+.badge-admin-unlimited {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.ai-quota-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.badge-quota {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.badge-quota.quota-good {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.badge-quota.quota-low {
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+  border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.badge-quota.quota-empty {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.quota-used-subtext {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
 .portfolio-style-cell {
   display: flex;
   flex-direction: column;

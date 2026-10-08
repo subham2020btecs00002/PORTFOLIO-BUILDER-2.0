@@ -1,8 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Portfolio } from './schemas/portfolio.schema';
 import { User } from '../common/schemas/user.schema';
+import { AiUsage } from './schemas/ai-usage.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
 import { MlClientService } from './ml-client.service';
 
@@ -11,6 +18,7 @@ export class PortfolioService {
   constructor(
     @InjectModel(Portfolio.name) private portfolioModel: Model<Portfolio>,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(AiUsage.name) private aiUsageModel: Model<AiUsage>,
     private readonly mlClientService: MlClientService,
   ) {}
 
@@ -342,5 +350,60 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio not found');
     }
     await this.portfolioModel.deleteOne({ user: userId });
+  }
+
+  async getAiUsage(userId: string, role?: string) {
+    const today = new Date().toISOString().slice(0, 10);
+    const userObjectId = Types.ObjectId.isValid(userId)
+      ? new Types.ObjectId(userId)
+      : userId;
+    const usage = await this.aiUsageModel
+      .findOne({ userId: userObjectId, date: today } as any)
+      .lean();
+    const used = usage?.count || 0;
+    const isAdmin = role === 'admin';
+
+    const resetDate = new Date();
+    resetDate.setUTCHours(24, 0, 0, 0);
+
+    return {
+      used,
+      limit: 4,
+      remaining: isAdmin ? 'Unlimited' : Math.max(0, 4 - used),
+      isAdmin,
+      resetAt: resetDate.toISOString(),
+    };
+  }
+
+  async assertAiImportAllowed(userId: string, role?: string): Promise<void> {
+    if (role === 'admin') return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const userObjectId = Types.ObjectId.isValid(userId)
+      ? new Types.ObjectId(userId)
+      : userId;
+    const usage = await this.aiUsageModel
+      .findOne({ userId: userObjectId, date: today } as any)
+      .lean();
+    const used = usage?.count || 0;
+
+    if (used >= 4) {
+      throw new HttpException(
+        'Daily AI resume import limit reached (4/4). Your quota resets at 00:00 UTC.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  async recordAiUsage(userId: string): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const userObjectId = Types.ObjectId.isValid(userId)
+      ? new Types.ObjectId(userId)
+      : userId;
+    await this.aiUsageModel.updateOne(
+      { userId: userObjectId, date: today } as any,
+      { $inc: { count: 1 } },
+      { upsert: true },
+    );
   }
 }

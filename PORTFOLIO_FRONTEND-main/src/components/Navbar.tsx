@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
-import { FaLaptopCode, FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon } from 'react-icons/fa';
+import { FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon } from 'react-icons/fa';
+import { AppLogo } from './common/AppLogo';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
@@ -33,7 +34,7 @@ const Navbar: React.FC = () => {
 
       <nav className="global-navbar card-glass">
         <div className="nav-brand" onClick={() => navTo('/')}>
-          <FaLaptopCode className="brand-icon" />
+          <AppLogo size={28} className="brand-icon" />
           <span>PortfolioBuilder</span>
         </div>
 

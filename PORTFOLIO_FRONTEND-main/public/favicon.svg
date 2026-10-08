@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="pbLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="pbGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="pbAccentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#fb923c" />
+    </linearGradient>
+    <filter id="pbShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Gradient Squircle -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#pbLogoGrad)" filter="url(#pbShadow)"/>
+  <rect x="34" y="34" width="444" height="444" rx="110" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="4"/>
+
+  <!-- Core Dark Container -->
+  <rect x="64" y="64" width="384" height="384" rx="88" fill="#0f172a" fill-opacity="0.9"/>
+  <rect x="64" y="64" width="384" height="384" rx="88" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="2"/>
+
+  <!-- Left Code Bracket < -->
+  <path d="M 190 175 L 125 256 L 190 337" stroke="url(#pbGlowGrad)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Right Code Bracket > -->
+  <path d="M 322 175 L 387 256 L 322 337" stroke="url(#pbGlowGrad)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Central Dynamic Slash / -->
+  <path d="M 285 170 L 227 342" stroke="#ffffff" stroke-width="30" stroke-linecap="round" />
+
+  <!-- Radiant Accent Spark (2.0 Node) -->
+  <circle cx="345" cy="165" r="21" fill="url(#pbAccentGrad)"/>
+  <circle cx="345" cy="165" r="8" fill="#ffffff"/>
+</svg>

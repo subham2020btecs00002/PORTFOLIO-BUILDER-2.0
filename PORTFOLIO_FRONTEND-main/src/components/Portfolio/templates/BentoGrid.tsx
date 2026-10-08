@@ -1,24 +1,13 @@
-import React, { useState } from 'react';
-import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload } from 'react-icons/fa';
-import type { Portfolio, ContactFormData, Project } from '../../../types';
+import React from 'react';
+import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../url';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import { use3DTilt } from '../../../hooks/use3DTilt';
-import { ProjectSpotlightModal } from '../ProjectSpotlightModal';
-import { PdfViewerModal } from '../PdfViewerModal';
-import { AvatarZoomModal } from '../AvatarZoomModal';
-
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-}
+import type { TemplateProps } from './common/types';
+import { getThemeOverrideClasses } from './common/themeUtils';
+import { useTemplateModals } from './common/useTemplateModals';
+import { TemplateModals } from './common/TemplateModals';
 
 interface BentoCardProps {
   className?: string;
@@ -43,21 +32,16 @@ export const BentoGrid: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   useScrollReveal();
-
-  const [spotlightProject, setSpotlightProject] = useState<Project | null>(null);
-  const [viewPdf, setViewPdf] = useState<boolean>(false);
-  const [zoomAvatar, setZoomAvatar] = useState<boolean>(false);
+  const modals = useTemplateModals();
 
   const currentJob = portfolio.professionalHistory?.find((job) => job.isCurrentEmployee);
-  
-  const fontClass = portfolio.fontFamily && portfolio.fontFamily !== 'default' ? `font-family-${portfolio.fontFamily}` : '';
-  const radiusClass = portfolio.borderRadius && portfolio.borderRadius !== 'default' ? `radius-override-${portfolio.borderRadius}` : '';
-  const colorClass = portfolio.themeColor && portfolio.themeColor !== 'default' ? `color-override-${portfolio.themeColor}` : '';
+  const themeOverrideClasses = getThemeOverrideClasses(portfolio);
 
   return (
-    <div className={`theme-container bento-theme ${fontClass} ${radiusClass} ${colorClass}`}>
+    <div className={`theme-container bento-theme ${themeOverrideClasses}`}>
       {isPreview && (
         <div style={{
           position: 'fixed',
@@ -102,7 +86,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                     src={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
                     alt={portfolio.user?.name}
                     className="bento-avatar"
-                    onClick={() => setZoomAvatar(true)}
+                    onClick={() => modals.setZoomAvatar(true)}
                   />
                 </div>
               )}
@@ -111,7 +95,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                 <h2>About Me</h2>
                 <p className="bento-bio-desc">{portfolio.description || 'No bio description provided.'}</p>
                 {portfolio.pdf && (
-                  <button onClick={() => setViewPdf(true)} className="bento-btn-primary" style={{ marginTop: '15px' }}>
+                  <button onClick={() => modals.setViewPdf(true)} className="bento-btn-primary" style={{ marginTop: '15px' }}>
                     <FaDownload style={{ marginRight: '6px' }} /> View Resume PDF
                   </button>
                 )}
@@ -222,7 +206,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                       ))}
                     </div>
                   )}
-                  <button onClick={() => setSpotlightProject(proj)} className="bento-btn-text" style={{ marginTop: '12px' }}>
+                  <button onClick={() => modals.setSpotlightProject(proj)} className="bento-btn-text" style={{ marginTop: '12px' }}>
                     View Project Details
                   </button>
                 </BentoCard>
@@ -262,8 +246,27 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                   <div className="bento-form-group">
                     <textarea name="reason" value={contactForm.reason} onChange={handleInputChange} placeholder="Describe your inquiry..." rows={4} required />
                   </div>
-                  <button type="submit" className="bento-btn-primary" style={{ width: '100%' }}>
-                    Send Message
+                  <button
+                    type="submit"
+                    className="bento-btn-primary"
+                    disabled={isSendingEmail}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                      opacity: isSendingEmail ? 0.7 : 1,
+                    }}
+                  >
+                    {isSendingEmail ? (
+                      <>
+                        <FaSpinner className="spinner-icon" /> Sending Message...
+                      </>
+                    ) : (
+                      'Send Message'
+                    )}
                   </button>
                 </form>
               </div>
@@ -280,24 +283,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
       </div>
 
       {/* Modals */}
-      {spotlightProject && (
-        <ProjectSpotlightModal project={spotlightProject} onClose={() => setSpotlightProject(null)} />
-      )}
-      
-      {viewPdf && portfolio.pdf && (
-        <PdfViewerModal
-          pdfUrl={`${baseUrl}/api/portfolio/pdf/${portfolio._id}`}
-          onClose={() => setViewPdf(false)}
-        />
-      )}
-
-      {zoomAvatar && (
-        <AvatarZoomModal
-          avatarUrl={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
-          userName={portfolio.user?.name || 'User'}
-          onClose={() => setZoomAvatar(false)}
-        />
-      )}
+      <TemplateModals portfolio={portfolio} {...modals} />
     </div>
   );
 };

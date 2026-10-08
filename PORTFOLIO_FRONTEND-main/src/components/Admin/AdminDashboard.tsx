@@ -63,6 +63,12 @@ interface AggregatedUser {
     views: number;
     contactCount: number;
   };
+  aiUsage?: {
+    used: number;
+    limit: number;
+    remaining: number | string;
+    isAdmin: boolean;
+  };
 }
 
 const AdminDashboard: React.FC = () => {
@@ -477,6 +483,7 @@ const AdminDashboard: React.FC = () => {
                       <tr>
                         <th>User Info</th>
                         <th>Role</th>
+                        <th>AI Quota (Today)</th>
                         <th>Joined Date</th>
                         <th>Portfolio Settings</th>
                         <th>Activity metrics</th>
@@ -499,6 +506,32 @@ const AdminDashboard: React.FC = () => {
                             <span className={`role-badge badge-${user.role}`}>
                               {user.role}
                             </span>
+                          </td>
+
+                          {/* AI QUOTA USAGE */}
+                          <td>
+                            {user.role === 'admin' ? (
+                              <span className="badge-admin-unlimited" title="Admins have unlimited AI usage">
+                                ⚡ Unlimited
+                              </span>
+                            ) : (
+                              <div className="ai-quota-cell">
+                                <span
+                                  className={`badge-quota ${
+                                    Number(user.aiUsage?.remaining ?? 4) === 0
+                                      ? 'quota-empty'
+                                      : Number(user.aiUsage?.remaining ?? 4) <= 1
+                                      ? 'quota-low'
+                                      : 'quota-good'
+                                  }`}
+                                >
+                                  {user.aiUsage?.remaining ?? 4} / 4 left
+                                </span>
+                                <span className="quota-used-subtext">
+                                  Used: {user.aiUsage?.used ?? 0}
+                                </span>
+                              </div>
+                            )}
                           </td>
 
                           {/* JOINED DATE */}

@@ -1,22 +1,14 @@
-import React, { useState } from 'react';
-import type { Portfolio, ContactFormData, Project } from '../../../types';
-import { baseUrl } from '../../url';
+import React from 'react';
+import { FaSpinner } from 'react-icons/fa';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import { useTimelineDraw } from '../../../hooks/useTimelineDraw';
-import { ProjectSpotlightModal } from '../ProjectSpotlightModal';
-import { PdfViewerModal } from '../PdfViewerModal';
+import type { TemplateProps } from './common/types';
+import { getThemeOverrideClasses } from './common/themeUtils';
+import { useTemplateModals } from './common/useTemplateModals';
+import { TemplateModals } from './common/TemplateModals';
 
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-}
+import { baseUrl } from '../../url';
 
 export const GamifiedRPG: React.FC<TemplateProps> = ({
   portfolio,
@@ -26,17 +18,17 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
   useScrollReveal();
+  const modals = useTemplateModals();
+  const hasAvatar = Boolean(portfolio.avatarUrl || (portfolio.avatar && portfolio.avatar.contentType));
+  const avatarUrl = portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`;
   
   // Custom timeline draw hook for retro SVG scroll connector path
   const svgPathRef = useTimelineDraw<SVGPathElement>();
 
-  const [spotlightProject, setSpotlightProject] = useState<Project | null>(null);
-  const [viewPdf, setViewPdf] = useState<boolean>(false);
-
-  const fontClass = portfolio.fontFamily && portfolio.fontFamily !== 'default' ? `font-family-${portfolio.fontFamily}` : '';
-  const colorClass = portfolio.themeColor && portfolio.themeColor !== 'default' ? `color-override-${portfolio.themeColor}` : '';
+  const themeOverrideClasses = getThemeOverrideClasses(portfolio);
 
   // Calculate experience level (Level = 1 + years of experience)
   const sortedJobs = getSortedHistory(portfolio.professionalHistory);
@@ -51,7 +43,7 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
   }
 
   return (
-    <div className={`theme-container rpg-theme ${fontClass} ${colorClass}`}>
+    <div className={`theme-container rpg-theme ${themeOverrideClasses}`}>
       {isPreview && (
         <div style={{
           position: 'fixed',
@@ -75,9 +67,25 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
         
         {/* Main Hero Header Board */}
         <header className="rpg-header reveal-on-scroll">
-          <div className="rpg-header-left">
-            <h1 className="rpg-char-name">{portfolio.user?.name}</h1>
-            <div className="rpg-char-title">Class: {portfolio.title || 'Developer'}</div>
+          <div className="rpg-header-hero">
+            {hasAvatar && (
+              <div 
+                className="rpg-avatar-frame"
+                onClick={() => modals.setZoomAvatar(true)}
+                title="Click to inspect character portrait"
+              >
+                <img 
+                  src={avatarUrl} 
+                  alt={portfolio.user?.name || 'Character Portrait'} 
+                  className="rpg-avatar-img"
+                />
+                <span className="rpg-avatar-badge">HERO</span>
+              </div>
+            )}
+            <div className="rpg-header-left">
+              <h1 className="rpg-char-name">{portfolio.user?.name}</h1>
+              <div className="rpg-char-title">Class: {portfolio.title || 'Developer'}</div>
+            </div>
           </div>
           <div className="rpg-char-level-badge">
             <div className="badge-lv">LVL</div>
@@ -154,7 +162,7 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
                   </a>
                 )}
                 {portfolio.pdf && (
-                  <div onClick={() => setViewPdf(true)} className="rpg-item-slot" style={{ cursor: 'pointer' }}>
+                  <div onClick={() => modals.setViewPdf(true)} className="rpg-item-slot" style={{ cursor: 'pointer' }}>
                     <span className="slot-icon">📜</span>
                     <span className="slot-name">Scroll PDF</span>
                   </div>
@@ -241,7 +249,7 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
                           ))}
                         </div>
                       )}
-                      <button onClick={() => setSpotlightProject(proj)} className="rpg-btn" style={{ fontSize: '0.75rem', marginTop: '10px', padding: '4px 8px' }}>
+                      <button onClick={() => modals.setSpotlightProject(proj)} className="rpg-btn" style={{ fontSize: '0.75rem', marginTop: '10px', padding: '4px 8px' }}>
                         Inspect Item
                       </button>
                     </div>
@@ -277,8 +285,27 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
               <label>Message Content</label>
               <textarea name="reason" value={contactForm.reason} onChange={handleInputChange} rows={4} required />
             </div>
-            <button type="submit" className="rpg-btn rpg-btn-primary" style={{ width: '100%' }}>
-              DISPATCH MESSENGER
+            <button
+              type="submit"
+              className="rpg-btn rpg-btn-primary"
+              disabled={isSendingEmail}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                opacity: isSendingEmail ? 0.7 : 1,
+              }}
+            >
+              {isSendingEmail ? (
+                <>
+                  <FaSpinner className="spinner-icon" /> TRANSMITTING...
+                </>
+              ) : (
+                'DISPATCH MESSENGER'
+              )}
             </button>
           </form>
         </div>
@@ -291,16 +318,7 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
       </div>
 
       {/* Modals */}
-      {spotlightProject && (
-        <ProjectSpotlightModal project={spotlightProject} onClose={() => setSpotlightProject(null)} />
-      )}
-
-      {viewPdf && portfolio.pdf && (
-        <PdfViewerModal
-          pdfUrl={`${baseUrl}/api/portfolio/pdf/${portfolio._id}`}
-          onClose={() => setViewPdf(false)}
-        />
-      )}
+      <TemplateModals portfolio={portfolio} {...modals} />
     </div>
   );
 };

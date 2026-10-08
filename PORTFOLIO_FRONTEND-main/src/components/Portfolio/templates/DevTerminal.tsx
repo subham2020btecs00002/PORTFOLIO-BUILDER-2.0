@@ -1,18 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTerminal } from 'react-icons/fa';
-import type { Portfolio, ContactFormData } from '../../../types';
+import { FaTerminal, FaSpinner } from 'react-icons/fa';
 import { getSortedHistory } from '../../../utils/portfolioUtils';
-
-interface TemplateProps {
-  portfolio: Portfolio;
-  contactForm: ContactFormData;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleScrollTo: (sectionId: string) => void;
-  isPreview?: boolean;
-  theme?: string;
-  toggleTheme?: () => void;
-}
+import type { TemplateProps } from './common/types';
+import { useTemplateModals } from './common/useTemplateModals';
+import { TemplateModals } from './common/TemplateModals';
+import { baseUrl } from '../../url';
 
 interface HistoryItem {
   command: string;
@@ -28,7 +20,12 @@ export const DevTerminal: React.FC<TemplateProps> = ({
   isPreview = false,
   theme,
   toggleTheme,
+  isSendingEmail = false,
 }) => {
+  const modals = useTemplateModals();
+  const hasAvatar = Boolean(portfolio.avatarUrl || (portfolio.avatar && portfolio.avatar.contentType));
+  const avatarUrl = portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`;
+
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -54,12 +51,29 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         <p className="terminal-output-info">System: PortfolioOS v2.0 (Active)</p>
         {isPreview && <p className="terminal-output-accent">[PREVIEW MODE ACTIVE]</p>}
         <p className="terminal-output-success">Welcome to {portfolio.user?.name}'s interactive developer shell.</p>
+        {hasAvatar && (
+          <div 
+            className="cli-welcome-avatar-card"
+            onClick={(e) => {
+              e.stopPropagation();
+              modals.setZoomAvatar(true);
+            }}
+            title="Click to zoom operator avatar"
+          >
+            <img src={avatarUrl} alt={portfolio.user?.name || 'Operator'} className="cli-welcome-avatar-img" />
+            <div className="cli-welcome-avatar-info">
+              <span className="cli-tag">[IDENTITY_NODE // VERIFIED]</span>
+              <span className="cli-name">{portfolio.user?.name} &bull; {portfolio.title || 'Developer'}</span>
+              <span className="cli-hint">&gt; Click to inspect identity record</span>
+            </div>
+          </div>
+        )}
         <p className="terminal-output-accent">Type 'help' to see the list of available commands, or click the buttons above to run them.</p>
         <p style={{ margin: '15px 0 0 0', opacity: 0.6 }}>---------------------------------------------------------</p>
       </div>
     );
     setHistory([{ command: 'system --init', output: welcomeOutput, timestamp: new Date().toLocaleTimeString() }]);
-  }, [portfolio.user?.name, isPreview]);
+  }, [portfolio.user?.name, portfolio.title, hasAvatar, avatarUrl, isPreview]);
 
   useEffect(() => {
     scrollToBottom();
@@ -101,20 +115,42 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         output = (
           <div className="terminal-output">
             <p className="terminal-output-accent">Available Commands:</p>
-            <p>  <strong className="terminal-output-success">about</strong>       - Print biographical details and background info</p>
-            <p>  <strong className="terminal-output-success">skills</strong>      - Print technical skills and proficiency levels</p>
-            <p>  <strong className="terminal-output-success">experience</strong>  - List professional employment history</p>
-            <p>  <strong className="terminal-output-success">projects</strong>    - Display notable projects and code links</p>
-            <p>  <strong className="terminal-output-success">contact</strong>     - Render details on how to get in touch</p>
-            <p>  <strong className="terminal-output-success">clear</strong>       - Clear the terminal screen</p>
-            <p>  <strong className="terminal-output-success">socials</strong>     - Show links to GitHub, LinkedIn, etc.</p>
+            <p>  <strong className="terminal-output-success">whoami</strong>       - Display operator identity and credentials</p>
+            <p>  <strong className="terminal-output-success">about</strong>        - Print biographical details and background info</p>
+            <p>  <strong className="terminal-output-success">skills</strong>       - Print technical skills and proficiency levels</p>
+            <p>  <strong className="terminal-output-success">experience</strong>   - List professional employment history</p>
+            <p>  <strong className="terminal-output-success">projects</strong>     - Display notable projects and code links</p>
+            <p>  <strong className="terminal-output-success">contact</strong>      - Render details on how to get in touch</p>
+            <p>  <strong className="terminal-output-success">clear</strong>        - Clear the terminal screen</p>
+            <p>  <strong className="terminal-output-success">socials</strong>      - Show links to GitHub, LinkedIn, etc.</p>
           </div>
         );
         break;
 
+      case 'whoami':
       case 'about':
         output = (
           <div className="terminal-output">
+            {hasAvatar && (
+              <div 
+                className="cli-about-avatar-row"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  modals.setZoomAvatar(true);
+                }}
+                title="Click to zoom operator avatar"
+              >
+                <div className="cli-about-avatar-wrapper">
+                  <img src={avatarUrl} alt={portfolio.user?.name || 'Operator'} className="cli-about-avatar-img" />
+                  <span className="cli-about-badge">ID_01</span>
+                </div>
+                <div className="cli-about-avatar-details">
+                  <div className="terminal-output-success" style={{ fontWeight: 'bold' }}>{portfolio.user?.name}</div>
+                  <div className="terminal-output-accent" style={{ fontSize: '0.85rem' }}>&gt; Role: {portfolio.title || 'Developer'}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#00cc52', opacity: 0.7, marginTop: '2px' }}>[STATUS: ACTIVE // CLICK TO EXPAND]</div>
+                </div>
+              </div>
+            )}
             <h3 className="terminal-output-info">{"//"} PROFILE SUMMARY</h3>
             <p>{portfolio.description || 'No bio description provided.'}</p>
             
@@ -291,9 +327,28 @@ export const DevTerminal: React.FC<TemplateProps> = ({
               </div>
               <button 
                 type="submit" 
-                style={{ background: 'rgba(0, 255, 102, 0.1)', border: '1px solid #00ff66', color: '#00ff66', padding: '8px 12px', cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}
+                disabled={isSendingEmail}
+                style={{
+                  background: 'rgba(0, 255, 102, 0.1)',
+                  border: '1px solid #00ff66',
+                  color: '#00ff66',
+                  padding: '8px 12px',
+                  cursor: isSendingEmail ? 'not-allowed' : 'pointer',
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: isSendingEmail ? 0.7 : 1,
+                }}
               >
-                Send Message
+                {isSendingEmail ? (
+                  <>
+                    <FaSpinner className="spinner-icon" /> Sending Message...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
               </button>
             </form>
           </div>
@@ -362,15 +417,40 @@ export const DevTerminal: React.FC<TemplateProps> = ({
   return (
     <div className="cli-theme cli-container" onClick={focusInput}>
       <header className="terminal-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', color: '#00ff66', margin: 0 }}>
-              <FaTerminal style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-              {portfolio.user?.name ? portfolio.user.name.toUpperCase() : 'PORTFOLIO'}_SHELL
-            </h1>
-            <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '2px 0 0 0' }}>
-              Connected as Guest Node
-            </p>
+        <div className="terminal-header-top">
+          <div className="terminal-header-brand">
+            {hasAvatar && (
+              <div 
+                className="cli-avatar-badge" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  modals.setZoomAvatar(true);
+                }}
+                title="Identity Node: Click to zoom avatar"
+              >
+                <div className="cli-avatar-frame">
+                  <img 
+                    src={avatarUrl} 
+                    alt={portfolio.user?.name || 'Operator'} 
+                    className="cli-avatar-img"
+                  />
+                  <span className="cli-avatar-status-dot" />
+                </div>
+                <div className="cli-avatar-meta">
+                  <span className="cli-avatar-id">SYS_USER // AUTH</span>
+                  <span className="cli-avatar-inspect">[ZOOM_ID]</span>
+                </div>
+              </div>
+            )}
+            <div>
+              <h1 style={{ fontSize: '1.5rem', color: '#00ff66', margin: 0 }}>
+                <FaTerminal style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                {portfolio.user?.name ? portfolio.user.name.toUpperCase() : 'PORTFOLIO'}_SHELL
+              </h1>
+              <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '2px 0 0 0' }}>
+                Connected as Guest Node &bull; Host: {portfolio.user?.name || 'Host'}
+              </p>
+            </div>
           </div>
           {toggleTheme && (
             <button 
@@ -396,6 +476,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         {/* Console Command Shortcuts */}
         <nav style={{ marginTop: '20px' }}>
           <ul className="terminal-nav">
+            <li className="terminal-nav-item" onClick={() => handleTabClick('whoami')}>[whoami]</li>
             <li className="terminal-nav-item" onClick={() => handleTabClick('about')}>[about]</li>
             <li className="terminal-nav-item" onClick={() => handleTabClick('skills')}>[skills]</li>
             <li className="terminal-nav-item" onClick={() => handleTabClick('experience')}>[experience]</li>
@@ -454,6 +535,9 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         </form>
         <div ref={terminalEndRef} />
       </main>
+
+      {/* Modals for Avatar Zoom, Project Spotlight, and PDF Viewer */}
+      <TemplateModals portfolio={portfolio} {...modals} />
     </div>
   );
 };

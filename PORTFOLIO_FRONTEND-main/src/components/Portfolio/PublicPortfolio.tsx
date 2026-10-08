@@ -23,6 +23,7 @@ import { AcademicLaTeX } from './templates/AcademicLaTeX';
 import { GamifiedRPG } from './templates/GamifiedRPG';
 import { ResumePrint } from './templates/ResumePrint';
 import './templates/templates.css';
+import './PublicPortfolio.css';
 
 interface PublicPortfolioProps {
   isResumeMode?: boolean;
@@ -44,6 +45,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
     phone: '',
     reason: '',
   });
+  const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -105,8 +107,11 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!portfolio) return;
+    if (!portfolio || isSendingEmail) return;
     
+    setIsSendingEmail(true);
+    const toastId = toast.loading('Sending your message...');
+
     try {
       // Send contact message (owner user id is in portfolio.user._id)
       const response = await axios.post(`${baseUrl}/api/contact`, {
@@ -115,7 +120,12 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       });
       
       if (response.status === 200 || response.status === 201) {
-        toast.success('Email sent successfully');
+        toast.update(toastId, {
+          render: 'Message sent successfully! The portfolio owner has been notified.',
+          type: 'success',
+          isLoading: false,
+          autoClose: 5000,
+        });
         setContactForm({
           name: '',
           email: '',
@@ -123,15 +133,31 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
           reason: '',
         });
       }
-    } catch (err) {
-      toast.error('Error sending email');
-      console.error(err);
+    } catch (err: any) {
+      const errorMsg =
+        err.response?.data?.message || 'Error sending email. Please try again.';
+      toast.update(toastId, {
+        render: errorMsg,
+        type: 'error',
+        isLoading: false,
+        autoClose: 6000,
+      });
+      console.error('Contact email submission error:', err);
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
   const copyPortfolioLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('Link copied to clipboard!');
+  };
+
+  const copyRichShareText = () => {
+    const ownerName = portfolio?.user?.name || 'Developer';
+    const richText = `Check out ${ownerName}'s portfolio: ${window.location.href} 🚀 Built with PortfolioBuilder!`;
+    navigator.clipboard.writeText(richText);
+    toast.success('Share caption & link copied to clipboard!');
   };
 
   if (loading) {
@@ -158,6 +184,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       handleInputChange,
       handleSubmit,
       handleScrollTo,
+      isSendingEmail,
       theme,
     };
 
@@ -186,7 +213,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
     }
   };
 
-  const shareText = `Check out my professional developer portfolio built on PortfolioBuilder:`;
+  const shareText = `Check out ${portfolio.user?.name || 'my'} developer portfolio built on PortfolioBuilder:`;
   const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
 
@@ -198,8 +225,23 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
     <div className="public-portfolio-wrapper">
       {renderTemplate()}
 
-      {/* Floating Share Button (original style) */}
-      <button className="floating-share-btn" onClick={() => setIsShareModalOpen(true)}>
+      {/* Sleek Floating Branding Pill (Increases reach & virality) */}
+      <a
+        href="/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="portfolio-brand-badge no-print"
+        title="Create your own free developer portfolio with PortfolioBuilder"
+      >
+        <span className="brand-badge-sparkle">⚡</span>
+        <span className="brand-badge-text">
+          Built with <strong>PortfolioBuilder</strong>
+        </span>
+        <span className="brand-badge-cta">Create Yours Free →</span>
+      </a>
+
+      {/* Floating Share Button */}
+      <button className="floating-share-btn no-print" onClick={() => setIsShareModalOpen(true)}>
         <FaShareAlt /> Share Portfolio
       </button>
 
@@ -224,6 +266,25 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
                 </button>
               </div>
 
+              <div style={{ marginBottom: '18px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={copyRichShareText}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.12)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    color: '#818cf8',
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✨ Copy with Viral Caption
+                </button>
+              </div>
+
               <div className="share-social-grid">
                 <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer" className="btn-share-social linkedin">
                   <FaLinkedin /> LinkedIn
@@ -237,7 +298,10 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
                 <div className="qr-code-section">
                   <h4>QR Code Profile</h4>
                   <img src={qrCodeUrl} alt="QR Code Profile" />
-                  <a href={qrCodeUrl} download={`${username || portfolio.user.username || 'portfolio'}-portfolio-qr.png`} className="btn-secondary" style={{ marginTop: '10px', fontSize: '0.85rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px' }}>
+                    Powered by PortfolioBuilder 2.0
+                  </p>
+                  <a href={qrCodeUrl} download={`${username || portfolio.user.username || 'portfolio'}-portfolio-qr.png`} className="btn-secondary" style={{ marginTop: '6px', fontSize: '0.85rem' }}>
                     <FaQrcode /> Download QR Code
                   </a>
                 </div>
