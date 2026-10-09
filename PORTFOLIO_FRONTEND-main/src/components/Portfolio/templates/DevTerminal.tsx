@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTerminal, FaSpinner } from 'react-icons/fa';
-import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation, formatEducationDateRange } from '../../../utils/portfolioUtils';
 import type { TemplateProps } from './common/types';
 import { useTemplateModals } from './common/useTemplateModals';
 import { TemplateModals } from './common/TemplateModals';
@@ -161,7 +161,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
                 <div key={idx} style={{ marginTop: '10px' }}>
                   <p>🎓 <strong className="terminal-output-accent">{edu.collegeName}</strong> - {edu.degree} in {edu.branch}</p>
                   <p style={{ opacity: 0.8, fontSize: '0.85rem' }}>
-                    Period: {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : 'N/A'} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}
+                    Period: {formatEducationDateRange(edu)}
                   </p>
                   <p style={{ opacity: 0.8, fontSize: '0.85rem' }}>CGPA/Percentage: {edu.cgpaOrPercentage}</p>
                 </div>

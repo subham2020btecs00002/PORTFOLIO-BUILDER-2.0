@@ -1,7 +1,21 @@
-import React, { useState, useEffect, useDeferredValue } from 'react';
+import React, { useState, useEffect, useDeferredValue, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaArrowRight, FaCheck, FaSpinner, FaTimes } from 'react-icons/fa';
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaCheck,
+  FaSpinner,
+  FaTimes,
+  FaColumns,
+  FaExpand,
+  FaCompress,
+  FaEye,
+  FaDesktop,
+  FaTabletAlt,
+  FaMobileAlt,
+  FaEdit,
+} from 'react-icons/fa';
 import api from '../api';
 import { usePortfolioForm } from '../../hooks/usePortfolioForm';
 import { useAuth } from '../context/AuthContext';
@@ -268,6 +282,82 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     localStorage.getItem('portfolio_disable_animations') !== 'true'
   );
 
+  // View modes: split, full form, or full live preview
+  type ViewMode = 'split' | 'form-only' | 'preview-only';
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('portfolio_builder_view_mode');
+    return (saved === 'split' || saved === 'form-only' || saved === 'preview-only') ? saved : 'split';
+  });
+
+  // Mobile / Tablet Tab Mode (<= 900px)
+  const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 900;
+    }
+    return false;
+  });
+
+  // Viewport Device Frame Switcher ('desktop' | 'tablet' | 'mobile')
+  type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth <= 900);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Split ratio for horizontal resizer (width percentage of form pane)
+  const [splitRatio, setSplitRatio] = useState<number>(() => {
+    const saved = localStorage.getItem('portfolio_builder_split_ratio');
+    const num = Number(saved);
+    return (num >= 30 && num <= 75) ? num : 48;
+  });
+
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('portfolio_builder_view_mode', mode);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const newRatio = (offsetX / rect.width) * 100;
+      if (newRatio >= 30 && newRatio <= 75) {
+        setSplitRatio(Math.round(newRatio));
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        localStorage.setItem('portfolio_builder_split_ratio', String(splitRatio));
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, splitRatio]);
+
   useEffect(() => {
     let url = '';
     if (formData.avatar && (formData.avatar instanceof File || formData.avatar instanceof Blob)) {
@@ -453,11 +543,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
           );
           payload.append(
             `education[${index}][yearOfPassing]`,
-            edu.isCurrentStudent
-              ? ''
-              : edu.yearOfPassing
-              ? new Date(edu.yearOfPassing).toISOString()
-              : '',
+            edu.yearOfPassing ? new Date(edu.yearOfPassing).toISOString() : '',
           );
           payload.append(
             `education[${index}][isCurrentStudent]`,
@@ -566,7 +652,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
     );
   };
 
-  // Step Indicators
+  // Step Indicators (Desktop + Responsive Mobile)
   const renderStepIndicator = () => {
     const steps = ['Details', 'Skills', 'Projects', 'Education', 'Experience', 'Links & PDF', 'Theme & Layout'];
 
@@ -583,23 +669,71 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
       }
     };
 
+    const progressPercentage = Math.round((currentStep / totalSteps) * 100);
+
     return (
-      <div className="step-indicator-container">
-        {steps.map((stepName, index) => {
-          const stepNum = index + 1;
-          const isActive = currentStep === stepNum;
-          const isCompleted = currentStep > stepNum;
-          const hasError = !isActive && stepHasAnyError(stepNum);
-          return (
-            <div key={stepNum} className={`step-dot-wrapper ${isActive ? 'active' : ''} ${isCompleted && !hasError ? 'completed' : ''} ${hasError ? 'has-error' : ''}`}>
-              <div className="step-dot" onClick={() => setStep(stepNum)}>
-                {isCompleted && !hasError ? <FaCheck size={12} /> : stepNum}
+      <>
+        {/* Desktop Step Indicator (>= 901px) */}
+        <div className="step-indicator-container desktop-step-indicator">
+          {steps.map((stepName, index) => {
+            const stepNum = index + 1;
+            const isActive = currentStep === stepNum;
+            const isCompleted = currentStep > stepNum;
+            const hasError = !isActive && stepHasAnyError(stepNum);
+            return (
+              <div
+                key={stepNum}
+                className={`step-dot-wrapper ${isActive ? 'active' : ''} ${isCompleted && !hasError ? 'completed' : ''} ${hasError ? 'has-error' : ''}`}
+              >
+                <div className="step-dot" onClick={() => setStep(stepNum)}>
+                  {isCompleted && !hasError ? <FaCheck size={12} /> : stepNum}
+                </div>
+                <span className="step-label">{stepName}</span>
               </div>
-              <span className="step-label">{stepName}</span>
+            );
+          })}
+        </div>
+
+        {/* Mobile / Tablet Compact Stepper (<= 900px) */}
+        <div className="mobile-compact-stepper">
+          <div className="mobile-stepper-header">
+            <div className="mobile-step-meta">
+              <span className="mobile-step-count">Step {currentStep} of {totalSteps}</span>
+              <span className="mobile-step-sep">•</span>
+              <span className="mobile-step-current-name">{steps[currentStep - 1]}</span>
             </div>
-          );
-        })}
-      </div>
+            <span className="mobile-step-percentage">{progressPercentage}% Complete</span>
+          </div>
+
+          <div className="mobile-step-progress-track">
+            <div
+              className="mobile-step-progress-bar"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+
+          <div className="mobile-step-dots-row">
+            {steps.map((stepName, index) => {
+              const stepNum = index + 1;
+              const isActive = currentStep === stepNum;
+              const isCompleted = currentStep > stepNum;
+              const hasError = !isActive && stepHasAnyError(stepNum);
+
+              return (
+                <button
+                  type="button"
+                  key={stepNum}
+                  onClick={() => setStep(stepNum)}
+                  className={`mobile-mini-step-btn ${isActive ? 'active' : ''} ${isCompleted && !hasError ? 'completed' : ''} ${hasError ? 'has-error' : ''}`}
+                  title={`${stepNum}. ${stepName}`}
+                >
+                  {isCompleted && !hasError ? <FaCheck size={9} /> : stepNum}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </>
     );
   };
 
@@ -636,25 +770,87 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
   ];
 
   return (
-    <div className="portfolio-builder-split-container">
-      {/* Full-Page AI Processing Overlays */}
-      {parsingResume && (
-        <LoadingSpinner
-          fullPage={true}
-          size="lg"
-          message="✨ AI is parsing your resume PDF and auto-filling your portfolio sections..."
-        />
-      )}
-      {fetchingRecommendations && (
-        <LoadingSpinner
-          fullPage={true}
-          size="lg"
-          message="✨ Consulting AI design models for theme and layout recommendations..."
-        />
-      )}
+    <>
+      {/* Horizontal View Mode Switcher Toolbar for Desktop (>= 901px) */}
+      <div className="builder-view-toolbar desktop-toolbar">
+        <div className="view-mode-pill-group">
+          <button
+            type="button"
+            className={`view-mode-btn ${viewMode === 'split' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('split')}
+            title="Split View (Form on left, Live preview on right)"
+          >
+            <FaColumns /> Split View
+          </button>
+          <button
+            type="button"
+            className={`view-mode-btn ${viewMode === 'form-only' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('form-only')}
+            title="Focus Form: Expands the form wizard to 100% full width for spacious editing"
+          >
+            <FaExpand /> Focus Form (100% Width)
+          </button>
+          <button
+            type="button"
+            className={`view-mode-btn ${viewMode === 'preview-only' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('preview-only')}
+            title="Full Preview: Expand live portfolio preview to full desktop width"
+          >
+            <FaEye /> Full Preview
+          </button>
+        </div>
+        {viewMode === 'split' && (
+          <div className="resizer-quick-hint">
+            <small>Drag the vertical divider between panels to resize freely</small>
+          </div>
+        )}
+      </div>
 
-      {/* LEFT COLUMN: BUILDER FORM */}
-      <div className="builder-left-form-pane">
+      {/* Segmented Toolbar for Mobile / Tablet (<= 900px) */}
+      <div className="builder-view-toolbar mobile-toolbar">
+        <div className="mobile-segmented-control">
+          <button
+            type="button"
+            className={`mobile-segmented-btn ${mobileTab === 'form' ? 'active' : ''}`}
+            onClick={() => setMobileTab('form')}
+          >
+            <FaEdit /> Edit Form
+          </button>
+          <button
+            type="button"
+            className={`mobile-segmented-btn ${mobileTab === 'preview' ? 'active' : ''}`}
+            onClick={() => setMobileTab('preview')}
+          >
+            <FaEye /> Live Preview <span className="live-indicator-dot" />
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={containerRef}
+        className={`portfolio-builder-split-container mode-${viewMode} ${isMobileScreen ? `mobile-active-${mobileTab}` : ''} ${isDragging ? 'is-resizing' : ''}`}
+      >
+        {/* Full-Page AI Processing Overlays */}
+        {parsingResume && (
+          <LoadingSpinner
+            fullPage={true}
+            size="lg"
+            message="✨ AI is parsing your resume PDF and auto-filling your portfolio sections..."
+          />
+        )}
+        {fetchingRecommendations && (
+          <LoadingSpinner
+            fullPage={true}
+            size="lg"
+            message="✨ Consulting AI design models for theme and layout recommendations..."
+          />
+        )}
+
+        {/* LEFT COLUMN: BUILDER FORM */}
+        <div
+          className="builder-left-form-pane"
+          style={!isMobileScreen && viewMode === 'split' ? { flex: `0 0 ${splitRatio}%`, maxWidth: `${splitRatio}%` } : undefined}
+        >
         <div className="portfolio-wizard-container">
           {renderStepIndicator()}
           
@@ -829,6 +1025,18 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                 </button>
               )}
 
+              {/* Mobile Preview Peek Button */}
+              {isMobileScreen && (
+                <button
+                  type="button"
+                  className="btn-mobile-preview-peek"
+                  onClick={() => setMobileTab('preview')}
+                  title="Peek live portfolio preview"
+                >
+                  <FaEye /> Preview
+                </button>
+              )}
+
               {currentStep < totalSteps ? (
                 <button
                   type="button"
@@ -867,17 +1075,107 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         </div>
       </div>
 
+      {!isMobileScreen && viewMode === 'split' && (
+        <div
+          className={`builder-resizer-handle ${isDragging ? 'dragging' : ''}`}
+          onMouseDown={handleMouseDown}
+          onDoubleClick={() => setSplitRatio(48)}
+          title="Drag horizontally to resize panes (Double-click to reset 50/50)"
+        />
+      )}
+
       {/* RIGHT COLUMN: RESPONSIVE BROWSER PREVIEW */}
-      <div className="builder-right-preview-pane">
+      <div
+        className="builder-right-preview-pane"
+        style={!isMobileScreen && viewMode === 'split' ? { flex: `0 0 calc(${100 - splitRatio}% - 16px)`, maxWidth: `calc(${100 - splitRatio}% - 16px)` } : undefined}
+      >
         <div className="preview-browser-mockup">
           <div className="browser-header">
-            <span className="dot red"></span>
-            <span className="dot yellow"></span>
-            <span className="dot green"></span>
+            <div className="browser-dots">
+              <span className="dot red"></span>
+              <span className="dot yellow"></span>
+              <span className="dot green"></span>
+            </div>
+
+            {/* Responsive device frame switcher (Desktop/Tablet/Mobile) */}
+            <div className="preview-device-switcher" role="group" aria-label="Device Viewport">
+              <button
+                type="button"
+                className={`device-btn ${previewDevice === 'desktop' ? 'active' : ''}`}
+                onClick={() => setPreviewDevice('desktop')}
+                title="Desktop View (Fluid 100%)"
+              >
+                <FaDesktop size={12} /> <span className="device-btn-text">Desktop</span>
+              </button>
+              <button
+                type="button"
+                className={`device-btn ${previewDevice === 'tablet' ? 'active' : ''}`}
+                onClick={() => setPreviewDevice('tablet')}
+                title="Tablet View (768px Frame)"
+              >
+                <FaTabletAlt size={12} /> <span className="device-btn-text">Tablet</span>
+              </button>
+              <button
+                type="button"
+                className={`device-btn ${previewDevice === 'mobile' ? 'active' : ''}`}
+                onClick={() => setPreviewDevice('mobile')}
+                title="Mobile View (385px Phone Frame)"
+              >
+                <FaMobileAlt size={12} /> <span className="device-btn-text">Mobile</span>
+              </button>
+            </div>
+
             <div className="browser-address">localhost:3000/portfolio/preview</div>
+
+            {!isMobileScreen && (
+              <button
+                type="button"
+                className="btn-mockup-expand"
+                onClick={() => handleViewModeChange(viewMode === 'preview-only' ? 'split' : 'preview-only')}
+                title={viewMode === 'preview-only' ? 'Exit Full Preview (Return to Split)' : 'Expand to Full Preview'}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                {viewMode === 'preview-only' ? <FaCompress /> : <FaExpand />}
+              </button>
+            )}
           </div>
-          <div className="browser-content preview-mode">
-            {renderLivePreview()}
+
+          {/* Quick back-to-form header for mobile when viewing preview */}
+          {isMobileScreen && mobileTab === 'preview' && (
+            <div className="mobile-preview-back-bar">
+              <button
+                type="button"
+                className="btn-mobile-back-to-form"
+                onClick={() => setMobileTab('form')}
+              >
+                <FaArrowLeft /> Back to Editing Form
+              </button>
+              <span className="mobile-preview-badge">Live Preview</span>
+            </div>
+          )}
+
+          <div className={`browser-content preview-mode device-${previewDevice}`}>
+            <div className={`device-preview-wrapper device-frame-${previewDevice}`}>
+              {previewDevice === 'mobile' && !isMobileScreen && (
+                <div className="mobile-device-notch">
+                  <div className="mobile-speaker" />
+                  <div className="mobile-camera" />
+                </div>
+              )}
+              <div className="device-screen-content">
+                {renderLivePreview()}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -893,6 +1191,7 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         />
       )}
     </div>
+    </>
   );
 };
 

@@ -63,7 +63,7 @@ const EditPortfolio: React.FC = () => {
                 yearOfJoining: edu.yearOfJoining
                   ? new Date(edu.yearOfJoining).toISOString().substring(0, 10)
                   : '',
-                yearOfPassing: edu.yearOfPassing && !edu.isCurrentStudent
+                yearOfPassing: edu.yearOfPassing
                   ? new Date(edu.yearOfPassing).toISOString().substring(0, 10)
                   : '',
               }))
@@ -106,7 +106,7 @@ const EditPortfolio: React.FC = () => {
   }
 
   return (
-    <div className="portfolio-page-wrapper">
+    <div className="portfolio-page-wrapper builder-page-wrapper">
       {portfolioData ? (
         <PortfolioFormShell mode="edit" initialData={portfolioData} />
       ) : (

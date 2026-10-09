@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Portfolio } from '../../../types';
-import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation, formatEducationDateRange } from '../../../utils/portfolioUtils';
 
 interface ResumePrintProps {
   portfolio: Portfolio;
@@ -114,7 +114,7 @@ export const ResumePrint: React.FC<ResumePrintProps> = ({ portfolio }) => {
               <div className="resume-item-header" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px' }}>
                 <span>{edu.collegeName}</span>
                 <span>
-                  {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : '')}
+                  {formatEducationDateRange(edu)}
                 </span>
               </div>
               <div className="resume-item-subtitle" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaGraduationCap, FaSun, FaMoon, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../url';
-import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation, formatEducationDateRange } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import type { TemplateProps } from './common/types';
 import { getThemeOverrideClasses } from './common/themeUtils';
@@ -47,7 +47,7 @@ export const Minimalist: React.FC<TemplateProps> = ({
                       <div className="edu-header-minimal">
                         <span className="edu-college">{edu.collegeName}</span>
                         <span className="edu-dates">
-                          {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : '')}
+                          {formatEducationDateRange(edu)}
                         </span>
                       </div>
                       <p className="edu-degree">{edu.degree} in {edu.branch}</p>

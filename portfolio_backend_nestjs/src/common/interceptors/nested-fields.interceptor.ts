@@ -6,9 +6,27 @@ export class NestedFieldsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     if (request.body && typeof request.body === 'object') {
-      request.body = this.parseNestedFields(request.body);
+      const parsed = this.parseNestedFields(request.body);
+      request.body = this.normalizeValues(parsed);
     }
     return next.handle();
+  }
+
+  private normalizeValues(data: any): any {
+    if (data === null || data === undefined) return data;
+    if (data === 'true') return true;
+    if (data === 'false') return false;
+    if (Array.isArray(data)) {
+      return data.map((item) => this.normalizeValues(item));
+    }
+    if (typeof data === 'object') {
+      const res: any = {};
+      for (const k of Object.keys(data)) {
+        res[k] = this.normalizeValues(data[k]);
+      }
+      return res;
+    }
+    return data;
   }
 
   private parseNestedFields(obj: any): any {

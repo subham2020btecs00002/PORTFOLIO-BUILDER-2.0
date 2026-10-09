@@ -12,6 +12,13 @@
 .combobox-input-row input {
   width: 100%;
   padding-right: 36px; /* leave room for the chevron icon */
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.combobox-input-row input:focus {
+  text-overflow: clip;
 }
 
 .combobox-chevron {
