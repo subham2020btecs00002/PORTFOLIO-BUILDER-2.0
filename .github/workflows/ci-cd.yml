@@ -45,12 +45,9 @@ jobs:
           ignore-unfixed: true
 
       - name: Static Code Analysis (Semgrep OSS)
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-        continue-on-error: true
+        run: |
+          python3 -m pip install --upgrade semgrep
+          semgrep scan --config "p/security-audit" --config "p/owasp-top-ten" || true
 
       - name: Python Security Audit (Bandit)
         run: |

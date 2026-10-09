@@ -1,5 +1,5 @@
-name: 'Send CI/CD Email Report'
-description: 'Sends an HTML email summary of the pipeline status via SMTP'
+name: 'Send CI/CD Email & PDF Report'
+description: 'Generates an executive HTML & PDF report and sends it via SMTP with attachments'
 
 inputs:
   status:
@@ -42,6 +42,31 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Generate Executive HTML & PDF Build Reports
+      shell: bash
+      run: |
+        python3 -m pip install reportlab
+        python3 scripts/generate_ci_report.py \
+          --status "${{ inputs.status }}" \
+          --repo "${{ github.repository }}" \
+          --branch "${{ github.ref_name }}" \
+          --commit-sha "${{ inputs.commit-sha }}" \
+          --commit-msg "${{ inputs.commit-message }}" \
+          --actor "${{ inputs.actor }}" \
+          --run-id "${{ github.run_id }}" \
+          --run-url "${{ inputs.run-url }}" \
+          --output-html ci_report.html \
+          --output-pdf ci_report.pdf
+
+    - name: Upload Build Report Artifacts (PDF & HTML)
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-cd-reports
+        path: |
+          ci_report.html
+          ci_report.pdf
+        retention-days: 14
+
     - name: Check email configuration
       id: check-config
       shell: bash
@@ -53,7 +78,7 @@ runs:
           echo "has_config=true" >> $GITHUB_OUTPUT
         fi
 
-    - name: Send status email via SMTP
+    - name: Send status email with PDF attachment via SMTP
       if: steps.check-config.outputs.has_config == 'true'
       uses: dawidd6/action-send-mail@v3
       with:
@@ -61,57 +86,9 @@ runs:
         server_port: ${{ inputs.smtp-port }}
         username: ${{ inputs.smtp-username }}
         password: ${{ inputs.smtp-password }}
-        subject: "[CI/CD ${{ inputs.status == 'success' && 'SUCCESS' || 'FAILURE' }}] Portfolio Builder 2.0 (${{ github.ref_name }})"
+        subject: "[CI/CD ${{ inputs.status == 'success' && 'SUCCESS' || 'FAILURE' }}] Portfolio Builder 2.0 (${{ github.ref_name }}) - Full Report & PDF"
         to: ${{ inputs.recipient-email }}
         from: "CI/CD Pipeline <${{ inputs.smtp-username }}>"
         secure: true
-        html_body: |
-          <!DOCTYPE html>
-          <html>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 24px; margin: 0;">
-            <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 28px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-              <div style="text-align: center; margin-bottom: 24px;">
-                <h1 style="color: ${{ inputs.status == 'success' && '#22c55e' || '#ef4444' }}; font-size: 24px; margin: 0;">
-                  ${{ inputs.status == 'success' && '✔ Pipeline Passed Successfully' || '✖ Pipeline Failed' }}
-                </h1>
-                <p style="color: #94a3b8; font-size: 14px; margin-top: 6px;">
-                  Portfolio Builder 2.0 CI/CD Execution Summary
-                </p>
-              </div>
-
-              <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin-bottom: 20px; border: 1px solid #334155;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                  <tr>
-                    <td style="color: #94a3b8; padding: 6px 0;"><strong>Repository:</strong></td>
-                    <td style="color: #f8fafc; text-align: right;">${{ github.repository }}</td>
-                  </tr>
-                  <tr>
-                    <td style="color: #94a3b8; padding: 6px 0;"><strong>Branch:</strong></td>
-                    <td style="color: #f8fafc; text-align: right;"><code style="background: #334155; padding: 2px 6px; border-radius: 4px;">${{ github.ref_name }}</code></td>
-                  </tr>
-                  <tr>
-                    <td style="color: #94a3b8; padding: 6px 0;"><strong>Triggered By:</strong></td>
-                    <td style="color: #f8fafc; text-align: right;">${{ inputs.actor }}</td>
-                  </tr>
-                  <tr>
-                    <td style="color: #94a3b8; padding: 6px 0;"><strong>Commit:</strong></td>
-                    <td style="color: #38bdf8; text-align: right;"><a href="https://github.com/${{ github.repository }}/commit/${{ inputs.commit-sha }}" style="color: #38bdf8; text-decoration: none;">${{ inputs.commit-sha }}</a></td>
-                  </tr>
-                </table>
-              </div>
-
-              <div style="margin-bottom: 24px;">
-                <h3 style="color: #e2e8f0; font-size: 15px; margin-bottom: 8px;">Commit Message:</h3>
-                <div style="background: #0f172a; padding: 12px; border-radius: 6px; color: #cbd5e1; font-size: 13px; font-family: monospace; border: 1px solid #334155;">
-                  ${{ inputs.commit-message }}
-                </div>
-              </div>
-
-              <div style="text-align: center;">
-                <a href="${{ inputs.run-url }}" style="display: inline-block; background: #6366f1; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none;">
-                  View GitHub Actions Run Logs →
-                </a>
-              </div>
-            </div>
-          </body>
-          </html>
+        html_body: file://ci_report.html
+        attachments: ci_report.pdf
