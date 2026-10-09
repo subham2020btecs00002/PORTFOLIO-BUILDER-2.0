@@ -99,20 +99,51 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   # STAGE 3: BUILD & TEST (API & UNIT TESTS WITH EPHEMERAL MONGODB)
   # ─────────────────────────────────────────────────────────────────────────────
+  test-and-build-gateway:
+    name: Test & Build (api-gateway)
+    needs: [security-scan, lint]
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci_test_jwt_secret_key_minimum_32_characters_long_1234
+      INTERNAL_SECRET: ci_test_internal_service_secret_token
+      AUTH_SERVICE_URL: http://localhost:5001
+      BACKEND_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:3000
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node & Cache
+        uses: ./.github/actions/setup-node-service
+        with:
+          service-dir: api-gateway
+
+      - name: Compile & Build Service
+        working-directory: api-gateway
+        run: npm run build
+
+      - name: Run Unit Tests
+        working-directory: api-gateway
+        run: npm run test
+
+      - name: Run E2E / API Tests
+        working-directory: api-gateway
+        run: npm run test:e2e
+
   test-and-build-backends:
     name: Test & Build (${{ matrix.service }})
     needs: [security-scan, lint]
     runs-on: ubuntu-latest
     services:
       mongodb:
-        image: mongo:7
+        image: public.ecr.aws/docker/library/mongo:7
         ports:
           - 27017:27017
     strategy:
       fail-fast: false
       matrix:
         service:
-          - api-gateway
           - auth-service
           - portfolio_backend_nestjs
     env:
@@ -193,7 +224,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to Render & Vercel
-    needs: [test-and-build-backends, test-ml-service, test-and-build-frontend]
+    needs: [test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
@@ -270,7 +301,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   notify:
     name: Dispatch Email Notification
-    needs: [security-scan, lint, lint-python, test-and-build-backends, test-ml-service, test-and-build-frontend, deploy]
+    needs: [security-scan, lint, lint-python, test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -285,6 +316,7 @@ jobs:
           if [[ "${{ needs.security-scan.result }}" == "failure" || \
                 "${{ needs.lint.result }}" == "failure" || \
                 "${{ needs.lint-python.result }}" == "failure" || \
+                "${{ needs.test-and-build-gateway.result }}" == "failure" || \
                 "${{ needs.test-and-build-backends.result }}" == "failure" || \
                 "${{ needs.test-ml-service.result }}" == "failure" || \
                 "${{ needs.test-and-build-frontend.result }}" == "failure" || \
