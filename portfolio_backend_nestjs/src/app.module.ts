@@ -28,11 +28,15 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
         INTERNAL_SECRET: Joi.string().required(),
         GATEWAY_URL: Joi.string().default('http://localhost:3001'),
         FRONTEND_URL: Joi.string().default('http://localhost:3000'),
-        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+        NODE_ENV: Joi.string()
+          .valid('development', 'production', 'test')
+          .default('development'),
         EMAIL: Joi.string().optional(),
         PASSWORD: Joi.string().optional(),
         RECEIVER_EMAIL: Joi.string().optional(),
-        PORTFOLIO_BUILDER_APP_URL: Joi.string().default('https://portfolio-builder-2-0-theta.vercel.app/'),
+        PORTFOLIO_BUILDER_APP_URL: Joi.string().default(
+          'https://portfolio-builder-2-0-theta.vercel.app/',
+        ),
         APP_URL: Joi.string().optional(),
       }),
     }),

@@ -6,7 +6,10 @@ export class Skill {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ default: 'Intermediate', enum: ['Beginner', 'Intermediate', 'Expert'] })
+  @Prop({
+    default: 'Intermediate',
+    enum: ['Beginner', 'Intermediate', 'Expert'],
+  })
   level: string;
 
   @Prop({ default: '' })
@@ -82,7 +85,8 @@ export class ProfessionalHistory {
   technologies: string[];
 }
 
-const ProfessionalHistorySchema = SchemaFactory.createForClass(ProfessionalHistory);
+const ProfessionalHistorySchema =
+  SchemaFactory.createForClass(ProfessionalHistory);
 
 @Schema()
 export class PortfolioLinks {
@@ -161,7 +165,10 @@ export class Portfolio extends Document {
   @Prop({ default: 'classic-green' })
   templateId: string;
 
-  @Prop({ type: [String], default: ['about', 'skills', 'experience', 'projects', 'contact'] })
+  @Prop({
+    type: [String],
+    default: ['about', 'skills', 'experience', 'projects', 'contact'],
+  })
   sectionOrder: string[];
 
   @Prop({ default: 'default' })

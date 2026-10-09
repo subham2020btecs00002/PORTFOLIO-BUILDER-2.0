@@ -83,3 +83,23 @@ services:
         sync: false
       - key: RECEIVER_EMAIL
         sync: false
+
+  # ── 4. ML Service (FastAPI) ────────────────────────────────────────────────
+  - type: web
+    name: portfolio-ml-service
+    env: python
+    plan: free
+    rootDir: ml-service-python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+

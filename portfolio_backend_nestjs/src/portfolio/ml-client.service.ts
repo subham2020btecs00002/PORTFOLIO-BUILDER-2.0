@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface EnhanceTextResponse {
@@ -56,7 +52,10 @@ export class MlClientService {
     this.internalSecret = rawSecret.trim().replace(/^["']|["']$/g, '');
   }
 
-  private getHeaders(correlationId?: string, isJson: boolean = true): HeadersInit {
+  private getHeaders(
+    correlationId?: string,
+    isJson: boolean = true,
+  ): HeadersInit {
     const headers: Record<string, string> = {};
     if (isJson) {
       headers['Content-Type'] = 'application/json';
@@ -70,7 +69,10 @@ export class MlClientService {
     return headers;
   }
 
-  async enhanceText(text: string, correlationId?: string): Promise<EnhanceTextResponse> {
+  async enhanceText(
+    text: string,
+    correlationId?: string,
+  ): Promise<EnhanceTextResponse> {
     const url = `${this.mlUrl}/api/ml/enhance`;
     return this.executeWithRetry<EnhanceTextResponse>(
       url,
@@ -132,7 +134,6 @@ export class MlClientService {
     timeoutMs: number = 120_000,
     maxRetries: number = 2,
   ): Promise<T> {
-
     let lastError: any = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -166,6 +167,8 @@ export class MlClientService {
     this.logger.error(
       `[MlClientService] All attempts failed for ${url}: ${lastError?.message} [correlationId: ${correlationId || '-'}]`,
     );
-    throw new BadRequestException('Failed to communicate with AI ML service. Please try again.');
+    throw new BadRequestException(
+      'Failed to communicate with AI ML service. Please try again.',
+    );
   }
 }

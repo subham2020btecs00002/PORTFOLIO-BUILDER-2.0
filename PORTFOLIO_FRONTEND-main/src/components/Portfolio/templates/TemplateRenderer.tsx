@@ -15,16 +15,16 @@ export const templatePreloaders: Record<string, () => Promise<any>> = {
   'classic-green': () => import('./ClassicGreen'),
 };
 
-const ClassicGreen  = React.lazy(() => templatePreloaders['classic-green']().then(m => ({ default: m.ClassicGreen })));
-const DarkPro       = React.lazy(() => templatePreloaders['dark-pro']().then(m => ({ default: m.DarkPro })));
-const Creative      = React.lazy(() => templatePreloaders['creative']().then(m => ({ default: m.Creative })));
-const Minimalist    = React.lazy(() => templatePreloaders['minimalist']().then(m => ({ default: m.Minimalist })));
-const Cyberpunk     = React.lazy(() => templatePreloaders['cyberpunk']().then(m => ({ default: m.Cyberpunk })));
-const Neobrutalism  = React.lazy(() => templatePreloaders['neobrutalism']().then(m => ({ default: m.Neobrutalism })));
-const DevTerminal   = React.lazy(() => templatePreloaders['cli']().then(m => ({ default: m.DevTerminal })));
-const BentoGrid     = React.lazy(() => templatePreloaders['bento']().then(m => ({ default: m.BentoGrid })));
-const AcademicLaTeX = React.lazy(() => templatePreloaders['latex']().then(m => ({ default: m.AcademicLaTeX })));
-const GamifiedRPG   = React.lazy(() => templatePreloaders['rpg']().then(m => ({ default: m.GamifiedRPG })));
+const ClassicGreen  = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['classic-green']().then(m => ({ default: m.ClassicGreen })));
+const DarkPro       = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['dark-pro']().then(m => ({ default: m.DarkPro })));
+const Creative      = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['creative']().then(m => ({ default: m.Creative })));
+const Minimalist    = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['minimalist']().then(m => ({ default: m.Minimalist })));
+const Cyberpunk     = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['cyberpunk']().then(m => ({ default: m.Cyberpunk })));
+const Neobrutalism  = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['neobrutalism']().then(m => ({ default: m.Neobrutalism })));
+const DevTerminal   = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['cli']().then(m => ({ default: m.DevTerminal })));
+const BentoGrid     = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['bento']().then(m => ({ default: m.BentoGrid })));
+const AcademicLaTeX = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['latex']().then(m => ({ default: m.AcademicLaTeX })));
+const GamifiedRPG   = React.lazy<React.ComponentType<TemplateProps>>(() => templatePreloaders['rpg']().then(m => ({ default: m.GamifiedRPG })));
 
 interface TemplateRendererProps extends TemplateProps {
   templateId?: string;

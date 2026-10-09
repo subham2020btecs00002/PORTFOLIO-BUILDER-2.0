@@ -1,0 +1,94 @@
+name: 'Send CI/CD Email & PDF Report'
+description: 'Generates an executive HTML & PDF report and sends it via SMTP with attachments'
+
+inputs:
+  status:
+    description: 'Overall pipeline status (success or failure)'
+    required: true
+  smtp-server:
+    description: 'SMTP Server host'
+    required: false
+    default: 'smtp.gmail.com'
+  smtp-port:
+    description: 'SMTP Server port'
+    required: false
+    default: '465'
+  smtp-username:
+    description: 'SMTP Username'
+    required: false
+  smtp-password:
+    description: 'SMTP Password / App Password'
+    required: false
+  recipient-email:
+    description: 'Recipient Email'
+    required: false
+  commit-sha:
+    description: 'Commit SHA'
+    required: false
+    default: ''
+  commit-message:
+    description: 'Commit message'
+    required: false
+    default: ''
+  actor:
+    description: 'Actor who triggered the run'
+    required: false
+    default: ''
+  run-url:
+    description: 'GitHub Actions run URL'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate Executive HTML & PDF Build Reports
+      shell: bash
+      run: |
+        python3 -m pip install reportlab
+        python3 scripts/generate_ci_report.py \
+          --status "${{ inputs.status }}" \
+          --repo "${{ github.repository }}" \
+          --branch "${{ github.ref_name }}" \
+          --commit-sha "${{ inputs.commit-sha }}" \
+          --commit-msg "${{ inputs.commit-message }}" \
+          --actor "${{ inputs.actor }}" \
+          --run-id "${{ github.run_id }}" \
+          --run-url "${{ inputs.run-url }}" \
+          --output-html ci_report.html \
+          --output-pdf ci_report.pdf
+
+    - name: Upload Build Report Artifacts (PDF & HTML)
+      uses: actions/upload-artifact@v4
+      with:
+        name: ci-cd-reports
+        path: |
+          ci_report.html
+          ci_report.pdf
+        retention-days: 14
+
+    - name: Check email configuration
+      id: check-config
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.smtp-username }}" ] || [ -z "${{ inputs.smtp-password }}" ] || [ -z "${{ inputs.recipient-email }}" ]; then
+          echo "has_config=false" >> $GITHUB_OUTPUT
+          echo "::warning ::Email notification skipped: MAIL_USERNAME, MAIL_PASSWORD, or NOTIFICATION_EMAIL secret is not configured yet in GitHub Secrets."
+        else
+          echo "has_config=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send status email with PDF attachment via SMTP
+      if: steps.check-config.outputs.has_config == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ inputs.smtp-server }}
+        server_port: ${{ inputs.smtp-port }}
+        username: ${{ inputs.smtp-username }}
+        password: ${{ inputs.smtp-password }}
+        subject: "[CI/CD ${{ inputs.status == 'success' && 'SUCCESS' || 'FAILURE' }}] Portfolio Builder 2.0 (${{ github.ref_name }}) - Full Report & PDF"
+        to: ${{ inputs.recipient-email }}
+        from: "CI/CD Pipeline <${{ inputs.smtp-username }}>"
+        secure: true
+        html_body: file://ci_report.html
+        attachments: ci_report.pdf

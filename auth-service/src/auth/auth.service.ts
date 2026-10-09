@@ -32,7 +32,10 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  private issueTokens(userId: string, role: string = 'user'): {
+  private issueTokens(
+    userId: string,
+    role: string = 'user',
+  ): {
     accessToken: string;
     refreshToken: string;
   } {
@@ -50,8 +53,7 @@ export class AuthService {
     accessToken: string,
     refreshToken: string,
   ): void {
-    const isProd =
-      this.configService.get<string>('NODE_ENV') === 'production';
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
@@ -171,8 +173,7 @@ export class AuthService {
       refreshTokenHash: null,
     });
 
-    const isProd =
-      this.configService.get<string>('NODE_ENV') === 'production';
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: isProd,
@@ -240,7 +241,9 @@ export class AuthService {
       user.resetPasswordExpires = expiry;
       await user.save();
 
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:3000';
       const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
       const mailOptions = {
@@ -288,16 +291,22 @@ export class AuthService {
             }),
           });
           if (res.ok) {
-            console.log(`Password reset email successfully sent via Brevo to ${email}`);
+            console.log(
+              `Password reset email successfully sent via Brevo to ${email}`,
+            );
           } else {
             const errBody = await res.text();
-            console.error(`Brevo password reset email error (${res.status}): ${errBody}`);
+            console.error(
+              `Brevo password reset email error (${res.status}): ${errBody}`,
+            );
           }
         } catch (error) {
           console.error('Error sending reset email via Brevo:', error);
         }
       } else {
-        console.warn('BREVO_API_KEY is not configured in auth-service environment.');
+        console.warn(
+          'BREVO_API_KEY is not configured in auth-service environment.',
+        );
       }
     }
 
@@ -318,7 +327,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Password reset token is invalid or has expired');
+      throw new BadRequestException(
+        'Password reset token is invalid or has expired',
+      );
     }
 
     const salt = await bcrypt.genSalt(10);

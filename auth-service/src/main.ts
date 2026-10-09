@@ -23,15 +23,21 @@ async function bootstrap() {
 
   const isAllowedOrigin = (origin: string | undefined): boolean => {
     if (!origin) return true;
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
-    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
-    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1'))
+      return true;
+    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app'))
+      return true;
+    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com'))
+      return true;
     if (gatewayUrl && origin === gatewayUrl) return true;
     return false;
   };
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
@@ -62,7 +68,9 @@ async function bootstrap() {
   );
 
   await app.listen(port);
-  console.log(`[Auth Service] Running on: http://localhost:${port} (internal only)`);
+  console.log(
+    `[Auth Service] Running on: http://localhost:${port} (internal only)`,
+  );
   console.log(`[Auth Service] Only accepts requests from: ${gatewayUrl}`);
 }
 bootstrap();

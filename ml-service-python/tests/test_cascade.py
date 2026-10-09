@@ -57,4 +57,3 @@ def test_cascade_fallback_on_groq_failure():
         # The cascade should catch this and successfully call OpenRouter / Gemini
         result = llm_client.generate_content("Say hello in one word", json_mode=False)
         assert len(result) > 0
-

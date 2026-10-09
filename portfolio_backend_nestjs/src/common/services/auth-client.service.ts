@@ -76,7 +76,8 @@ export class AuthClientService {
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       throw new Error(
-        err.message || `Failed to delete user account (HTTP ${response.status})`,
+        err.message ||
+          `Failed to delete user account (HTTP ${response.status})`,
       );
     }
 

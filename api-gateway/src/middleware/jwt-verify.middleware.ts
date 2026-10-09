@@ -39,9 +39,12 @@ export class JwtVerifyMiddleware implements NestMiddleware {
     }
 
     try {
-      const payload = this.jwtService.verify<{ sub: string; role?: string }>(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+      const payload = this.jwtService.verify<{ sub: string; role?: string }>(
+        token,
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+        },
+      );
 
       if (!payload?.sub) {
         throw new UnauthorizedException('Token payload is invalid');

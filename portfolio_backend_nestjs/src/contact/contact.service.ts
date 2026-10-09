@@ -175,7 +175,7 @@ Powered by PortfolioBuilder 2.0 (${appUrl})
         );
       }
 
-      const result = (await response.json().catch(() => ({}))) as any;
+      const result = await response.json().catch(() => ({}));
       this.logger.log(
         `Contact email successfully dispatched via Brevo HTTPS API (id: ${result.messageId || 'ok'}) to ${targetRecipient}`,
       );

@@ -48,8 +48,12 @@ export class AppModule implements NestModule {
   constructor(private readonly configService: ConfigService) {}
 
   configure(consumer: MiddlewareConsumer): void {
-    const rawSecret = this.configService.get<string>('INTERNAL_SECRET') || process.env.INTERNAL_SECRET;
-    const internalSecret = String(rawSecret || '').trim().replace(/^["']|["']$/g, '');
+    const rawSecret =
+      this.configService.get<string>('INTERNAL_SECRET') ||
+      process.env.INTERNAL_SECRET;
+    const internalSecret = String(rawSecret || '')
+      .trim()
+      .replace(/^["']|["']$/g, '');
     const authServiceUrl = this.configService.get<string>('AUTH_SERVICE_URL')!;
     const backendUrl = this.configService.get<string>('BACKEND_URL')!;
 
@@ -83,9 +87,12 @@ export class AppModule implements NestModule {
 
     const isAllowedOrigin = (origin: string | undefined): boolean => {
       if (!origin) return true;
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
-      if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
-      if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+      if (origin.includes('localhost') || origin.includes('127.0.0.1'))
+        return true;
+      if (origin.endsWith('.vercel.app') || origin.includes('vercel.app'))
+        return true;
+      if (origin.endsWith('.onrender.com') || origin.includes('onrender.com'))
+        return true;
       if (frontendUrl && origin === frontendUrl) return true;
       return false;
     };
@@ -108,24 +115,25 @@ export class AppModule implements NestModule {
       }
     };
 
-    const handleProxyError = (targetName: string) => (err: any, req: any, res: any) => {
-      const correlationId = req.headers?.['x-correlation-id'] || '';
-      console.error(
-        `[API Gateway][ProxyError] Upstream error talking to ${targetName}: ${err.message} [correlationId: ${correlationId}]`,
-      );
-      if (!res.headersSent && typeof res.writeHead === 'function') {
-        res.writeHead(502, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            statusCode: 502,
-            error: 'Bad Gateway',
-            message: `Service temporarily unavailable. Please try again.`,
-            correlationId,
-            timestamp: new Date().toISOString(),
-          }),
+    const handleProxyError =
+      (targetName: string) => (err: any, req: any, res: any) => {
+        const correlationId = req.headers?.['x-correlation-id'] || '';
+        console.error(
+          `[API Gateway][ProxyError] Upstream error talking to ${targetName}: ${err.message} [correlationId: ${correlationId}]`,
         );
-      }
-    };
+        if (!res.headersSent && typeof res.writeHead === 'function') {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              statusCode: 502,
+              error: 'Bad Gateway',
+              message: `Service temporarily unavailable. Please try again.`,
+              correlationId,
+              timestamp: new Date().toISOString(),
+            }),
+          );
+        }
+      };
 
     // ── 1. Distributed Tracing: Injects X-Correlation-Id ──────────────────
     consumer
@@ -156,7 +164,7 @@ export class AppModule implements NestModule {
           on: {
             proxyReq: (proxyReq, req) => {
               addGatewayHeaders(proxyReq, req);
-              fixRequestBody(proxyReq, req as any);
+              fixRequestBody(proxyReq, req);
             },
             proxyRes: (proxyRes, req) => {
               rewriteCorsHeaders(proxyRes, req);
@@ -176,7 +184,7 @@ export class AppModule implements NestModule {
           on: {
             proxyReq: (proxyReq, req) => {
               addGatewayHeaders(proxyReq, req);
-              fixRequestBody(proxyReq, req as any);
+              fixRequestBody(proxyReq, req);
             },
             proxyRes: (proxyRes, req) => {
               rewriteCorsHeaders(proxyRes, req);
@@ -196,4 +204,3 @@ export class AppModule implements NestModule {
       );
   }
 }
-

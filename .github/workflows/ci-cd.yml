@@ -1,0 +1,339 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - feat/*
+      - feat/**
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 1: SECURITY SCANNING (SAST, SCA, SECRETS)
+  # ─────────────────────────────────────────────────────────────────────────────
+  security-scan:
+    name: Security & Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Secret Scan (Gitleaks OSS)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Package Vulnerability Scan (Aqua Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          ignore-unfixed: true
+
+      - name: Static Code Analysis (Semgrep OSS)
+        run: |
+          python3 -m pip install --upgrade semgrep
+          semgrep scan --config "p/security-audit" --config "p/owasp-top-ten" || true
+
+      - name: Python Security Audit (Bandit)
+        run: |
+          python3 -m pip install bandit
+          bandit -r ml-service-python/app -ll -ii || true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 2: STATIC CODE ANALYSIS & LINTING
+  # ─────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Code Quality (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - portfolio_backend_nestjs
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node & Cache
+        uses: ./.github/actions/setup-node-service
+        with:
+          service-dir: ${{ matrix.service }}
+
+      - name: Run ESLint
+        working-directory: ${{ matrix.service }}
+        run: npm run lint
+
+  lint-python:
+    name: Lint Python Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-service
+
+      - name: Run Flake8 Syntax & Style Check
+        working-directory: ml-service-python
+        run: |
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 3: BUILD & TEST (API & UNIT TESTS WITH EPHEMERAL MONGODB)
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-and-build-gateway:
+    name: Test & Build (api-gateway)
+    needs: [security-scan, lint]
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci_test_jwt_secret_key_minimum_32_characters_long_1234
+      INTERNAL_SECRET: ci_test_internal_service_secret_token
+      AUTH_SERVICE_URL: http://localhost:5001
+      BACKEND_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:3000
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node & Cache
+        uses: ./.github/actions/setup-node-service
+        with:
+          service-dir: api-gateway
+
+      - name: Compile & Build Service
+        working-directory: api-gateway
+        run: npm run build
+
+      - name: Run Unit Tests
+        working-directory: api-gateway
+        run: npm run test
+
+      - name: Run E2E / API Tests
+        working-directory: api-gateway
+        run: npm run test:e2e
+
+  test-and-build-backends:
+    name: Test & Build (${{ matrix.service }})
+    needs: [security-scan, lint]
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: public.ecr.aws/docker/library/mongo:7
+        ports:
+          - 27017:27017
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - portfolio_backend_nestjs
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/portfolio_test
+      JWT_SECRET: ci_test_jwt_secret_key_minimum_32_characters_long_1234
+      JWT_REFRESH_SECRET: ci_test_refresh_secret_key_minimum_32_characters_1234
+      INTERNAL_SECRET: ci_test_internal_service_secret_token
+      AUTH_SERVICE_URL: http://localhost:5001
+      BACKEND_URL: http://localhost:5000
+      FRONTEND_URL: http://localhost:3000
+      GATEWAY_URL: http://localhost:3001
+      ML_SERVICE_URL: http://localhost:8000
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node & Cache
+        uses: ./.github/actions/setup-node-service
+        with:
+          service-dir: ${{ matrix.service }}
+
+      - name: Compile & Build Service
+        working-directory: ${{ matrix.service }}
+        run: npm run build
+
+      - name: Run Unit Tests
+        working-directory: ${{ matrix.service }}
+        run: npm run test
+
+      - name: Run E2E / API Integration Tests
+        working-directory: ${{ matrix.service }}
+        run: npm run test:e2e
+
+  test-ml-service:
+    name: Test & Validate ML Service
+    needs: [security-scan, lint-python]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-service
+
+      - name: Run Pytest Suite
+        working-directory: ml-service-python
+        env:
+          PYTHONPATH: .
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -m pytest tests/ -v
+
+  test-and-build-frontend:
+    name: Test & Build Frontend
+    needs: [security-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node & Cache
+        uses: ./.github/actions/setup-node-service
+        with:
+          service-dir: PORTFOLIO_FRONTEND-main
+
+      - name: Typecheck TypeScript
+        working-directory: PORTFOLIO_FRONTEND-main
+        run: npm run typecheck
+
+      - name: Build Vite Production Bundle
+        working-directory: PORTFOLIO_FRONTEND-main
+        run: npm run build
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 4: CONTINUOUS DEPLOYMENT (RENDER BACKENDS + VERCEL FRONTEND)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Render & Vercel
+    needs: [test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # ── Deploy Backends via Render Deploy Hooks (100% Free) ──────────────────
+      - name: Deploy API Gateway to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_GATEWAY_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for API Gateway..."
+            curl -f -s -X POST "${{ secrets.RENDER_GATEWAY_DEPLOY_HOOK }}"
+            echo "✔ API Gateway deployment triggered successfully."
+          else
+            echo "::warning ::RENDER_GATEWAY_DEPLOY_HOOK is not set. Skipping gateway deploy."
+          fi
+
+      - name: Deploy Auth Service to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_AUTH_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for Auth Service..."
+            curl -f -s -X POST "${{ secrets.RENDER_AUTH_DEPLOY_HOOK }}"
+            echo "✔ Auth Service deployment triggered successfully."
+          else
+            echo "::warning ::RENDER_AUTH_DEPLOY_HOOK is not set. Skipping auth service deploy."
+          fi
+
+      - name: Deploy Portfolio Monolith Backend to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for Portfolio Monolith..."
+            curl -f -s -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+            echo "✔ Portfolio Backend deployment triggered successfully."
+          else
+            echo "::warning ::RENDER_BACKEND_DEPLOY_HOOK is not set. Skipping backend deploy."
+          fi
+
+      - name: Deploy ML Service (FastAPI) to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_ML_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for ML Service..."
+            curl -f -s -X POST "${{ secrets.RENDER_ML_DEPLOY_HOOK }}"
+            echo "✔ ML Service deployment triggered successfully."
+          else
+            echo "::notice ::RENDER_ML_DEPLOY_HOOK is not set. Skipping ML service deploy."
+          fi
+
+      # ── Deploy Frontend to Vercel (100% Free) ───────────────────────────────
+      - name: Deploy Frontend to Vercel
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.VERCEL_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Vercel Deploy Hook..."
+            curl -f -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+            echo "✔ Vercel deployment triggered via Deploy Hook."
+          elif [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "🚀 Deploying to Vercel using Vercel CLI..."
+            npm install --global vercel@latest
+            cd PORTFOLIO_FRONTEND-main
+            vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+            vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+            vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+            echo "✔ Frontend deployed to Vercel."
+          else
+            echo "::warning ::Neither VERCEL_DEPLOY_HOOK nor VERCEL_TOKEN is set. Skipping frontend deploy."
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 5: EMAIL NOTIFICATION (ALWAYS RUNS ON COMPLETION)
+  # ─────────────────────────────────────────────────────────────────────────────
+  notify:
+    name: Dispatch Email Notification
+    needs: [security-scan, lint, lint-python, test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Calculate Pipeline Status
+        id: status-calc
+        shell: bash
+        run: |
+          # If any of the required CI jobs failed or were cancelled, mark as failure
+          if [[ "${{ needs.security-scan.result }}" == "failure" || \
+                "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.lint-python.result }}" == "failure" || \
+                "${{ needs.test-and-build-gateway.result }}" == "failure" || \
+                "${{ needs.test-and-build-backends.result }}" == "failure" || \
+                "${{ needs.test-ml-service.result }}" == "failure" || \
+                "${{ needs.test-and-build-frontend.result }}" == "failure" || \
+                "${{ needs.deploy.result }}" == "failure" ]]; then
+            echo "overall_status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "overall_status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Email Report
+        uses: ./.github/actions/send-email-report
+        with:
+          status: ${{ steps.status-calc.outputs.overall_status }}
+          smtp-username: ${{ secrets.MAIL_USERNAME }}
+          smtp-password: ${{ secrets.MAIL_PASSWORD }}
+          recipient-email: ${{ secrets.NOTIFICATION_EMAIL }}
+          commit-sha: ${{ github.sha }}
+          commit-message: ${{ github.event.head_commit.message }}
+          actor: ${{ github.actor }}
+          run-url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
