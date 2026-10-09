@@ -2,12 +2,35 @@ import re
 
 def clean_cgpa_or_percentage(val: str) -> str:
     """
-    Normalizes GPA, CGPA or percentage into a standard format.
-    Example: '8.5 CGPA' -> '8.5', '85.5%' -> '85.5%'.
+    Normalizes GPA, CGPA, scale ratios, letter grades, or percentage into a standard format.
+    Example: '8.5 CGPA' -> '8.5', '9.0 / 10' -> '9', '3.8/4.0' -> '3.8/4', '85.5%' -> '85.5%', 'A+' -> 'A+'.
     """
     if not val:
         return ""
     val_str = str(val).strip()
+
+    # 1. Letter grades and honors (e.g. A+, A, A-, B+, Distinction, First Class, O)
+    grade_match = re.search(r"^(?:Grade\s*)?([A-D][+-]?|[OS]|Distinction|First\s+Class|First\s+Division|Honours|Honors)$", val_str, re.IGNORECASE)
+    if grade_match:
+        matched = grade_match.group(1).strip()
+        return matched.upper() if len(matched) <= 2 else matched.title()
+
+    # 2. Scale ratios (e.g. 3.8/4.0, 9.0/10, 4.5/5.0)
+    ratio_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:/|\s*out of\s*)\s*(\d+(?:\.\d+)?)", val_str, re.IGNORECASE)
+    if ratio_match:
+        try:
+            num = float(ratio_match.group(1))
+            scale = float(ratio_match.group(2))
+            if scale == 10.0:
+                return f"{int(num)}" if num == int(num) else f"{num:.2f}".rstrip("0").rstrip(".")
+            else:
+                num_fmt = f"{int(num)}" if num == int(num) else f"{num:.2f}".rstrip("0").rstrip(".")
+                scale_fmt = f"{int(scale)}" if scale == int(scale) else f"{scale:.1f}".rstrip("0").rstrip(".")
+                return f"{num_fmt}/{scale_fmt}"
+        except ValueError:
+            pass
+
+    # 3. Numeric extraction (percentages or standard CGPA)
     match = re.search(r"(\d+(?:\.\d+)?)", val_str)
     if match:
         num_str = match.group(1)

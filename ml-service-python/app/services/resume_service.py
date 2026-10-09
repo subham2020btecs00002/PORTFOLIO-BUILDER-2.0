@@ -16,6 +16,10 @@ def post_process_resume_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(data, dict):
         return {}
 
+    # 0. Clean candidate full name
+    if "fullName" in data and isinstance(data["fullName"], str):
+        data["fullName"] = " ".join(data["fullName"].strip().split())
+
     # 1. Clean portfolio links
     links = data.get("portfolioLinks", {})
     if isinstance(links, dict):
@@ -43,17 +47,30 @@ def post_process_resume_dict(data: Dict[str, Any]) -> Dict[str, Any]:
                     edu["degree"] = normalize_degree(edu["degree"])
                 if "yearOfJoining" in edu:
                     edu["yearOfJoining"] = normalize_date(edu["yearOfJoining"], 2019)
-                if "yearOfPassing" in edu:
-                    edu["yearOfPassing"] = normalize_date(edu["yearOfPassing"], 2023)
 
-                y_join = edu.get("yearOfJoining")
-                y_pass = edu.get("yearOfPassing")
-                if y_join and y_pass and y_join >= y_pass:
-                    try:
-                        join_year = int(y_join.split("-")[0])
-                        edu["yearOfPassing"] = f"{join_year + 4}-05-30"
-                    except Exception:
-                        pass
+                y_pass_raw = str(edu.get("yearOfPassing", ""))
+                is_curr = (
+                    edu.get("isCurrentStudent") is True
+                    or "present" in y_pass_raw.lower()
+                    or "current" in y_pass_raw.lower()
+                    or "ongoing" in y_pass_raw.lower()
+                )
+                if is_curr:
+                    edu["isCurrentStudent"] = True
+                    edu["yearOfPassing"] = ""
+                else:
+                    edu["isCurrentStudent"] = False
+                    if "yearOfPassing" in edu:
+                        edu["yearOfPassing"] = normalize_date(edu["yearOfPassing"], 2023)
+
+                    y_join = edu.get("yearOfJoining")
+                    y_pass = edu.get("yearOfPassing")
+                    if y_join and y_pass and y_join >= y_pass:
+                        try:
+                            join_year = int(y_join.split("-")[0])
+                            edu["yearOfPassing"] = f"{join_year + 4}-05-30"
+                        except Exception:
+                            pass
         data["education"] = education
 
     # 4. Clean professional history

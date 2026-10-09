@@ -115,16 +115,30 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     // Draw raw portion onto the canvas
     ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, size, size);
 
-    // Convert canvas back to File object
+    // Convert canvas back to compressed high-efficiency WebP File object (~30KB vs 500KB PNG)
+    const outputType = 'image/webp';
+    const cleanFileName = (fileName || 'avatar').replace(/\.[^.]+$/, '') + '.webp';
+
     canvas.toBlob((blob) => {
       if (blob) {
-        const croppedFile = new File([blob], fileName || 'avatar.png', {
-          type: 'image/png',
+        const croppedFile = new File([blob], cleanFileName, {
+          type: outputType,
           lastModified: Date.now(),
         });
         onCrop(croppedFile);
+      } else {
+        // Fallback to JPEG if WebP is not supported by the environment
+        canvas.toBlob((jpegBlob) => {
+          if (jpegBlob) {
+            const fallbackFile = new File([jpegBlob], cleanFileName.replace('.webp', '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            onCrop(fallbackFile);
+          }
+        }, 'image/jpeg', 0.85);
       }
-    }, 'image/png');
+    }, outputType, 0.85);
   };
 
   return (

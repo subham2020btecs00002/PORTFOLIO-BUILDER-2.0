@@ -43,8 +43,11 @@ export class Education {
   @Prop()
   branch: string;
 
-  @Prop()
-  cgpaOrPercentage: number;
+  @Prop({ type: String, default: '' })
+  cgpaOrPercentage: string;
+
+  @Prop({ type: Boolean, default: false })
+  isCurrentStudent: boolean;
 
   @Prop()
   yearOfJoining: Date;
@@ -131,6 +134,10 @@ export class Portfolio extends Document {
 
   @Prop({ required: true })
   title: string;
+
+  /** Optional display name override (preserves First MiddleName LastName) */
+  @Prop({ type: String, default: '' })
+  fullName?: string;
 
   @Prop()
   description: string;

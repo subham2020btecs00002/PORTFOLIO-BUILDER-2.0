@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTerminal, FaSpinner } from 'react-icons/fa';
-import { getSortedHistory } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
 import type { TemplateProps } from './common/types';
 import { useTemplateModals } from './common/useTemplateModals';
 import { TemplateModals } from './common/TemplateModals';
@@ -33,7 +33,8 @@ export const DevTerminal: React.FC<TemplateProps> = ({
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const userName = portfolio.user?.name ? portfolio.user.name.toLowerCase().replace(/\s+/g, '-') : 'portfolio';
+  const effectiveName = portfolio.fullName || portfolio.user?.name || 'Developer';
+  const userName = effectiveName.toLowerCase().replace(/\s+/g, '-');
   const promptUser = `guest@${userName}`;
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         `}</pre>
         <p className="terminal-output-info">System: PortfolioOS v2.0 (Active)</p>
         {isPreview && <p className="terminal-output-accent">[PREVIEW MODE ACTIVE]</p>}
-        <p className="terminal-output-success">Welcome to {portfolio.user?.name}'s interactive developer shell.</p>
+        <p className="terminal-output-success">Welcome to {effectiveName}'s interactive developer shell.</p>
         {hasAvatar && (
           <div 
             className="cli-welcome-avatar-card"
@@ -60,10 +61,10 @@ export const DevTerminal: React.FC<TemplateProps> = ({
             }}
             title="Click to zoom operator avatar"
           >
-            <img src={avatarUrl} alt={portfolio.user?.name || 'Operator'} className="cli-welcome-avatar-img" />
+            <img src={avatarUrl} alt={effectiveName} className="cli-welcome-avatar-img" />
             <div className="cli-welcome-avatar-info">
               <span className="cli-tag">[IDENTITY_NODE // VERIFIED]</span>
-              <span className="cli-name">{portfolio.user?.name} &bull; {portfolio.title || 'Developer'}</span>
+              <span className="cli-name">{effectiveName} &bull; {portfolio.title || 'Developer'}</span>
               <span className="cli-hint">&gt; Click to inspect identity record</span>
             </div>
           </div>
@@ -73,7 +74,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
       </div>
     );
     setHistory([{ command: 'system --init', output: welcomeOutput, timestamp: new Date().toLocaleTimeString() }]);
-  }, [portfolio.user?.name, portfolio.title, hasAvatar, avatarUrl, isPreview]);
+  }, [effectiveName, portfolio.title, hasAvatar, avatarUrl, isPreview]);
 
   useEffect(() => {
     scrollToBottom();
@@ -156,11 +157,11 @@ export const DevTerminal: React.FC<TemplateProps> = ({
             
             <h3 className="terminal-output-info" style={{ marginTop: '15px' }}>{"//"} EDUCATION</h3>
             {portfolio.education && portfolio.education.length > 0 ? (
-              portfolio.education.map((edu, idx) => (
+              getSortedEducation(portfolio.education).map((edu, idx) => (
                 <div key={idx} style={{ marginTop: '10px' }}>
                   <p>🎓 <strong className="terminal-output-accent">{edu.collegeName}</strong> - {edu.degree} in {edu.branch}</p>
                   <p style={{ opacity: 0.8, fontSize: '0.85rem' }}>
-                    Period: {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : 'N/A'} - {edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'Present'}
+                    Period: {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : 'N/A'} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}
                   </p>
                   <p style={{ opacity: 0.8, fontSize: '0.85rem' }}>CGPA/Percentage: {edu.cgpaOrPercentage}</p>
                 </div>

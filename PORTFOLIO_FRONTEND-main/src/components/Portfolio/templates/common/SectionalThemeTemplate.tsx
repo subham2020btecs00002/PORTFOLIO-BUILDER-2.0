@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaSun, FaMoon, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../../url';
-import { getSortedHistory } from '../../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../../hooks/useScrollReveal';
 import type { TemplateProps } from './types';
 import { getThemeOverrideClasses } from './themeUtils';
@@ -53,7 +53,7 @@ export const SectionalThemeTemplate: React.FC<SectionalThemeTemplateProps> = ({
               <div className="theme-education-col">
                 <h3>{isCyberpunk ? '> ACADEMICS' : 'Education'}</h3>
                 <div style={{ marginTop: '16px' }}>
-                  {portfolio.education?.map((edu, idx) => (
+                  {getSortedEducation(portfolio.education || []).map((edu, idx) => (
                     <div key={idx} className="theme-card">
                       <h4 className="theme-card-subtitle">{edu.collegeName}</h4>
                       <p className="theme-card-meta">
@@ -64,7 +64,7 @@ export const SectionalThemeTemplate: React.FC<SectionalThemeTemplateProps> = ({
                       </p>
                       <p className="theme-card-meta" style={{ fontStyle: 'italic', fontSize: '0.85rem' }}>
                         {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} -{' '}
-                        {edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : ''}
+                        {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : '')}
                       </p>
                     </div>
                   ))}
@@ -345,13 +345,13 @@ export const SectionalThemeTemplate: React.FC<SectionalThemeTemplateProps> = ({
             <div className="theme-avatar-container">
               <img
                 src={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
-                alt={portfolio.user.name}
+                alt={portfolio.fullName || portfolio.user?.name || 'Developer'}
                 className="theme-avatar"
                 onClick={() => modals.setZoomAvatar(true)}
               />
             </div>
           )}
-          <h1>{portfolio.user.name}</h1>
+          <h1>{portfolio.fullName || portfolio.user?.name}</h1>
           <p className="theme-hero-subtitle">
             {isCyberpunk
               ? currentJob

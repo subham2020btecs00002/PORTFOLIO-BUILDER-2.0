@@ -18,10 +18,15 @@ export interface ThemeRecommendationResponse {
 }
 
 export interface ParsedResumeResponse {
+  fullName?: string;
+  title?: string;
+  description?: string;
   skills: Array<{ name: string; level: string; category: string }>;
   education: Array<any>;
-  experience: Array<any>;
+  experience?: Array<any>;
+  professionalHistory?: Array<any>;
   projects: Array<any>;
+  portfolioLinks?: any;
 }
 
 /**

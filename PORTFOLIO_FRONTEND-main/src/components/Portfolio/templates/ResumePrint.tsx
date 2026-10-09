@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Portfolio } from '../../../types';
-import { getSortedHistory } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
 
 interface ResumePrintProps {
   portfolio: Portfolio;
@@ -24,7 +24,7 @@ export const ResumePrint: React.FC<ResumePrintProps> = ({ portfolio }) => {
       
       {/* Header */}
       <header className="resume-header" style={{ borderBottom: '2px solid #000', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>
-        <h1 style={{ margin: '0 0 5px 0', fontSize: '26px', fontWeight: 'bold' }}>{portfolio.user.name.toUpperCase()}</h1>
+        <h1 style={{ margin: '0 0 5px 0', fontSize: '26px', fontWeight: 'bold' }}>{(portfolio.fullName || portfolio.user.name).toUpperCase()}</h1>
         <div className="resume-contact-info" style={{ fontSize: '12px', color: '#333' }}>
           {currentJob ? `${currentJob.position} | ` : portfolio.title ? `${portfolio.title} | ` : ''}
           {portfolio.user.email}
@@ -109,12 +109,12 @@ export const ResumePrint: React.FC<ResumePrintProps> = ({ portfolio }) => {
       {portfolio.education && portfolio.education.length > 0 && (
         <section className="resume-section" style={{ marginBottom: '20px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1px solid #000', paddingBottom: '3px', margin: '0 0 10px 0' }}>Education</h2>
-          {portfolio.education.map((edu, idx) => (
+          {getSortedEducation(portfolio.education).map((edu, idx) => (
             <div key={idx} className="resume-item" style={{ marginBottom: '8px' }}>
               <div className="resume-item-header" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px' }}>
                 <span>{edu.collegeName}</span>
                 <span>
-                  {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : ''}
+                  {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : '')}
                 </span>
               </div>
               <div className="resume-item-subtitle" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGithub, FaCode, FaAward, FaLinkedin, FaDownload, FaEnvelope, FaGraduationCap, FaSun, FaMoon, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../url';
-import { getSortedHistory } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import type { TemplateProps } from './common/types';
 import { getThemeOverrideClasses } from './common/themeUtils';
@@ -42,12 +42,12 @@ export const Minimalist: React.FC<TemplateProps> = ({
               <div className="about-education-card">
                 <h3 className="sub-title-minimal"><FaGraduationCap /> Education</h3>
                 <div className="education-list-minimal">
-                  {portfolio.education?.map((edu, idx) => (
+                  {getSortedEducation(portfolio.education || []).map((edu, idx) => (
                     <div key={idx} className="education-item-minimal">
                       <div className="edu-header-minimal">
                         <span className="edu-college">{edu.collegeName}</span>
                         <span className="edu-dates">
-                          {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : ''}
+                          {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} - {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : '')}
                         </span>
                       </div>
                       <p className="edu-degree">{edu.degree} in {edu.branch}</p>
@@ -260,13 +260,13 @@ export const Minimalist: React.FC<TemplateProps> = ({
             <div className="theme-avatar-container">
               <img
                 src={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
-                alt={portfolio.user.name}
+                alt={portfolio.fullName || portfolio.user?.name || 'Developer'}
                 className="theme-avatar"
                 onClick={() => modals.setZoomAvatar(true)}
               />
             </div>
           )}
-          <h1 className="hero-name-minimal">{portfolio.user.name}</h1>
+          <h1 className="hero-name-minimal">{portfolio.fullName || portfolio.user?.name}</h1>
           <p className="theme-hero-subtitle">
             {currentJob ? `${currentJob.position} @ ${currentJob.companyName}` : portfolio.title}
           </p>

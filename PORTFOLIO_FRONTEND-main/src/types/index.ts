@@ -96,7 +96,8 @@ export interface Education {
   branch: string;
   cgpaOrPercentage: string;
   yearOfJoining: string;
-  yearOfPassing: string;
+  yearOfPassing?: string;
+  isCurrentStudent?: boolean;
 }
 
 export interface ProfessionalHistory {
@@ -126,6 +127,7 @@ export interface AnalyticsData {
 export interface Portfolio {
   _id: string;
   user: User;
+  fullName?: string;
   title: string;
   description: string;
   projects: Project[];
@@ -152,6 +154,7 @@ export interface Portfolio {
 /** Shape of the local form state used in Create / Edit portfolio forms. */
 export interface PortfolioFormData {
   _id?: string;
+  fullName?: string;
   title: string;
   description: string;
   projects: Project[];

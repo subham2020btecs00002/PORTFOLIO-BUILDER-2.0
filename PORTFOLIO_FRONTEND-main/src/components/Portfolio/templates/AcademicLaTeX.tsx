@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaSpinner } from 'react-icons/fa';
-import { getSortedHistory } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import type { TemplateProps } from './common/types';
 import { getThemeOverrideClasses } from './common/themeUtils';
@@ -49,7 +49,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
         
         {/* Header Section */}
         <header className="latex-header">
-          <h1 className="latex-name">{portfolio.user?.name}</h1>
+          <h1 className="latex-name">{portfolio.fullName || portfolio.user?.name}</h1>
           <p className="latex-title">{portfolio.title}</p>
           
           <div className="latex-contact-info">
@@ -94,12 +94,12 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
           <h2 className="latex-section-title">II. Academic Education</h2>
           <div className="latex-section-content">
             {portfolio.education && portfolio.education.length > 0 ? (
-              portfolio.education.map((edu, idx) => (
+              getSortedEducation(portfolio.education).map((edu, idx) => (
                 <div key={idx} className="latex-entry">
                   <div className="latex-entry-header">
                     <strong>{edu.collegeName}</strong>
                     <span>
-                      {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} -- {edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'Present'}
+                      {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} -- {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}
                     </span>
                   </div>
                   <div className="latex-entry-sub">

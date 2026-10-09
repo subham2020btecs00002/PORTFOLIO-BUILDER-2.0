@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import debounce from 'lodash.debounce';
 import api from '../api';
 import PortfolioFormShell from './PortfolioFormShell';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -14,21 +13,26 @@ const CreatePortfolio: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkPortfolioExists = debounce(async (): Promise<void> => {
+    let isMounted = true;
+    const checkPortfolioExists = async (): Promise<void> => {
       try {
         const { data } = await api.get<{ exists: boolean }>('/api/portfolio/exists');
+        if (!isMounted) return;
         setPortfolioExists(data.exists);
         if (data.exists) {
-          navigate('/portfolio/edit');
+          navigate('/portfolio/edit', { replace: true });
         }
       } catch (err: unknown) {
+        if (!isMounted) return;
         setPortfolioExists(false);
         if (err instanceof Error) console.error(err.message);
       }
-    }, 300);
+    };
 
     void checkPortfolioExists();
-    return () => checkPortfolioExists.cancel();
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   if (portfolioExists === null) {
