@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from datetime import datetime
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import PDFProcessingError
@@ -39,6 +40,7 @@ def post_process_resume_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     # 3. Clean education records
     education = data.get("education", [])
     if isinstance(education, list):
+        now_year = datetime.now().year
         for edu in education:
             if isinstance(edu, dict):
                 if "cgpaOrPercentage" in edu:
@@ -49,28 +51,44 @@ def post_process_resume_dict(data: Dict[str, Any]) -> Dict[str, Any]:
                     edu["yearOfJoining"] = normalize_date(edu["yearOfJoining"], 2019)
 
                 y_pass_raw = str(edu.get("yearOfPassing", ""))
-                is_curr = (
-                    edu.get("isCurrentStudent") is True
-                    or "present" in y_pass_raw.lower()
+                has_present_kw = (
+                    "present" in y_pass_raw.lower()
                     or "current" in y_pass_raw.lower()
                     or "ongoing" in y_pass_raw.lower()
+                    or "pursuing" in y_pass_raw.lower()
                 )
-                if is_curr:
+
+                # Normalize yearOfPassing if valid date string
+                norm_pass = ""
+                if not has_present_kw and y_pass_raw and y_pass_raw.lower() != "none":
+                    norm_pass = normalize_date(y_pass_raw, 2023)
+
+                pass_year = None
+                if norm_pass:
+                    try:
+                        pass_year = int(norm_pass.split("-")[0])
+                    except Exception:
+                        pass
+
+                # If pass_year is in the past (<= now_year), they graduated! NOT current student
+                if pass_year and pass_year <= now_year:
+                    edu["isCurrentStudent"] = False
+                    edu["yearOfPassing"] = norm_pass
+                elif has_present_kw or edu.get("isCurrentStudent") is True:
                     edu["isCurrentStudent"] = True
-                    edu["yearOfPassing"] = ""
+                    edu["yearOfPassing"] = norm_pass  # Keep expected graduation date if available
                 else:
                     edu["isCurrentStudent"] = False
-                    if "yearOfPassing" in edu:
-                        edu["yearOfPassing"] = normalize_date(edu["yearOfPassing"], 2023)
+                    edu["yearOfPassing"] = norm_pass
 
-                    y_join = edu.get("yearOfJoining")
-                    y_pass = edu.get("yearOfPassing")
-                    if y_join and y_pass and y_join >= y_pass:
-                        try:
-                            join_year = int(y_join.split("-")[0])
-                            edu["yearOfPassing"] = f"{join_year + 4}-05-30"
-                        except Exception:
-                            pass
+                y_join = edu.get("yearOfJoining")
+                y_pass = edu.get("yearOfPassing")
+                if y_join and y_pass and y_join >= y_pass and not edu.get("isCurrentStudent"):
+                    try:
+                        join_year = int(y_join.split("-")[0])
+                        edu["yearOfPassing"] = f"{join_year + 4}-05-30"
+                    except Exception:
+                        pass
         data["education"] = education
 
     # 4. Clean professional history
@@ -120,7 +138,8 @@ def parse_resume_document(file_bytes: bytes) -> ResumeParseResponse:
 
     # Guard against prompt explosion
     trimmed_text = raw_text[: settings.MAX_PROMPT_CHARS].strip()
-    prompt = RESUME_PARSE_PROMPT.format(resume_text=trimmed_text)
+    current_year = datetime.now().year
+    prompt = RESUME_PARSE_PROMPT.format(resume_text=trimmed_text, current_year=current_year)
 
     logger.info(f"Parsing resume text with LLM ({len(trimmed_text)} chars)...")
     raw_json = llm_client.generate_json(prompt, temperature=0.1)

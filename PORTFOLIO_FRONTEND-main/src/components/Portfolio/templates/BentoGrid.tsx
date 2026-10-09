@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../url';
-import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation, formatEducationDateRange } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import { use3DTilt } from '../../../hooks/use3DTilt';
 import type { TemplateProps } from './common/types';
@@ -149,7 +149,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                   <p className="bento-edu-degree">{edu.degree} in {edu.branch}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
                     <span>CGPA/Percentage: {edu.cgpaOrPercentage}</span>
-                    <span>{edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}</span>
+                    <span style={{ fontWeight: 500 }}>{formatEducationDateRange(edu)}</span>
                   </div>
                 </div>
               ))}

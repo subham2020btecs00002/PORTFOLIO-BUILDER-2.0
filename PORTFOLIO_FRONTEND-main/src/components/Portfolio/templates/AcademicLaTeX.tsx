@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaSpinner } from 'react-icons/fa';
-import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation, formatEducationDateRange } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import type { TemplateProps } from './common/types';
 import { getThemeOverrideClasses } from './common/themeUtils';
@@ -99,7 +99,7 @@ export const AcademicLaTeX: React.FC<TemplateProps> = ({
                   <div className="latex-entry-header">
                     <strong>{edu.collegeName}</strong>
                     <span>
-                      {edu.yearOfJoining ? new Date(edu.yearOfJoining).getFullYear() : ''} -- {edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}
+                      {formatEducationDateRange(edu, ' -- ')}
                     </span>
                   </div>
                   <div className="latex-entry-sub">

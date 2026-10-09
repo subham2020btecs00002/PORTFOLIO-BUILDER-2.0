@@ -74,6 +74,7 @@ export const Step4Education: React.FC<Step4EducationProps> = ({
                   type="text"
                   name="collegeName"
                   value={edu.collegeName}
+                  title={edu.collegeName || ''}
                   onChange={(e) => handlers.handleEducationChange(e, index)}
                   placeholder="e.g. Stanford University"
                   required
@@ -124,6 +125,7 @@ export const Step4Education: React.FC<Step4EducationProps> = ({
                   type="text"
                   name="cgpaOrPercentage"
                   value={edu.cgpaOrPercentage}
+                  title={String(edu.cgpaOrPercentage || '')}
                   onChange={(e) => handlers.handleEducationChange(e, index)}
                   placeholder="e.g. 8.78, 3.8/4.0, 77%, or Grade A"
                   required
@@ -150,13 +152,12 @@ export const Step4Education: React.FC<Step4EducationProps> = ({
                 )}
               </div>
               <div className="form-group">
-                <label>Year of Passing {edu.isCurrentStudent ? '' : '*'}</label>
+                <label>{edu.isCurrentStudent ? 'Expected Passing Date (Optional)' : 'Year of Passing *'}</label>
                 <input
                   type="date"
                   name="yearOfPassing"
-                  value={edu.isCurrentStudent ? '' : (edu.yearOfPassing ?? '')}
+                  value={edu.yearOfPassing ?? ''}
                   onChange={(e) => handlers.handleEducationChange(e, index)}
-                  disabled={Boolean(edu.isCurrentStudent)}
                   required={!edu.isCurrentStudent}
                 />
                 {!edu.isCurrentStudent && errors.education[index]?.yearOfPassing && (

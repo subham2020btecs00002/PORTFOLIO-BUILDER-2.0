@@ -527,26 +527,33 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     }));
 
     setErrors((prev) => {
-      const currentEdu = { ...formData.education[index], [name]: fieldValue };
+      const currentEdu = { ...(formData.education[index] || {}), [name]: fieldValue };
       const updated = prev.education.map((ee, i) =>
         i === index ? { ...ee, [name]: validateEducationField(name, String(fieldValue), currentEdu) } : ee,
       );
 
-      // If marked as currently studying, clear passing date errors
-      if (name === 'isCurrentStudent' && fieldValue === true) {
-        updated[index] = { ...updated[index], yearOfPassing: '' };
+      // If marked as currently studying, clear passing date errors; if unchecked, validate
+      if (name === 'isCurrentStudent') {
+        if (fieldValue === true) {
+          updated[index] = { ...updated[index], yearOfPassing: '' };
+        } else {
+          updated[index] = {
+            ...updated[index],
+            yearOfPassing: validateEducationField('yearOfPassing', currentEdu.yearOfPassing || '', currentEdu),
+          };
+        }
       }
 
       // Cross-field date validation
       if ((name === 'yearOfJoining' || name === 'yearOfPassing') && !currentEdu.isCurrentStudent) {
-        const joiningVal = name === 'yearOfJoining' ? value : formData.education[index].yearOfJoining;
-        const passingVal = name === 'yearOfPassing' ? value : (formData.education[index].yearOfPassing ?? '');
+        const joiningVal = name === 'yearOfJoining' ? value : currentEdu.yearOfJoining;
+        const passingVal = name === 'yearOfPassing' ? value : (currentEdu.yearOfPassing ?? '');
         if (passingVal && joiningVal && new Date(passingVal) <= new Date(joiningVal)) {
           updated[index] = {
             ...updated[index],
             yearOfPassing: 'Year of passing must be after year of joining.',
           };
-        } else if (passingVal && joiningVal) {
+        } else if (passingVal && joiningVal && updated[index].yearOfPassing === 'Year of passing must be after year of joining.') {
           updated[index] = { ...updated[index], yearOfPassing: '' };
         }
       }

@@ -147,6 +147,7 @@ const ComboBox: React.FC<ComboBoxProps> = ({
           name={name}
           type="text"
           value={value}
+          title={value || ''}
           placeholder={placeholder}
           required={required}
           disabled={disabled}

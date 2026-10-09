@@ -26,7 +26,16 @@ export class PortfolioService {
   private mapDtoFields(dto: CreatePortfolioDto) {
     const education = dto.education
       ? dto.education.map((edu) => {
-          const isCurrent = edu.isCurrentStudent === true || (edu.isCurrentStudent as any) === 'true';
+          let isCurrent = edu.isCurrentStudent === true || (edu.isCurrentStudent as any) === 'true';
+
+          // If a graduation date is provided and is in the past, candidate has already graduated
+          if (edu.yearOfPassing) {
+            const passDate = new Date(edu.yearOfPassing);
+            if (!isNaN(passDate.getTime()) && passDate < new Date()) {
+              isCurrent = false;
+            }
+          }
+
           return {
             collegeName: edu.collegeName || '',
             degree: edu.degree || '',
@@ -37,11 +46,7 @@ export class PortfolioService {
                 : '',
             isCurrentStudent: isCurrent,
             yearOfJoining: edu.yearOfJoining ? new Date(edu.yearOfJoining) : undefined,
-            yearOfPassing: isCurrent
-              ? undefined
-              : edu.yearOfPassing
-              ? new Date(edu.yearOfPassing)
-              : undefined,
+            yearOfPassing: edu.yearOfPassing ? new Date(edu.yearOfPassing) : undefined,
           };
         })
       : [];

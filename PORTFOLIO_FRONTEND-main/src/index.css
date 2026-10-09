@@ -152,6 +152,25 @@ input, textarea, select {
   width: 100%;
 }
 
+/* Ellipsis for text inputs so long values don't clip harshly */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="date"]):not([type="time"]) {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="date"]):not([type="time"]):focus {
+  text-overflow: clip;
+}
+
+/* Date picker input styling */
+input[type="date"] {
+  min-width: 140px;
+  font-size: 0.92rem;
+  padding: 10px 12px;
+  letter-spacing: -0.01em;
+}
+
 /* Reset checkbox and radio styles to prevent distortion from global input styles */
 input[type="checkbox"], input[type="radio"] {
   width: auto;

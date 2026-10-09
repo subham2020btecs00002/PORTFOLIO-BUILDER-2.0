@@ -40,7 +40,7 @@ const CreatePortfolio: React.FC = () => {
   }
 
   return portfolioExists ? null : (
-    <div className="portfolio-page-wrapper">
+    <div className="portfolio-page-wrapper builder-page-wrapper">
       <PortfolioFormShell mode="create" />
     </div>
   );
