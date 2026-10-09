@@ -22,11 +22,12 @@ export class PortfolioService {
     private readonly mlClientService: MlClientService,
   ) {}
 
-
   private mapDtoFields(dto: CreatePortfolioDto) {
     const education = dto.education
       ? dto.education.map((edu) => {
-          let isCurrent = edu.isCurrentStudent === true || (edu.isCurrentStudent as any) === 'true';
+          let isCurrent =
+            edu.isCurrentStudent === true ||
+            (edu.isCurrentStudent as any) === 'true';
 
           // If a graduation date is provided and is in the past, candidate has already graduated
           if (edu.yearOfPassing) {
@@ -41,12 +42,17 @@ export class PortfolioService {
             degree: edu.degree || '',
             branch: edu.branch || '',
             cgpaOrPercentage:
-              edu.cgpaOrPercentage !== undefined && edu.cgpaOrPercentage !== null
+              edu.cgpaOrPercentage !== undefined &&
+              edu.cgpaOrPercentage !== null
                 ? String(edu.cgpaOrPercentage).trim()
                 : '',
             isCurrentStudent: isCurrent,
-            yearOfJoining: edu.yearOfJoining ? new Date(edu.yearOfJoining) : undefined,
-            yearOfPassing: edu.yearOfPassing ? new Date(edu.yearOfPassing) : undefined,
+            yearOfJoining: edu.yearOfJoining
+              ? new Date(edu.yearOfJoining)
+              : undefined,
+            yearOfPassing: edu.yearOfPassing
+              ? new Date(edu.yearOfPassing)
+              : undefined,
           };
         })
       : [];
@@ -56,9 +62,15 @@ export class PortfolioService {
           companyName: hist.companyName || '',
           position: hist.position || '',
           responsibility: hist.responsibility || '',
-          yearOfJoining: hist.yearOfJoining ? new Date(hist.yearOfJoining) : undefined,
-          yearOfLeaving: hist.yearOfLeaving ? new Date(hist.yearOfLeaving) : undefined,
-          isCurrentEmployee: hist.isCurrentEmployee === true || hist.isCurrentEmployee === 'true',
+          yearOfJoining: hist.yearOfJoining
+            ? new Date(hist.yearOfJoining)
+            : undefined,
+          yearOfLeaving: hist.yearOfLeaving
+            ? new Date(hist.yearOfLeaving)
+            : undefined,
+          isCurrentEmployee:
+            hist.isCurrentEmployee === true ||
+            hist.isCurrentEmployee === 'true',
           technologies: hist.technologies || [],
         }))
       : [];
@@ -103,11 +115,10 @@ export class PortfolioService {
       throw new BadRequestException('Portfolio already exists');
     }
 
-    const { education, professionalHistory, projects, portfolioLinks, skills } = this.mapDtoFields(dto);
+    const { education, professionalHistory, projects, portfolioLinks, skills } =
+      this.mapDtoFields(dto);
 
-    const pdf = file
-      ? { data: file.buffer, contentType: file.mimetype }
-      : null;
+    const pdf = file ? { data: file.buffer, contentType: file.mimetype } : null;
 
     const avatar = avatarFile
       ? { data: avatarFile.buffer, contentType: avatarFile.mimetype }
@@ -119,7 +130,13 @@ export class PortfolioService {
       fullName: dto.fullName || '',
       description: dto.description || '',
       templateId: dto.templateId || 'classic-green',
-      sectionOrder: dto.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'],
+      sectionOrder: dto.sectionOrder || [
+        'about',
+        'skills',
+        'experience',
+        'projects',
+        'contact',
+      ],
       themeColor: dto.themeColor || 'default',
       fontFamily: dto.fontFamily || 'default',
       borderRadius: dto.borderRadius || 'default',
@@ -147,7 +164,8 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio not found');
     }
 
-    const { education, professionalHistory, projects, portfolioLinks, skills } = this.mapDtoFields(dto);
+    const { education, professionalHistory, projects, portfolioLinks, skills } =
+      this.mapDtoFields(dto);
 
     const pdf = file
       ? { data: file.buffer, contentType: file.mimetype }
@@ -162,16 +180,25 @@ export class PortfolioService {
       portfolio.fullName = dto.fullName;
     }
     portfolio.description = dto.description || '';
-    portfolio.templateId = dto.templateId || portfolio.templateId || 'classic-green';
-    portfolio.sectionOrder = dto.sectionOrder || portfolio.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'];
+    portfolio.templateId =
+      dto.templateId || portfolio.templateId || 'classic-green';
+    portfolio.sectionOrder = dto.sectionOrder ||
+      portfolio.sectionOrder || [
+        'about',
+        'skills',
+        'experience',
+        'projects',
+        'contact',
+      ];
     portfolio.themeColor = dto.themeColor || portfolio.themeColor || 'default';
     portfolio.fontFamily = dto.fontFamily || portfolio.fontFamily || 'default';
-    portfolio.borderRadius = dto.borderRadius || portfolio.borderRadius || 'default';
+    portfolio.borderRadius =
+      dto.borderRadius || portfolio.borderRadius || 'default';
     portfolio.projects = projects;
-    portfolio.portfolioLinks = portfolioLinks as any;
+    portfolio.portfolioLinks = portfolioLinks;
     portfolio.education = education as any;
     portfolio.professionalHistory = professionalHistory as any;
-    portfolio.skills = skills as any;
+    portfolio.skills = skills;
     portfolio.pdf = pdf;
     portfolio.avatar = avatar;
 
@@ -196,7 +223,9 @@ export class PortfolioService {
     }
 
     portfolio.aiRecommendations = {
-      templateId: recommendations?.template ? recommendations.template.toLowerCase() : undefined,
+      templateId: recommendations?.template
+        ? recommendations.template.toLowerCase()
+        : undefined,
       themeColor: recommendations?.themeColor,
       fontFamily: recommendations?.fontFamily,
       borderRadius: recommendations?.borderRadius,
@@ -208,14 +237,18 @@ export class PortfolioService {
     portfolio.markModified('aiRecommendations');
 
     const saved = await portfolio.save();
-    console.log(`[PortfolioService] Successfully saved AI recommendations to portfolio recommendations field: ${portfolioId}`);
+    console.log(
+      `[PortfolioService] Successfully saved AI recommendations to portfolio recommendations field: ${portfolioId}`,
+    );
     return saved;
   }
 
   async clearRecommendations(userId: string): Promise<Portfolio> {
     const portfolio = await this.portfolioModel.findOne({ user: userId });
     if (!portfolio) {
-      throw new NotFoundException('Portfolio not found for recommendations cleanup');
+      throw new NotFoundException(
+        'Portfolio not found for recommendations cleanup',
+      );
     }
 
     portfolio.aiRecommendations = null as any;
@@ -229,29 +262,46 @@ export class PortfolioService {
       throw new NotFoundException('Portfolio not found');
     }
 
-    const skillsList = portfolio.skills ? portfolio.skills.map((s) => s.name) : [];
+    const skillsList = portfolio.skills
+      ? portfolio.skills.map((s) => s.name)
+      : [];
     const industry = portfolio.title || 'Software Development';
 
     try {
-      const data = await this.mlClientService.recommendTheme(industry, skillsList);
+      const data = await this.mlClientService.recommendTheme(
+        industry,
+        skillsList,
+      );
 
       let enhancedDescription = '';
       if (portfolio.description && portfolio.description.trim().length > 5) {
         try {
-          const enhanceData = await this.mlClientService.enhanceText(portfolio.description);
+          const enhanceData = await this.mlClientService.enhanceText(
+            portfolio.description,
+          );
           enhancedDescription = enhanceData.enhanced;
         } catch (e) {
-          console.error('[PortfolioService] Description auto-enhance failed:', e);
+          console.error(
+            '[PortfolioService] Description auto-enhance failed:',
+            e,
+          );
         }
       }
 
       // Update recommendations in the DB and return the updated sub-document
-      const updated = await this.updateRecommendations(portfolio._id.toString(), data, enhancedDescription);
+      const updated = await this.updateRecommendations(
+        portfolio._id.toString(),
+        data,
+        enhancedDescription,
+      );
       return {
         recommendations: updated.aiRecommendations,
       };
     } catch (err) {
-      console.error('[PortfolioService] Error generating AI recommendations:', err);
+      console.error(
+        '[PortfolioService] Error generating AI recommendations:',
+        err,
+      );
       throw new BadRequestException('Failed to generate AI recommendations');
     }
   }
@@ -345,8 +395,14 @@ export class PortfolioService {
     return portfolio;
   }
 
-  async getAnalytics(userId: string): Promise<{ views: number; contactCount: number; lastVisited: Date | null }> {
-    const portfolio = await this.portfolioModel.findOne({ user: userId }).select('analytics');
+  async getAnalytics(userId: string): Promise<{
+    views: number;
+    contactCount: number;
+    lastVisited: Date | null;
+  }> {
+    const portfolio = await this.portfolioModel
+      .findOne({ user: userId })
+      .select('analytics');
     if (!portfolio) {
       throw new NotFoundException('Portfolio not found');
     }

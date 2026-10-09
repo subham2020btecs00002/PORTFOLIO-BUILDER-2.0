@@ -38,15 +38,21 @@ async function bootstrap() {
   // ── CORS — dynamically accept any vercel.app, onrender.com, or localhost origin ──
   const isAllowedOrigin = (origin: string | undefined): boolean => {
     if (!origin) return true;
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
-    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
-    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1'))
+      return true;
+    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app'))
+      return true;
+    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com'))
+      return true;
     if (frontendUrl && origin === frontendUrl) return true;
     return false;
   };
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
@@ -62,7 +68,13 @@ async function bootstrap() {
       'Origin',
       'X-Correlation-Id',
     ],
-    exposedHeaders: ['Set-Cookie', 'X-Correlation-Id', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
+    exposedHeaders: [
+      'Set-Cookie',
+      'X-Correlation-Id',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+      'X-RateLimit-Reset',
+    ],
   });
 
   await app.listen(port);

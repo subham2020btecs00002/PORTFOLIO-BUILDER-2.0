@@ -23,7 +23,8 @@
     "build": "vite build",
     "build:cra": "react-scripts build",
     "preview": "vite preview",
-    "test": "react-scripts test"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [

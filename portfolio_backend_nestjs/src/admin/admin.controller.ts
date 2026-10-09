@@ -1,4 +1,13 @@
-import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './guards/admin.guard';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -37,9 +46,7 @@ export class AdminController {
   }
 
   @Delete('users/:userId/portfolio')
-  async deletePortfolio(
-    @Param('userId') userId: string,
-  ) {
+  async deletePortfolio(@Param('userId') userId: string) {
     return this.adminService.deleteUserPortfolio(userId);
   }
 }

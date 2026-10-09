@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { User, UserSchema } from '../common/schemas/user.schema';
-import { Portfolio, PortfolioSchema } from '../portfolio/schemas/portfolio.schema';
+import {
+  Portfolio,
+  PortfolioSchema,
+} from '../portfolio/schemas/portfolio.schema';
 import { AiUsage, AiUsageSchema } from '../portfolio/schemas/ai-usage.schema';
 import { AuthClientService } from '../common/services/auth-client.service';
 

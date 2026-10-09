@@ -14,8 +14,10 @@ async function bootstrap() {
   expressApp.set('trust proxy', 1);
 
   const configService = app.get(ConfigService);
-  const gatewayUrl = configService.get<string>('GATEWAY_URL') || 'http://localhost:3001';
-  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+  const gatewayUrl =
+    configService.get<string>('GATEWAY_URL') || 'http://localhost:3001';
+  const frontendUrl =
+    configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
   app.use(
     helmet({
@@ -33,16 +35,22 @@ async function bootstrap() {
 
   const isAllowedOrigin = (origin: string | undefined): boolean => {
     if (!origin) return true;
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
-    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
-    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com')) return true;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1'))
+      return true;
+    if (origin.endsWith('.vercel.app') || origin.includes('vercel.app'))
+      return true;
+    if (origin.endsWith('.onrender.com') || origin.includes('onrender.com'))
+      return true;
     if (gatewayUrl && origin === gatewayUrl) return true;
     if (frontendUrl && origin === frontendUrl) return true;
     return false;
   };
 
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
@@ -78,7 +86,9 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 5000;
 
   await app.listen(port);
-  console.log(`[Monolith] Running HTTP on: http://localhost:${port} (internal only)`);
+  console.log(
+    `[Monolith] Running HTTP on: http://localhost:${port} (internal only)`,
+  );
   console.log(`[Monolith] API Gateway expected at: ${gatewayUrl}`);
 }
 bootstrap();

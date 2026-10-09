@@ -1,0 +1,26 @@
+name: 'Setup Node.js Service'
+description: 'Configures Node.js, sets up npm dependency caching, and installs packages cleanly'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  service-dir:
+    description: 'Subdirectory where package.json is located'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: '${{ inputs.service-dir }}/package-lock.json'
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.service-dir }}
+      run: npm ci

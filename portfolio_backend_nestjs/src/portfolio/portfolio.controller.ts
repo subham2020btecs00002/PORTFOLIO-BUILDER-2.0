@@ -12,7 +12,10 @@ import {
   Res,
   BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+  FileFieldsInterceptor,
+} from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
@@ -48,7 +51,8 @@ export class PortfolioController {
   async create(
     @CurrentUser() user: { id: string },
     @Body() dto: CreatePortfolioDto,
-    @UploadedFiles() files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
+    @UploadedFiles()
+    files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
   ) {
     const pdfFile = files?.pdf?.[0];
     const avatarFile = files?.avatar?.[0];
@@ -73,7 +77,8 @@ export class PortfolioController {
   async update(
     @CurrentUser() user: { id: string },
     @Body() dto: CreatePortfolioDto,
-    @UploadedFiles() files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
+    @UploadedFiles()
+    files?: { pdf?: Express.Multer.File[]; avatar?: Express.Multer.File[] },
   ) {
     const pdfFile = files?.pdf?.[0];
     const avatarFile = files?.avatar?.[0];
@@ -150,7 +155,10 @@ export class PortfolioController {
 
   @Post('ai/parse-resume')
   @UseInterceptors(FileInterceptor('file'))
-  async parseResume(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+  async parseResume(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
     if (!file) {
       throw new BadRequestException('No resume file uploaded');
     }
@@ -174,7 +182,7 @@ export class PortfolioController {
     if (userId && userRole !== 'admin') {
       try {
         await this.portfolioService.recordAiUsage(userId);
-      } catch (err) {
+      } catch {
         // Non-blocking error handling
       }
     }

@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../common/schemas/user.schema';
@@ -9,7 +13,8 @@ import { AuthClientService } from '../common/services/auth-client.service';
 export class AdminService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    @InjectModel(Portfolio.name) private readonly portfolioModel: Model<Portfolio>,
+    @InjectModel(Portfolio.name)
+    private readonly portfolioModel: Model<Portfolio>,
     private readonly authClientService: AuthClientService,
   ) {}
 
@@ -115,11 +120,7 @@ export class AdminService {
     const matchStage: any = {};
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
-      matchStage.$or = [
-        { name: regex },
-        { email: regex },
-        { username: regex },
-      ];
+      matchStage.$or = [{ name: regex }, { email: regex }, { username: regex }];
     }
 
     const today = new Date().toISOString().slice(0, 10);
@@ -165,7 +166,9 @@ export class AdminService {
           aiUsage: {
             $let: {
               vars: {
-                usedCount: { $ifNull: [{ $arrayElemAt: ['$todayAiUsage.count', 0] }, 0] },
+                usedCount: {
+                  $ifNull: [{ $arrayElemAt: ['$todayAiUsage.count', 0] }, 0],
+                },
                 isAdminUser: { $eq: ['$role', 'admin'] },
               },
               in: {
@@ -194,10 +197,16 @@ export class AdminService {
                     fontFamily: '$$p.fontFamily',
                     projectsCount: { $size: { $ifNull: ['$$p.projects', []] } },
                     skillsCount: { $size: { $ifNull: ['$$p.skills', []] } },
-                    educationCount: { $size: { $ifNull: ['$$p.education', []] } },
-                    experienceCount: { $size: { $ifNull: ['$$p.professionalHistory', []] } },
+                    educationCount: {
+                      $size: { $ifNull: ['$$p.education', []] },
+                    },
+                    experienceCount: {
+                      $size: { $ifNull: ['$$p.professionalHistory', []] },
+                    },
                     views: { $ifNull: ['$$p.analytics.views', 0] },
-                    contactCount: { $ifNull: ['$$p.analytics.contactCount', 0] },
+                    contactCount: {
+                      $ifNull: ['$$p.analytics.contactCount', 0],
+                    },
                   },
                 },
               },
@@ -212,15 +221,23 @@ export class AdminService {
 
   async updateUserRole(adminId: string, userId: string, role: string) {
     if (role !== 'admin' && role !== 'user') {
-      throw new BadRequestException('Invalid role. Allowed roles are admin or user');
+      throw new BadRequestException(
+        'Invalid role. Allowed roles are admin or user',
+      );
     }
 
     if (adminId === userId) {
-      throw new BadRequestException('Self-demotion or changing your own role is not allowed.');
+      throw new BadRequestException(
+        'Self-demotion or changing your own role is not allowed.',
+      );
     }
 
     try {
-      const result = await this.authClientService.updateUserRole(adminId, userId, role);
+      const result = await this.authClientService.updateUserRole(
+        adminId,
+        userId,
+        role,
+      );
       return result.user || result;
     } catch {
       // Safe fallback to direct model if auth-service internal endpoint is not yet online
@@ -230,14 +247,14 @@ export class AdminService {
       }
 
       if (targetUser.role === 'admin' && role === 'user') {
-        throw new BadRequestException('Demoting other admin accounts is not allowed.');
+        throw new BadRequestException(
+          'Demoting other admin accounts is not allowed.',
+        );
       }
 
-      const updatedUser = await this.userModel.findByIdAndUpdate(
-        userId,
-        { $set: { role } },
-        { new: true },
-      ).select('-password');
+      const updatedUser = await this.userModel
+        .findByIdAndUpdate(userId, { $set: { role } }, { new: true })
+        .select('-password');
 
       return updatedUser;
     }
@@ -254,7 +271,9 @@ export class AdminService {
     }
 
     if (targetUser.role === 'admin') {
-      throw new BadRequestException('Deleting other admin accounts is not allowed.');
+      throw new BadRequestException(
+        'Deleting other admin accounts is not allowed.',
+      );
     }
 
     // Cascade delete portfolio if it exists
@@ -267,7 +286,9 @@ export class AdminService {
       await this.userModel.findByIdAndDelete(userId);
     }
 
-    return { message: `User "${targetUser.name}" (${targetUser.email}) and their portfolio were successfully deleted.` };
+    return {
+      message: `User "${targetUser.name}" (${targetUser.email}) and their portfolio were successfully deleted.`,
+    };
   }
 
   async deleteUserPortfolio(userId: string) {
@@ -277,7 +298,9 @@ export class AdminService {
     }
 
     if (targetUser.role === 'admin') {
-      throw new BadRequestException("Deleting another admin's portfolio is not allowed.");
+      throw new BadRequestException(
+        "Deleting another admin's portfolio is not allowed.",
+      );
     }
 
     const portfolio = await this.portfolioModel.findOne({ user: userId });
@@ -287,6 +310,8 @@ export class AdminService {
 
     await this.portfolioModel.deleteOne({ user: userId });
 
-    return { message: `Portfolio for user "${targetUser.name}" was successfully deleted.` };
+    return {
+      message: `Portfolio for user "${targetUser.name}" was successfully deleted.`,
+    };
   }
 }

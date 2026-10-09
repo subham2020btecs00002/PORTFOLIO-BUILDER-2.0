@@ -14,7 +14,10 @@ import { Request, Response, NextFunction } from 'express';
  */
 @Injectable()
 export class RateLimiterMiddleware implements NestMiddleware {
-  private readonly store = new Map<string, { count: number; resetAt: number }>();
+  private readonly store = new Map<
+    string,
+    { count: number; resetAt: number }
+  >();
 
   /** Default window: 60 000 ms (1 minute) */
   private readonly WINDOW_MS = 60_000;
