@@ -45,10 +45,12 @@ Render provides free webhook URLs to trigger instant deployments without needing
    - `portfolio-api-gateway` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
    - `portfolio-auth-service` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
    - `portfolio-backend` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
+   - `portfolio-ml-service` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
 2. Add them as repository secrets in GitHub:
    - `RENDER_GATEWAY_DEPLOY_HOOK`
    - `RENDER_AUTH_DEPLOY_HOOK`
    - `RENDER_BACKEND_DEPLOY_HOOK`
+   - `RENDER_ML_DEPLOY_HOOK` (Optional if ML service is deployed on Render)
 
 ### 2. Vercel Deployment (Frontend)
 Choose **either** Method A (Deploy Hook) or Method B (Vercel CLI):

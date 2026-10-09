@@ -232,6 +232,17 @@ jobs:
             echo "::warning ::RENDER_BACKEND_DEPLOY_HOOK is not set. Skipping backend deploy."
           fi
 
+      - name: Deploy ML Service (FastAPI) to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_ML_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for ML Service..."
+            curl -f -s -X POST "${{ secrets.RENDER_ML_DEPLOY_HOOK }}"
+            echo "✔ ML Service deployment triggered successfully."
+          else
+            echo "::notice ::RENDER_ML_DEPLOY_HOOK is not set. Skipping ML service deploy."
+          fi
+
       # ── Deploy Frontend to Vercel (100% Free) ───────────────────────────────
       - name: Deploy Frontend to Vercel
         shell: bash
