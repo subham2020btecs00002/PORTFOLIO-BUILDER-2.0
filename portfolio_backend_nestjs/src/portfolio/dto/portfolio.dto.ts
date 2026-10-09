@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SkillDto {
@@ -47,8 +47,13 @@ export class EducationDto {
   @IsOptional()
   branch?: string;
 
+  @IsString()
   @IsOptional()
-  cgpaOrPercentage?: number;
+  cgpaOrPercentage?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isCurrentStudent?: boolean;
 
   @IsOptional()
   yearOfJoining?: string;
@@ -107,6 +112,10 @@ export class CreatePortfolioDto {
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsOptional()
+  fullName?: string;
 
   @IsString()
   @IsOptional()

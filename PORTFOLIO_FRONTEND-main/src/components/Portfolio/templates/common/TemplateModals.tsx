@@ -21,7 +21,7 @@ export const TemplateModals: React.FC<TemplateModalsProps> = ({
 }) => {
   const hasAvatar = Boolean(portfolio.avatarUrl || (portfolio.avatar && portfolio.avatar.contentType));
   const avatarUrl = portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`;
-  const userName = portfolio.user?.name || 'User';
+  const userName = portfolio.fullName || portfolio.user?.name || 'User';
 
   return (
     <>

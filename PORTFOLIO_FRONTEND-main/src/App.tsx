@@ -8,7 +8,7 @@ import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/Admin/AdminRoute';
-import LoadingSpinner from './components/common/LoadingSpinner';
+import TopProgressBar from './components/common/TopProgressBar';
 
 // ✅ Lazy-loaded: these are only downloaded when the user actually navigates to them
 const CreatePortfolio    = React.lazy(() => import('./components/Portfolio/CreatePortfolio'));
@@ -35,8 +35,8 @@ const MainApp: React.FC = () => {
   return (
     <>
       {!isPublicPortfolio && <Navbar />}
-      {/* Suspense shows a spinner while any lazy-loaded chunk is downloading */}
-      <Suspense fallback={<LoadingSpinner size="lg" message="Loading..." />}>
+      {/* TopProgressBar provides a smooth non-blocking transition when lazy chunks load */}
+      <Suspense fallback={<TopProgressBar />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />

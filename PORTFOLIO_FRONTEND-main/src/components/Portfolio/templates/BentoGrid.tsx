@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGithub, FaLinkedin, FaEnvelope, FaGraduationCap, FaBriefcase, FaCode, FaExternalLinkAlt, FaSun, FaMoon, FaDownload, FaSpinner } from 'react-icons/fa';
 import { baseUrl } from '../../url';
-import { getSortedHistory } from '../../../utils/portfolioUtils';
+import { getSortedHistory, getSortedEducation } from '../../../utils/portfolioUtils';
 import { useScrollReveal } from '../../../hooks/useScrollReveal';
 import { use3DTilt } from '../../../hooks/use3DTilt';
 import type { TemplateProps } from './common/types';
@@ -64,7 +64,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
         {/* Navigation Bar */}
         <header className="bento-header reveal-on-scroll">
           <div className="bento-header-left">
-            <h1 className="bento-logo">{portfolio.user?.name}</h1>
+            <h1 className="bento-logo">{portfolio.fullName || portfolio.user?.name}</h1>
             <p className="bento-tagline">{currentJob ? `${currentJob.position} @ ${currentJob.companyName}` : portfolio.title}</p>
           </div>
           {toggleTheme && (
@@ -84,7 +84,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
                 <div className="bento-avatar-wrapper">
                   <img
                     src={portfolio.avatarUrl || `${baseUrl}/api/portfolio/avatar/${portfolio._id}`}
-                    alt={portfolio.user?.name}
+                    alt={portfolio.fullName || portfolio.user?.name}
                     className="bento-avatar"
                     onClick={() => modals.setZoomAvatar(true)}
                   />
@@ -143,13 +143,13 @@ export const BentoGrid: React.FC<TemplateProps> = ({
           <BentoCard className="bento-education-card reveal-on-scroll delay-3">
             <h3 className="bento-card-title"><FaGraduationCap style={{ marginRight: '8px' }} /> Education</h3>
             <div className="bento-education-list">
-              {portfolio.education?.map((edu, idx) => (
+              {getSortedEducation(portfolio.education || []).map((edu, idx) => (
                 <div key={idx} className="bento-edu-item">
                   <h4>{edu.collegeName}</h4>
                   <p className="bento-edu-degree">{edu.degree} in {edu.branch}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>
                     <span>CGPA/Percentage: {edu.cgpaOrPercentage}</span>
-                    <span>{edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A'}</span>
+                    <span>{edu.isCurrentStudent ? 'Present' : (edu.yearOfPassing ? new Date(edu.yearOfPassing).getFullYear() : 'N/A')}</span>
                   </div>
                 </div>
               ))}
@@ -277,7 +277,7 @@ export const BentoGrid: React.FC<TemplateProps> = ({
 
         {/* Footer */}
         <footer className="bento-footer">
-          <p>© {new Date().getFullYear()} {portfolio.user?.name}. Powered by PortfolioBuilder.</p>
+          <p>© {new Date().getFullYear()} {portfolio.fullName || portfolio.user?.name}. Powered by PortfolioBuilder.</p>
         </footer>
 
       </div>

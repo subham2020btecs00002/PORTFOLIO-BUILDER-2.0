@@ -7,6 +7,11 @@ def test_clean_cgpa():
     assert clean_cgpa_or_percentage("9.0 / 10") == "9"
     assert clean_cgpa_or_percentage("85.5 %") == "85.5%"
     assert clean_cgpa_or_percentage("85 percent") == "85%"
+    assert clean_cgpa_or_percentage("77%") == "77%"
+    assert clean_cgpa_or_percentage("8.78") == "8.78"
+    assert clean_cgpa_or_percentage("3.8/4.0") == "3.8/4"
+    assert clean_cgpa_or_percentage("A+") == "A+"
+    assert clean_cgpa_or_percentage("Distinction") == "Distinction"
     assert clean_cgpa_or_percentage("") == ""
 
 def test_normalize_degree():

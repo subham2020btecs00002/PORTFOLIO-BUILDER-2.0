@@ -76,14 +76,14 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
               >
                 <img 
                   src={avatarUrl} 
-                  alt={portfolio.user?.name || 'Character Portrait'} 
+                  alt={portfolio.fullName || portfolio.user?.name || 'Character Portrait'} 
                   className="rpg-avatar-img"
                 />
                 <span className="rpg-avatar-badge">HERO</span>
               </div>
             )}
             <div className="rpg-header-left">
-              <h1 className="rpg-char-name">{portfolio.user?.name}</h1>
+              <h1 className="rpg-char-name">{portfolio.fullName || portfolio.user?.name}</h1>
               <div className="rpg-char-title">Class: {portfolio.title || 'Developer'}</div>
             </div>
           </div>
@@ -312,7 +312,7 @@ export const GamifiedRPG: React.FC<TemplateProps> = ({
 
         {/* Footer */}
         <footer className="rpg-footer">
-          <p>© {new Date().getFullYear()} {portfolio.user?.name}. Powered by RPGBuilder.</p>
+          <p>© {new Date().getFullYear()} {portfolio.fullName || portfolio.user?.name}. Powered by RPGBuilder.</p>
         </footer>
 
       </div>

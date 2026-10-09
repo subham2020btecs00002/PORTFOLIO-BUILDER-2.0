@@ -17,6 +17,7 @@ class EducationItem(BaseModel):
     degree: str = Field(default="", description="Degree title (e.g. B.Tech, M.Tech)")
     branch: str = Field(default="", description="Field of study / branch")
     cgpaOrPercentage: str = Field(default="", description="Academic score (e.g. 8.5 or 85%)")
+    isCurrentStudent: bool = Field(default=False, description="Whether currently enrolled / studying here")
     yearOfJoining: str = Field(default="", description="Start date (YYYY-MM-DD)")
     yearOfPassing: str = Field(default="", description="End or graduation date (YYYY-MM-DD)")
 
@@ -36,6 +37,7 @@ class PortfolioLinks(BaseModel):
     linkedin: str = Field(default="", description="LinkedIn profile URL")
 
 class ResumeParseResponse(BaseModel):
+    fullName: str = Field(default="", description="Candidate's full name (preserving First MiddleName LastName)")
     title: str = Field(default="", description="Inferred or extracted professional headline")
     description: str = Field(default="", description="Extracted or generated professional bio")
     skills: List[SkillItem] = Field(default_factory=list, description="Extracted skills")

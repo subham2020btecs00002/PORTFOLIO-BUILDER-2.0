@@ -13,7 +13,8 @@ interface Step4EducationProps {
     branch: string;
     cgpaOrPercentage: string | number;
     yearOfJoining: string;
-    yearOfPassing: string;
+    yearOfPassing?: string;
+    isCurrentStudent?: boolean;
   }>;
   handlers: {
     handleEducationChange: (
@@ -118,13 +119,13 @@ export const Step4Education: React.FC<Step4EducationProps> = ({
                 )}
               </div>
               <div className="form-group">
-                <label>CGPA or Percentage *</label>
+                <label>Score / CGPA / Grade *</label>
                 <input
                   type="text"
                   name="cgpaOrPercentage"
                   value={edu.cgpaOrPercentage}
                   onChange={(e) => handlers.handleEducationChange(e, index)}
-                  placeholder="e.g. 8.5 or 85%"
+                  placeholder="e.g. 8.78, 3.8/4.0, 77%, or Grade A"
                   required
                 />
                 {errors.education[index]?.cgpaOrPercentage && (
@@ -149,19 +150,31 @@ export const Step4Education: React.FC<Step4EducationProps> = ({
                 )}
               </div>
               <div className="form-group">
-                <label>Year of Passing *</label>
+                <label>Year of Passing {edu.isCurrentStudent ? '' : '*'}</label>
                 <input
                   type="date"
                   name="yearOfPassing"
-                  value={edu.yearOfPassing}
+                  value={edu.isCurrentStudent ? '' : (edu.yearOfPassing ?? '')}
                   onChange={(e) => handlers.handleEducationChange(e, index)}
-                  required
+                  disabled={Boolean(edu.isCurrentStudent)}
+                  required={!edu.isCurrentStudent}
                 />
-                {errors.education[index]?.yearOfPassing && (
+                {!edu.isCurrentStudent && errors.education[index]?.yearOfPassing && (
                   <span className="field-error-msg">
                     {errors.education[index].yearOfPassing}
                   </span>
                 )}
+              </div>
+              <div className="form-group checkbox-group select-span-2">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isCurrentStudent"
+                    checked={Boolean(edu.isCurrentStudent)}
+                    onChange={(e) => handlers.handleEducationChange(e, index)}
+                  />
+                  Presently studying here?
+                </label>
               </div>
             </div>
           </div>

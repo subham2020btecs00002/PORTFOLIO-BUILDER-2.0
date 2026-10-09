@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import debounce from 'lodash.debounce';
 import api from '../api';
 import type { Portfolio, PortfolioFormData } from '../../types';
 import PortfolioFormShell from './PortfolioFormShell';
@@ -14,12 +13,15 @@ const EditPortfolio: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchPortfolio = debounce(async (): Promise<void> => {
+    let isMounted = true;
+    const fetchPortfolio = async (): Promise<void> => {
       try {
         const { data } = await api.get<Portfolio>('/api/portfolio');
+        if (!isMounted) return;
 
         const transformed: PortfolioFormData = {
           _id: data._id,
+          fullName: data.fullName || '',
           title: data.title || '',
           description: data.description || '',
           templateId: data.templateId || 'classic-green',
@@ -57,10 +59,11 @@ const EditPortfolio: React.FC = () => {
                 degree: edu.degree || '',
                 branch: edu.branch || '',
                 cgpaOrPercentage: String(edu.cgpaOrPercentage || ''),
+                isCurrentStudent: !!edu.isCurrentStudent,
                 yearOfJoining: edu.yearOfJoining
                   ? new Date(edu.yearOfJoining).toISOString().substring(0, 10)
                   : '',
-                yearOfPassing: edu.yearOfPassing
+                yearOfPassing: edu.yearOfPassing && !edu.isCurrentStudent
                   ? new Date(edu.yearOfPassing).toISOString().substring(0, 10)
                   : '',
               }))
@@ -86,12 +89,16 @@ const EditPortfolio: React.FC = () => {
       } catch (err: unknown) {
         if (err instanceof Error) console.error(err.message);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    }, 300);
+    };
 
     void fetchPortfolio();
-    return () => fetchPortfolio.cancel();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {

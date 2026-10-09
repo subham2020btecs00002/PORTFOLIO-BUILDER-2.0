@@ -25,14 +25,25 @@ export class PortfolioService {
 
   private mapDtoFields(dto: CreatePortfolioDto) {
     const education = dto.education
-      ? dto.education.map((edu) => ({
-          collegeName: edu.collegeName || '',
-          degree: edu.degree || '',
-          branch: edu.branch || '',
-          cgpaOrPercentage: edu.cgpaOrPercentage || 0,
-          yearOfJoining: edu.yearOfJoining ? new Date(edu.yearOfJoining) : undefined,
-          yearOfPassing: edu.yearOfPassing ? new Date(edu.yearOfPassing) : undefined,
-        }))
+      ? dto.education.map((edu) => {
+          const isCurrent = edu.isCurrentStudent === true || (edu.isCurrentStudent as any) === 'true';
+          return {
+            collegeName: edu.collegeName || '',
+            degree: edu.degree || '',
+            branch: edu.branch || '',
+            cgpaOrPercentage:
+              edu.cgpaOrPercentage !== undefined && edu.cgpaOrPercentage !== null
+                ? String(edu.cgpaOrPercentage).trim()
+                : '',
+            isCurrentStudent: isCurrent,
+            yearOfJoining: edu.yearOfJoining ? new Date(edu.yearOfJoining) : undefined,
+            yearOfPassing: isCurrent
+              ? undefined
+              : edu.yearOfPassing
+              ? new Date(edu.yearOfPassing)
+              : undefined,
+          };
+        })
       : [];
 
     const professionalHistory = dto.professionalHistory
@@ -100,6 +111,7 @@ export class PortfolioService {
     const portfolio = new this.portfolioModel({
       user: userId,
       title: dto.title,
+      fullName: dto.fullName || '',
       description: dto.description || '',
       templateId: dto.templateId || 'classic-green',
       sectionOrder: dto.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'],
@@ -141,6 +153,9 @@ export class PortfolioService {
       : portfolio.avatar;
 
     portfolio.title = dto.title;
+    if (dto.fullName !== undefined) {
+      portfolio.fullName = dto.fullName;
+    }
     portfolio.description = dto.description || '';
     portfolio.templateId = dto.templateId || portfolio.templateId || 'classic-green';
     portfolio.sectionOrder = dto.sectionOrder || portfolio.sectionOrder || ['about', 'skills', 'experience', 'projects', 'contact'];

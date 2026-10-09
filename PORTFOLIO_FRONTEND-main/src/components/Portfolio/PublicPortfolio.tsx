@@ -11,18 +11,8 @@ import { baseUrl } from '../url';
 import type { Portfolio, ContactFormData } from '../../types';
 import { useDraggableFloating } from '../../hooks/useDraggableFloating';
 
-// Import templates & template CSS
-import { ClassicGreen } from './templates/ClassicGreen';
-import { DarkPro } from './templates/DarkPro';
-import { Creative } from './templates/Creative';
-import { Minimalist } from './templates/Minimalist';
-import { Cyberpunk } from './templates/Cyberpunk';
-import { Neobrutalism } from './templates/Neobrutalism';
-import { DevTerminal } from './templates/DevTerminal';
-import { BentoGrid } from './templates/BentoGrid';
-import { AcademicLaTeX } from './templates/AcademicLaTeX';
-import { GamifiedRPG } from './templates/GamifiedRPG';
-import { ResumePrint } from './templates/ResumePrint';
+import TemplateRenderer, { templatePreloaders } from './templates/TemplateRenderer';
+const ResumePrint = React.lazy(() => import('./templates/ResumePrint').then(m => ({ default: m.ResumePrint })));
 import './templates/templates.css';
 import './PublicPortfolio.css';
 
@@ -63,6 +53,17 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
           ? `${baseUrl}/api/portfolio/public/by-username/${username}`
           : `${baseUrl}/api/portfolio/public/${userId}`;
         const { data } = await axios.get<Portfolio>(url);
+
+        // Preload the specific template chunk while single loader is visible to eliminate double loader
+        const activeTemplate = data.templateId || 'classic-green';
+        if (templatePreloaders[activeTemplate]) {
+          try {
+            await templatePreloaders[activeTemplate]();
+          } catch (e) {
+            console.warn('Template preload failed, falling back to dynamic import:', e);
+          }
+        }
+
         setPortfolio(data);
         setError(null);
       } catch (err: any) {
@@ -186,39 +187,17 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
 
   // Choose template component
   const renderTemplate = () => {
-    const props = {
-      portfolio,
-      contactForm,
-      handleInputChange,
-      handleSubmit,
-      handleScrollTo,
-      isSendingEmail,
-      theme,
-    };
-
-    switch (portfolio.templateId) {
-      case 'dark-pro':
-        return <DarkPro {...props} />;
-      case 'creative':
-        return <Creative {...props} />;
-      case 'minimalist':
-        return <Minimalist {...props} />;
-      case 'cyberpunk':
-        return <Cyberpunk {...props} />;
-      case 'neobrutalism':
-        return <Neobrutalism {...props} />;
-      case 'cli':
-        return <DevTerminal {...props} />;
-      case 'bento':
-        return <BentoGrid {...props} />;
-      case 'latex':
-        return <AcademicLaTeX {...props} />;
-      case 'rpg':
-        return <GamifiedRPG {...props} />;
-      case 'classic-green':
-      default:
-        return <ClassicGreen {...props} />;
-    }
+    return (
+      <TemplateRenderer
+        portfolio={portfolio}
+        contactForm={contactForm}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+        handleScrollTo={handleScrollTo}
+        isSendingEmail={isSendingEmail}
+        theme={theme}
+      />
+    );
   };
 
   const shareText = `Check out ${portfolio.user?.name || 'my'} developer portfolio built on PortfolioBuilder:`;
@@ -226,7 +205,11 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
 
   if (isResumeMode) {
-    return portfolio ? <ResumePrint portfolio={portfolio} /> : null;
+    return portfolio ? (
+      <React.Suspense fallback={<LoadingSpinner message="Generating resume..." />}>
+        <ResumePrint portfolio={portfolio} />
+      </React.Suspense>
+    ) : null;
   }
 
   return (

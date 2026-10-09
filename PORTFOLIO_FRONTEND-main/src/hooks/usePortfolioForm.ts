@@ -51,9 +51,26 @@ export interface FormErrors {
 /** Loose URL: must start with http(s):// or be blank */
 const urlPattern = /^https?:\/\/\S+\.\S+/;
 
-/** CGPA: 0.0–10.0 or percentage: 0–100% or 0–100 */
-const cgpaPattern = /^(?:10(?:\.0{1,2})?|[0-9](?:\.\d{1,2})?)$/;
-const percentagePattern = /^(?:100(?:\.0{1,2})?|[0-9]{1,2}(?:\.\d{1,2})?)\s*%?$/;
+/**
+ * Validates diverse academic scoring formats:
+ * - Percentage: 0-100%, 77%, 85.5%
+ * - Standard CGPA: 0.0-10.0, 8.78
+ * - Scale ratio: 3.8/4.0, 3.8/4, 4.5/5, 9/10
+ * - Letter grades / honors: A+, A, A-, B+, B, O, S, Distinction, First Class, etc.
+ */
+export const isValidAcademicGrade = (v: string): boolean => {
+  const trimmed = v.trim();
+  if (!trimmed) return false;
+  // 1. Percentage (e.g. 77%, 85.5%, 90)
+  if (/^(?:100(?:\.0{1,2})?|[0-9]{1,2}(?:\.\d{1,2})?)\s*%?$/.test(trimmed)) return true;
+  // 2. Standard 10-point CGPA or standalone decimal (e.g. 8.78)
+  if (/^(?:10(?:\.0{1,2})?|[0-9](?:\.\d{1,2})?)$/.test(trimmed)) return true;
+  // 3. GPA with scale ratio (e.g. 3.8/4.0, 3.8/4, 4.5/5.0, 9.2/10)
+  if (/^[0-9]+(?:\.[0-9]+)?\s*\/\s*[0-9]+(?:\.[0-9]+)?$/.test(trimmed)) return true;
+  // 4. Letter grades and honors (e.g. A+, A, Distinction, First Class)
+  if (/^(?:Grade\s*)?(?:[A-D][+-]?|[OS]|Distinction|First\s+Class|First\s+Division|Honours|Honors)$/i.test(trimmed)) return true;
+  return false;
+};
 
 // --- Title ---
 export const validateTitle = (title: string): string => {
@@ -130,9 +147,9 @@ export const validateEducationField = (name: string, value: string, education?: 
     }
     case 'cgpaOrPercentage': {
       const v = value.trim();
-      if (!v) return 'CGPA or percentage is required.';
-      if (!cgpaPattern.test(v) && !percentagePattern.test(v)) {
-        return 'Enter a valid CGPA (e.g. 8.5) or percentage (e.g. 85% or 85).';
+      if (!v) return 'Academic score or grade is required.';
+      if (!isValidAcademicGrade(v)) {
+        return 'Enter a valid CGPA (e.g. 8.78), GPA (e.g. 3.8/4.0), percentage (e.g. 77%), or Grade (e.g. A+).';
       }
       return '';
     }
@@ -146,7 +163,10 @@ export const validateEducationField = (name: string, value: string, education?: 
       return '';
     }
     case 'yearOfPassing': {
-      if (!value) return 'Year of passing is required.';
+      if (education?.isCurrentStudent) {
+        return '';
+      }
+      if (!value) return 'Year of passing is required (or check "Presently studying here").';
       if (education?.yearOfJoining && value) {
         if (new Date(value) <= new Date(education.yearOfJoining)) {
           return 'Year of passing must be after year of joining.';
@@ -250,14 +270,14 @@ const validateStep4 = (formData: PortfolioFormData): Partial<FormErrors> => {
       !edu.branch.trim() &&
       !edu.cgpaOrPercentage.trim() &&
       !edu.yearOfJoining.trim() &&
-      !edu.yearOfPassing.trim();
+      !(edu.yearOfPassing ?? '').trim();
     return {
       collegeName: isEmpty ? '' : validateEducationField('collegeName', edu.collegeName),
       degree: isEmpty ? '' : validateEducationField('degree', edu.degree),
       branch: isEmpty ? '' : validateEducationField('branch', edu.branch),
       cgpaOrPercentage: isEmpty ? '' : validateEducationField('cgpaOrPercentage', edu.cgpaOrPercentage),
       yearOfJoining: isEmpty ? '' : validateEducationField('yearOfJoining', edu.yearOfJoining),
-      yearOfPassing: isEmpty ? '' : validateEducationField('yearOfPassing', edu.yearOfPassing, edu),
+      yearOfPassing: isEmpty ? '' : validateEducationField('yearOfPassing', edu.yearOfPassing ?? '', edu),
     };
   });
   return { education: educationErrors };
@@ -326,6 +346,7 @@ export const emptyEducation = (): Education => ({
   cgpaOrPercentage: '',
   yearOfJoining: '',
   yearOfPassing: '',
+  isCurrentStudent: false,
 });
 export const emptyEducationErrors = (): EducationErrors => ({
   collegeName: '',
@@ -365,6 +386,7 @@ export const emptySkill = (): Skill => ({
 
 export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
   const defaultForm: PortfolioFormData = {
+    fullName: '',
     title: '',
     description: '',
     projects: [emptyProject()],
@@ -495,22 +517,30 @@ export const usePortfolioForm = (initialFormValues?: PortfolioFormData) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     index: number,
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    const fieldValue = type === 'checkbox' ? checked : value;
+
     setFormData((prev) => ({
       ...prev,
-      education: prev.education.map((edu, i) => (i === index ? { ...edu, [name]: value } : edu)),
+      education: prev.education.map((edu, i) => (i === index ? { ...edu, [name]: fieldValue } : edu)),
     }));
 
     setErrors((prev) => {
-      const currentEdu = { ...formData.education[index], [name]: value };
+      const currentEdu = { ...formData.education[index], [name]: fieldValue };
       const updated = prev.education.map((ee, i) =>
-        i === index ? { ...ee, [name]: validateEducationField(name, value, currentEdu) } : ee,
+        i === index ? { ...ee, [name]: validateEducationField(name, String(fieldValue), currentEdu) } : ee,
       );
 
+      // If marked as currently studying, clear passing date errors
+      if (name === 'isCurrentStudent' && fieldValue === true) {
+        updated[index] = { ...updated[index], yearOfPassing: '' };
+      }
+
       // Cross-field date validation
-      if (name === 'yearOfJoining' || name === 'yearOfPassing') {
+      if ((name === 'yearOfJoining' || name === 'yearOfPassing') && !currentEdu.isCurrentStudent) {
         const joiningVal = name === 'yearOfJoining' ? value : formData.education[index].yearOfJoining;
-        const passingVal = name === 'yearOfPassing' ? value : formData.education[index].yearOfPassing;
+        const passingVal = name === 'yearOfPassing' ? value : (formData.education[index].yearOfPassing ?? '');
         if (passingVal && joiningVal && new Date(passingVal) <= new Date(joiningVal)) {
           updated[index] = {
             ...updated[index],
