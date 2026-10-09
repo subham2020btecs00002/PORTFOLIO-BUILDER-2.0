@@ -22,7 +22,9 @@ import { useAuth } from '../context/AuthContext';
 import { ImageCropperModal } from '../common/ImageCropperModal';
 import type { Portfolio } from '../../types';
 import LoadingSpinner from '../common/LoadingSpinner';
+import ResumeParsingLoader from './ResumeParsingLoader';
 import { baseUrl } from '../url';
+
 import { HEADLINE_SUGGESTIONS } from '../../data/formSuggestions';
 import './PortfolioForm.css';
 
@@ -831,14 +833,9 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
         className={`portfolio-builder-split-container mode-${viewMode} ${isMobileScreen ? `mobile-active-${mobileTab}` : ''} ${isDragging ? 'is-resizing' : ''}`}
       >
         {/* Full-Page AI Processing Overlays */}
-        {parsingResume && (
-          <LoadingSpinner
-            fullPage={true}
-            size="lg"
-            message="✨ AI is parsing your resume PDF and auto-filling your portfolio sections..."
-          />
-        )}
+        <ResumeParsingLoader isOpen={parsingResume} />
         {fetchingRecommendations && (
+
           <LoadingSpinner
             fullPage={true}
             size="lg"
@@ -1119,9 +1116,10 @@ const PortfolioFormShell: React.FC<PortfolioFormShellProps> = ({ mode, initialDa
                 type="button"
                 className={`device-btn ${previewDevice === 'mobile' ? 'active' : ''}`}
                 onClick={() => setPreviewDevice('mobile')}
-                title="Mobile View (385px Phone Frame)"
+                title="Mobile View (440px Modern Phone Frame)"
               >
                 <FaMobileAlt size={12} /> <span className="device-btn-text">Mobile</span>
+
               </button>
             </div>
 

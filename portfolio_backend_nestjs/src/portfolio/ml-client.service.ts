@@ -121,7 +121,7 @@ export class MlClientService {
         body: formData,
       },
       correlationId,
-      45_000,
+      120_000,
     );
   }
 
@@ -129,9 +129,10 @@ export class MlClientService {
     url: string,
     options: RequestInit,
     correlationId?: string,
-    timeoutMs: number = 30_000,
+    timeoutMs: number = 120_000,
     maxRetries: number = 2,
   ): Promise<T> {
+
     let lastError: any = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
