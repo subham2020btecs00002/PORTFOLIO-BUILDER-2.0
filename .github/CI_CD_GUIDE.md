@@ -74,6 +74,12 @@ Choose **either** Method A (Deploy Hook) or Method B (Vercel CLI):
    - `MAIL_PASSWORD` = `xxxx xxxx xxxx xxxx` (the 16-character App Password without spaces)
    - `NOTIFICATION_EMAIL` = `your-destination-email@gmail.com`
 
+### 4. LLM API Keys (FastAPI Live Tests)
+To run live LLM provider integration tests in CI (Groq, OpenRouter, Gemini), add the keys from your `ml-service-python/.env` into GitHub Secrets:
+- `GROQ_API_KEY`
+- `OPENROUTER_API_KEY`
+- `GEMINI_API_KEY`
+
 ---
 
 ## 📁 Repository Modular Structure
