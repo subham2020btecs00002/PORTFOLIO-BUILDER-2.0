@@ -9,6 +9,8 @@ client = TestClient(app)
 def test_cascade_active_providers():
     """Verify that multiple providers are detected and initialized."""
     active = llm_client.get_active_providers()
+    if not active:
+        pytest.skip("No live LLM provider keys configured in this environment.")
     assert "groq" in active
     assert "openrouter" in active
     assert "gemini" in active
@@ -21,6 +23,8 @@ def test_health_reports_active_providers():
     data = res.json()
     assert data["status"] == "healthy"
     assert "active_providers" in data
+    if not data["active_providers"]:
+        pytest.skip("No live LLM provider keys configured in this environment.")
     assert "groq" in data["active_providers"]
     assert data["primary_provider"] == llm_client.primary_provider
 
@@ -43,6 +47,8 @@ def test_extract_json_resilience():
 
 def test_live_groq_json_generation():
     """Verify that live LLM generation through Groq works and returns structured JSON."""
+    if not llm_client.is_configured():
+        pytest.skip("No live LLM provider keys configured in this environment.")
     result = llm_client.generate_json("Output a JSON object with key 'ping' and value 'pong'.")
     assert isinstance(result, dict)
     assert "ping" in result
@@ -50,6 +56,8 @@ def test_live_groq_json_generation():
 
 def test_cascade_fallback_on_groq_failure():
     """Verify that if Groq fails (e.g. 429 rate limit), the cascade seamlessly falls back to OpenRouter/Gemini."""
+    if not llm_client.is_configured():
+        pytest.skip("No live LLM provider keys configured in this environment.")
     groq_provider = llm_client.get_provider("groq")
     assert groq_provider is not None
     # Simulate Groq failure
