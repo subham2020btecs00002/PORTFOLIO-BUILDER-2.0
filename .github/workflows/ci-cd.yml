@@ -163,7 +163,9 @@ jobs:
 
       - name: Run Pytest Suite
         working-directory: ml-service-python
-        run: pytest tests/ -v
+        env:
+          PYTHONPATH: .
+        run: python -m pytest tests/ -v
 
   test-and-build-frontend:
     name: Test & Build Frontend
