@@ -146,5 +146,9 @@ def parse_resume_document(file_bytes: bytes) -> ResumeParseResponse:
 
     normalized_data = post_process_resume_dict(raw_json)
     validated_response = ResumeParseResponse(**normalized_data)
-    logger.info(f"Successfully parsed resume: '{validated_response.title}' with {len(validated_response.skills)} skills.")
+    logger.info(
+        f"Successfully parsed resume: '{validated_response.title}' with {len(validated_response.skills)} skills "
+        f"using model='{llm_client.last_model}' ({llm_client.last_provider}) in {llm_client.last_elapsed_seconds}s."
+    )
     return validated_response
+

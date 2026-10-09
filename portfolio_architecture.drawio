@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="PortfolioBuilderDiagram" name="Portfolio Builder Architecture">
-        <mxGraphModel dx="848" dy="983" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="800" math="0" shadow="0">
+        <mxGraphModel dx="460" dy="380" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="800" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -20,7 +20,7 @@
                     <mxGeometry x="50" y="80" width="240" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="102" value="&lt;b&gt;usePortfolioForm Hook&lt;/b&gt;&lt;br/&gt;React custom hook for form&lt;br/&gt;state and validation API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0288D1;fontColor=#01579B;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="190" width="240" height="60" as="geometry"/>
+                    <mxGeometry x="40" y="190" width="240" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="103" value="&lt;b&gt;PortfolioFormShell Component&lt;/b&gt;&lt;br/&gt;Grid shell for sections,&lt;br/&gt;collapsing headers, actions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#0288D1;fontColor=#01579B;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="50" y="280" width="240" height="60" as="geometry"/>
@@ -46,25 +46,25 @@
                 <mxCell id="204" value="&lt;b&gt;Proxy Manager&lt;/b&gt;&lt;br/&gt;http-proxy-middleware&lt;br/&gt;• Injects x-internal-secret&lt;br/&gt;• Maps endpoints to upstreams&lt;br/&gt;• Rewrites CORS headers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#FFB300;fontColor=#FF6F00;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="380" y="360" width="180" height="120" as="geometry"/>
                 </mxCell>
-                <mxCell id="301" value="&lt;b&gt;Auth Service (Non-ML)&lt;/b&gt;&lt;br/&gt;NestJS REST API Service&lt;br/&gt;Port: 5001 (Internal)&lt;br/&gt;User schema, credentials, logins" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;fontColor=#1B5E20;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="301" value="&lt;b&gt;Auth Service (Non-ML)&lt;/b&gt;&lt;br/&gt;NestJS REST API Service&lt;br/&gt;Port: 5001 (Internal)&lt;br/&gt;User schema, credentials, logins" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;fontColor=#1B5E20;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="700" y="80" width="220" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="302" value="&lt;b&gt;Portfolio Monolith Backend (Non-ML)&lt;/b&gt;&lt;br/&gt;NestJS Hybrid App (HTTP + RMQ)&lt;br/&gt;Port: 5000 (Internal)&lt;br/&gt;Portfolio CRUD &amp; analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;fontColor=#1B5E20;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="302" value="&lt;b&gt;Portfolio Monolith Backend (Non-ML)&lt;/b&gt;&lt;br/&gt;NestJS Hybrid App (HTTP + RMQ)&lt;br/&gt;Port: 5000 (Internal)&lt;br/&gt;Portfolio CRUD &amp; analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;fontColor=#1B5E20;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="700" y="220" width="240" height="100" as="geometry"/>
                 </mxCell>
-                <mxCell id="303" value="&lt;b&gt;AiStreamService (SSE)&lt;/b&gt;&lt;br/&gt;SSE emitter for pushing&lt;br/&gt;new recommendations to client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8F5;strokeColor=#117A65;fontColor=#0E6251;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="303" value="&lt;b&gt;AiStreamService (SSE)&lt;/b&gt;&lt;br/&gt;SSE emitter for pushing&lt;br/&gt;new recommendations to client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8F5;strokeColor=#117A65;fontColor=#0E6251;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="700" y="580" width="240" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="304" value="&lt;b&gt;RabbitMQ Message Broker&lt;/b&gt;&lt;br/&gt;Service-to-service communication&lt;br/&gt;AMQP Port: 5672 / Admin: 15672&lt;br/&gt;&lt;hr/&gt;• &lt;b&gt;portfolio_ml_queue&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;portfolio_backend_queue&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;fontColor=#4A148C;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="304" value="&lt;b&gt;RabbitMQ Message Broker&lt;/b&gt;&lt;br/&gt;Service-to-service communication&lt;br/&gt;AMQP Port: 5672 / Admin: 15672&lt;br/&gt;&lt;hr/&gt;• &lt;b&gt;portfolio_ml_queue&lt;/b&gt;&lt;br/&gt;• &lt;b&gt;portfolio_backend_queue&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;fontColor=#4A148C;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1010" y="380" width="200" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="305" value="&lt;b&gt;Python ML Service (ML)&lt;/b&gt;&lt;br/&gt;FastAPI + RMQ Consumer&lt;br/&gt;Port: 8000 (Internal)&lt;br/&gt;Handles Gemini prompts,&lt;br/&gt;PDF parsing, rephrasing API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2F1;strokeColor=#009688;fontColor=#004D40;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="305" value="&lt;b&gt;Python ML Service (ML)&lt;/b&gt;&lt;br/&gt;FastAPI + RMQ Consumer&lt;br/&gt;Port: 8000 (Internal)&lt;br/&gt;Handles Gemini prompts,&lt;br/&gt;PDF parsing, rephrasing API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2F1;strokeColor=#009688;fontColor=#004D40;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1280" y="220" width="220" height="100" as="geometry"/>
                 </mxCell>
-                <mxCell id="401" value="&lt;b&gt;MongoDB Atlas&lt;/b&gt;&lt;br/&gt;Cloud Database Cluster&lt;br/&gt;Stores credentials &amp; portfolios&lt;br/&gt;(Shared document schema)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#607D8B;fontColor=#263238;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="401" value="&lt;b&gt;MongoDB Atlas&lt;/b&gt;&lt;br/&gt;Cloud Database Cluster&lt;br/&gt;Stores credentials &amp; portfolios&lt;br/&gt;(Shared document schema)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#607D8B;fontColor=#263238;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1590" y="80" width="180" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="402" value="&lt;b&gt;Google Gemini API (External ML/AI)&lt;/b&gt;&lt;br/&gt;LLM endpoints invoked for&lt;br/&gt;resume parsing &amp; rephrasing&lt;br/&gt;(gemini-1.5-pro / flash)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;fontColor=#1A237E;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                <mxCell id="402" value="&lt;b&gt;Google Gemini API (External ML/AI)&lt;/b&gt;&lt;br/&gt;LLM endpoints invoked for&lt;br/&gt;resume parsing &amp; rephrasing&lt;br/&gt;(gemini-1.5-pro / flash)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;fontColor=#1A237E;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1590" y="230" width="180" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="403" value="&lt;b&gt;Gmail SMTP Server&lt;/b&gt;&lt;br/&gt;Email relay used by Auth Service&lt;br/&gt;for signing up validation and resets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECEFF1;strokeColor=#607D8B;fontColor=#263238;strokeWidth=2;fontSize=12;" parent="1" vertex="1">

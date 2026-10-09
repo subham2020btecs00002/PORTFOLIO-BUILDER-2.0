@@ -638,7 +638,7 @@
 }
 
 .device-preview-wrapper.device-frame-mobile {
-  max-width: 385px;
+  max-width: 440px;
   margin: 20px auto;
   border: 10px solid #1e293b;
   border-radius: 36px;
@@ -652,12 +652,12 @@
 }
 
 .mobile-device-notch {
-  width: 110px;
-  height: 18px;
+  width: 125px;
+  height: 20px;
   background: #1e293b;
   margin: 0 auto;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -665,6 +665,7 @@
   flex-shrink: 0;
   z-index: 10;
 }
+
 
 .mobile-speaker {
   width: 36px;

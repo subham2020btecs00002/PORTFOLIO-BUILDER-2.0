@@ -34,7 +34,12 @@ def recommend_portfolio_theme(industry: str, skills: List[str]) -> ThemeRecommen
             if key not in raw_json:
                 raw_json[key] = default_val
 
+        logger.info(
+            f"Successfully generated theme recommendation using model='{llm_client.last_model}' "
+            f"({llm_client.last_provider}) in {llm_client.last_elapsed_seconds}s."
+        )
         return ThemeRecommendationResponse(**raw_json)
     except Exception as err:
         logger.error(f"Error in recommend_portfolio_theme: {err}. Returning default theme.")
         return ThemeRecommendationResponse(**DEFAULT_THEME_CONFIG)
+
