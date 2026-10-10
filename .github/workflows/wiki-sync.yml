@@ -1,0 +1,48 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    name: Sync Documentation to GitHub Wiki
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+
+      - name: Checkout Wiki Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki-repo
+          token: ${{ secrets.WIKI_PAT || secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Sync Wiki Markdown Files
+        run: |
+          if [ -d "wiki-repo" ]; then
+            cp -r main-repo/wiki/* wiki-repo/
+            cd wiki-repo
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            if git diff --staged --quiet; then
+              echo "No wiki changes to commit."
+            else
+              git commit -m "docs(wiki): automated sync from main repository"
+              git push origin master || git push origin main
+            fi
+          else
+            echo "Wiki repository could not be cloned with default token; skipping auto-sync."
+          fi
