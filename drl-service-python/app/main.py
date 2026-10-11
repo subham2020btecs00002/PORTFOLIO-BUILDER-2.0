@@ -78,6 +78,18 @@ app.add_middleware(
 )
 
 
+@app.get("/", tags=["Root"])
+async def root():
+    """Root entrypoint displaying service status and navigation links."""
+    return {
+        "service": "Portfolio Intelligence Service",
+        "status": "online",
+        "docs_url": "/docs",
+        "health_check": "/health",
+        "description": "In-house ML & DRL microservice for Portfolio Builder 2.0"
+    }
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """
