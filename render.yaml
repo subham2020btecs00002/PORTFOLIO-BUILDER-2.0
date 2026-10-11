@@ -77,6 +77,8 @@ services:
         sync: false
       - key: ML_SERVICE_URL
         sync: false
+      - key: INTELLIGENCE_SERVICE_URL
+        sync: false
       - key: EMAIL
         sync: false
       - key: PASSWORD
@@ -101,5 +103,26 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: GEMINI_API_KEY
+        sync: false
+
+  # ── 5. Portfolio Intelligence DRL Service (FastAPI / XGBoost / SHAP / LinUCB) ────
+  - type: web
+    name: portfolio-intelligence-service
+    env: python
+    plan: free
+    rootDir: drl-service-python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: INTERNAL_SECRET
+        sync: false
+      - key: HF_MODEL_REPO_ID
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: MONGO_URI
         sync: false
 

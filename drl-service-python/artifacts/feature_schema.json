@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "features_count": 24,
+  "features": [
+    {
+      "name": "f01_word_count",
+      "description": "Total words across bio, experience, and projects",
+      "type": "int"
+    },
+    {
+      "name": "f02_action_verb_count",
+      "description": "Total strong leadership and action verbs",
+      "type": "int"
+    },
+    {
+      "name": "f03_action_verb_ratio",
+      "description": "Density of action verbs per sentence",
+      "type": "float"
+    },
+    {
+      "name": "f04_metric_count",
+      "description": "Total quantifiable metrics (percentages, dollars, scale)",
+      "type": "int"
+    },
+    {
+      "name": "f05_metric_density",
+      "description": "Metrics per bullet point",
+      "type": "float"
+    },
+    {
+      "name": "f06_flesch_reading_ease",
+      "description": "Flesch Reading Ease score",
+      "type": "float"
+    },
+    {
+      "name": "f07_flesch_grade_level",
+      "description": "Flesch-Kincaid Grade Level index",
+      "type": "float"
+    },
+    {
+      "name": "f08_skill_count",
+      "description": "Total distinct skills listed",
+      "type": "int"
+    },
+    {
+      "name": "f09_expert_skill_ratio",
+      "description": "Ratio of Expert-level skills to total skills",
+      "type": "float"
+    },
+    {
+      "name": "f10_skill_category_diversity",
+      "description": "Number of unique skill categories represented",
+      "type": "int"
+    },
+    {
+      "name": "f11_project_count",
+      "description": "Number of listed projects",
+      "type": "int"
+    },
+    {
+      "name": "f12_project_link_ratio",
+      "description": "Proportion of projects with live demo/deployment links",
+      "type": "float"
+    },
+    {
+      "name": "f13_project_repo_ratio",
+      "description": "Proportion of projects with repository links",
+      "type": "float"
+    },
+    {
+      "name": "f14_project_skill_cohesion",
+      "description": "Percentage of listed skills referenced in project bodies",
+      "type": "float"
+    },
+    {
+      "name": "f15_experience_count",
+      "description": "Number of professional work history entries",
+      "type": "int"
+    },
+    {
+      "name": "f16_total_experience_months",
+      "description": "Total cumulative career tenure in months",
+      "type": "float"
+    },
+    {
+      "name": "f17_avg_role_tenure_months",
+      "description": "Average tenure duration per role in months",
+      "type": "float"
+    },
+    {
+      "name": "f18_current_employee_flag",
+      "description": "Binary flag indicating active current employment",
+      "type": "binary"
+    },
+    {
+      "name": "f19_has_education",
+      "description": "Binary flag indicating formal educational credential",
+      "type": "binary"
+    },
+    {
+      "name": "f20_education_degree_level",
+      "description": "Normalized educational attainment score (0-4)",
+      "type": "float"
+    },
+    {
+      "name": "f21_bio_length",
+      "description": "Character length of personal summary / bio",
+      "type": "int"
+    },
+    {
+      "name": "f22_bio_has_specialization",
+      "description": "Binary flag for explicit domain specialization in bio",
+      "type": "binary"
+    },
+    {
+      "name": "f23_tech_breadth_score",
+      "description": "Coverage across Frontend, Backend, Database, and DevOps",
+      "type": "float"
+    },
+    {
+      "name": "f24_temporal_continuity",
+      "description": "Temporal career continuity score (absence of negative overlaps)",
+      "type": "float"
+    }
+  ]
+}

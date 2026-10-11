@@ -243,3 +243,485 @@
     justify-content: center;
   }
 }
+
+/* ── Portfolio Intelligence & SHAP Section ──────────────────────────── */
+
+.intelligence-section {
+  padding: 32px;
+  margin-bottom: 40px;
+  border-radius: var(--radius-lg, 16px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(99, 102, 241, 0.04) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+
+.intelligence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.intelligence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  margin-bottom: 8px;
+}
+
+.sparkle-icon {
+  color: #a5b4fc;
+}
+
+.intelligence-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+}
+
+.intelligence-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 600px;
+}
+
+.intelligence-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.intelligence-body-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Score Card */
+.intelligence-score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  border-radius: var(--radius-md, 12px);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.score-radial-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 16px;
+}
+
+.score-radial-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.radial-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 10;
+}
+
+.radial-progress {
+  fill: none;
+  stroke: #6366f1;
+  stroke: url(#scoreGradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.radial-inner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.score-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.score-grade-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.grade-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.grade-pill {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.grade-a-plus, .grade-a {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.grade-a-minus, .grade-b-plus, .grade-b {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.grade-c, .grade-d {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.quick-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.quick-metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.metric-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* SHAP Insights Column */
+.intelligence-insights-column h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+}
+
+.section-icon-gold {
+  color: #fbbf24;
+}
+
+.section-icon-indigo {
+  color: #818cf8;
+}
+
+.insights-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 16px 0;
+}
+
+.shap-factors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.shap-factor-card {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.shap-factor-card:hover {
+  transform: translateX(3px);
+}
+
+.shap-factor-card.factor-positive {
+  border-left: 3px solid #10b981;
+}
+
+.shap-factor-card.factor-negative {
+  border-left: 3px solid #f43f5e;
+}
+
+.factor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.factor-name-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.factor-icon-pos {
+  color: #10b981;
+  font-size: 0.85rem;
+}
+
+.factor-icon-neg {
+  color: #f43f5e;
+  font-size: 0.85rem;
+}
+
+.factor-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.factor-points {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.points-positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.points-negative {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+}
+
+.factor-advice {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Skill Gaps */
+.skill-gaps-container {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.skill-gaps-container h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+}
+
+.skill-gaps-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+
+.skill-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-recommendation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.skill-recommendation-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.chip-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.chip-match {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.2);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.chip-cat {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.intelligence-loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+}
+
+.placeholder-robot {
+  font-size: 2.2rem;
+  color: #818cf8;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 860px) {
+  .intelligence-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Light Mode Support for Dashboard Intelligence ──────────────────── */
+[data-theme="light"] .intelligence-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 243, 255, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .intelligence-badge {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #4f46e5;
+}
+
+[data-theme="light"] .sparkle-icon {
+  color: #6366f1;
+}
+
+[data-theme="light"] .intelligence-score-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .radial-bg {
+  stroke: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .score-number {
+  color: #0f172a;
+}
+
+[data-theme="light"] .score-max {
+  color: #64748b;
+}
+
+[data-theme="light"] .quick-metric-item {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .metric-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .metric-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .shap-factor-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .factor-name {
+  color: #0f172a;
+}
+
+[data-theme="light"] .factor-advice {
+  color: #475569;
+}
+
+[data-theme="light"] .skill-recommendation-chip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .chip-name {
+  color: #0f172a;
+}
+
+[data-theme="light"] .chip-match {
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] .chip-cat {
+  color: #64748b;
+}
+

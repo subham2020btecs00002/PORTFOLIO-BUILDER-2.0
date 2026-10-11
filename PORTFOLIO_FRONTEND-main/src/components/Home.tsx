@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaEye, FaArrowRight, FaRocket, FaUser, FaPalette, FaShareAlt } from 'react-icons/fa';
+import { FaEdit, FaEye, FaArrowRight, FaRocket, FaUser, FaPalette, FaShareAlt, FaRobot } from 'react-icons/fa';
 import api from './api';
 import { useAuth } from '../components/context/AuthContext';
 import LoadingSpinner from './common/LoadingSpinner';
@@ -81,25 +81,44 @@ const Home: React.FC = () => {
             {loading ? (
               <LoadingSpinner size="sm" message="" />
             ) : (
-              <div className="cta-buttons-group">
-                {portfolioExists ? (
-                  <>
-                    <button className="btn-primary" onClick={() => navigate('/portfolio/edit')}>
-                      <FaEdit /> Edit Portfolio
+              <>
+                <div className="cta-buttons-group">
+                  {portfolioExists ? (
+                    <>
+                      <button className="btn-primary" onClick={() => navigate('/portfolio/edit')}>
+                        <FaEdit /> Edit Portfolio
+                      </button>
+                      <button className="btn-secondary" onClick={() => navigate(user?.username ? `/p/${user.username}` : `/portfolio/public/${user?._id || user?.id}`)}>
+                        <FaEye /> View Public Link
+                      </button>
+                      <button className="btn-outline" onClick={() => navigate('/dashboard')}>
+                        📊 View Analytics
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn-primary" onClick={() => navigate('/portfolio')}>
+                      Create your Portfolio <FaArrowRight />
                     </button>
-                    <button className="btn-secondary" onClick={() => navigate(user?.username ? `/p/${user.username}` : `/portfolio/public/${user?._id || user?.id}`)}>
-                      <FaEye /> View Public Link
+                  )}
+                </div>
+
+                {portfolioExists && (
+                  <div className="home-ml-feature-banner card-glass" onClick={() => navigate('/portfolio/intelligence')}>
+                    <div className="ml-banner-content">
+                      <div className="ml-banner-badge">
+                        <FaRobot /> AI Portfolio Intelligence
+                      </div>
+                      <h3>Machine Learning Portfolio Benchmark &amp; Validation</h3>
+                      <p>
+                        Benchmark your profile against 470+ real developer resumes with XGBoost, inspect exact SHAP impact factors, and validate structural readiness.
+                      </p>
+                    </div>
+                    <button className="btn-ml-glow" onClick={(e) => { e.stopPropagation(); navigate('/portfolio/intelligence'); }}>
+                      Explore ML Benchmark <FaArrowRight />
                     </button>
-                    <button className="btn-outline" onClick={() => navigate('/dashboard')}>
-                      📊 View Analytics
-                    </button>
-                  </>
-                ) : (
-                  <button className="btn-primary" onClick={() => navigate('/portfolio')}>
-                    Create your Portfolio <FaArrowRight />
-                  </button>
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         ) : (

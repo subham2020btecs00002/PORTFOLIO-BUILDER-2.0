@@ -7,9 +7,10 @@ import { Portfolio, PortfolioSchema } from './schemas/portfolio.schema';
 import { User, UserSchema } from '../common/schemas/user.schema';
 import { AiUsage, AiUsageSchema } from './schemas/ai-usage.schema';
 import { MlClientService } from './ml-client.service';
+import { IntelligenceClientService } from './intelligence-client.service';
 
 /**
- * Portfolio Module (Phase 3)
+ * Portfolio Module
  *
  * AuthModule dependency removed — JWT validation is handled by the API Gateway.
  * User identity arrives via the X-User-Id header set by the gateway.
@@ -28,7 +29,17 @@ import { MlClientService } from './ml-client.service';
     ]),
   ],
   controllers: [PortfolioController],
-  providers: [PortfolioService, AiStreamService, MlClientService],
-  exports: [PortfolioService, AiStreamService, MlClientService],
+  providers: [
+    PortfolioService,
+    AiStreamService,
+    MlClientService,
+    IntelligenceClientService,
+  ],
+  exports: [
+    PortfolioService,
+    AiStreamService,
+    MlClientService,
+    IntelligenceClientService,
+  ],
 })
 export class PortfolioModule {}

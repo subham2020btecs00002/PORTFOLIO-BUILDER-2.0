@@ -186,6 +186,152 @@
   margin-bottom: 20px;
 }
 
+/* Intelligence button */
+.btn-intelligence {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.25) 100%);
+  color: #c4b5fd;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.2);
+}
+
+.btn-intelligence:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(168, 85, 247, 0.45) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
+  color: #ffffff;
+}
+
+/* ML Feature Banner below buttons */
+.home-ml-feature-banner {
+  margin-top: 28px;
+  padding: 24px 28px;
+  border-radius: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.home-ml-feature-banner:hover {
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.2);
+}
+
+.ml-banner-content {
+  flex: 1;
+}
+
+.ml-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.ml-banner-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 6px;
+}
+
+.ml-banner-content p {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.btn-ml-glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-ml-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+}
+
+/* Light Mode Overrides for ML Feature Banner */
+[data-theme="light"] .home-ml-feature-banner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 243, 255, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+}
+
+[data-theme="light"] .home-ml-feature-banner:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.16);
+}
+
+[data-theme="light"] .ml-banner-badge {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #4f46e5;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+[data-theme="light"] .ml-banner-content h3 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .ml-banner-content p {
+  color: #475569;
+}
+
+[data-theme="light"] .btn-ml-glow {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.35);
+  color: #ffffff;
+}
+
+[data-theme="light"] .btn-ml-glow:hover {
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+}
+
+@media (max-width: 768px) {
+  .home-ml-feature-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
 /* Features grid styling */
 .home-features-section {
   position: relative;

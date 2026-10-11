@@ -49,10 +49,15 @@ jobs:
           python3 -m pip install --upgrade semgrep
           semgrep scan --config "p/security-audit" --config "p/owasp-top-ten" || true
 
-      - name: Python Security Audit (Bandit)
+      - name: Python Security Audit (Bandit - ML Service)
         run: |
           python3 -m pip install bandit
           bandit -r ml-service-python/app -ll -ii || true
+
+      - name: Python Security Audit (Bandit - DRL Service)
+        run: |
+          python3 -m pip install bandit
+          bandit -r drl-service-python/app -ll -ii || true
 
   # ─────────────────────────────────────────────────────────────────────────────
   # STAGE 2: STATIC CODE ANALYSIS & LINTING
@@ -81,17 +86,25 @@ jobs:
         run: npm run lint
 
   lint-python:
-    name: Lint Python Service
+    name: Lint Python Service (${{ matrix.service }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ml-service-python
+          - drl-service-python
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: ./.github/actions/setup-python-service
+        with:
+          service-dir: ${{ matrix.service }}
 
       - name: Run Flake8 Syntax & Style Check
-        working-directory: ml-service-python
+        working-directory: ${{ matrix.service }}
         run: |
           flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
@@ -188,6 +201,8 @@ jobs:
 
       - name: Setup Python
         uses: ./.github/actions/setup-python-service
+        with:
+          service-dir: ml-service-python
 
       - name: Run Pytest Suite
         working-directory: ml-service-python
@@ -196,6 +211,28 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -m pytest tests/ -v
+
+  test-drl-service:
+    name: Test & Validate Portfolio Intelligence Engine (DRL)
+    needs: [security-scan, lint-python]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python-service
+        with:
+          service-dir: drl-service-python
+
+      - name: Run Pytest Suite
+        working-directory: drl-service-python
+        env:
+          PYTHONPATH: .
+          INTERNAL_SECRET: ci_test_internal_service_secret_token
+          HF_MODEL_REPO_ID: sk22082001/portfolio-intelligence-engine
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python -m pytest tests/ -v
 
   test-and-build-frontend:
@@ -224,7 +261,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to Render & Vercel
-    needs: [test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend]
+    needs: [test-and-build-gateway, test-and-build-backends, test-ml-service, test-drl-service, test-and-build-frontend]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
@@ -276,6 +313,17 @@ jobs:
             echo "::notice ::RENDER_ML_DEPLOY_HOOK is not set. Skipping ML service deploy."
           fi
 
+      - name: Deploy Portfolio Intelligence Service (FastAPI) to Render
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_INTELLIGENCE_DEPLOY_HOOK }}" ]; then
+            echo "🚀 Triggering Render deploy for Portfolio Intelligence Service..."
+            curl -f -s -X POST "${{ secrets.RENDER_INTELLIGENCE_DEPLOY_HOOK }}"
+            echo "✔ Intelligence Service deployment triggered successfully."
+          else
+            echo "::notice ::RENDER_INTELLIGENCE_DEPLOY_HOOK is not set. Skipping Intelligence service deploy."
+          fi
+
       # ── Deploy Frontend to Vercel (100% Free) ───────────────────────────────
       - name: Deploy Frontend to Vercel
         shell: bash
@@ -301,7 +349,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   notify:
     name: Dispatch Email Notification
-    needs: [security-scan, lint, lint-python, test-and-build-gateway, test-and-build-backends, test-ml-service, test-and-build-frontend, deploy]
+    needs: [security-scan, lint, lint-python, test-and-build-gateway, test-and-build-backends, test-ml-service, test-drl-service, test-and-build-frontend, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -319,6 +367,7 @@ jobs:
                 "${{ needs.test-and-build-gateway.result }}" == "failure" || \
                 "${{ needs.test-and-build-backends.result }}" == "failure" || \
                 "${{ needs.test-ml-service.result }}" == "failure" || \
+                "${{ needs.test-drl-service.result }}" == "failure" || \
                 "${{ needs.test-and-build-frontend.result }}" == "failure" || \
                 "${{ needs.deploy.result }}" == "failure" ]]; then
             echo "overall_status=failure" >> $GITHUB_OUTPUT

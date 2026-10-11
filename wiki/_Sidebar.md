@@ -11,6 +11,7 @@
 - [Auth Service (Port 5001)](Service-Auth)
 - [Portfolio Backend (Port 5000)](Service-Portfolio-Backend)
 - [Python ML Service (Port 8000)](Service-ML-Python)
+- [Portfolio Intelligence DRL Service (Port 8001)](Service-Portfolio-Intelligence-DRL)
 
 #### 🎨 **Frontend & UI**
 - [React SPA & 11 Templates](Frontend-Architecture-and-Templates)

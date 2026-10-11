@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "completed_at": "2026-10-11T07:21:00.455769+00:00",
+  "metrics": {
+    "r2_score": 0.9271215200424194,
+    "rmse": 2.557420860699356,
+    "train_samples": 520,
+    "test_samples": 130,
+    "shap_expected_value": 53.245922
+  },
+  "drl_episodes": 20000,
+  "taxonomy_size": 64
+}

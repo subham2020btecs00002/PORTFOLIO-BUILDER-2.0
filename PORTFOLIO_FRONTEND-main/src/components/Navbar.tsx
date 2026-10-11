@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
-import { FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon } from 'react-icons/fa';
+import { FaSignOutAlt, FaUser, FaChartBar, FaBars, FaTimes, FaSun, FaMoon, FaRobot } from 'react-icons/fa';
 import { AppLogo } from './common/AppLogo';
 import './Navbar.css';
 
@@ -75,6 +75,12 @@ const Navbar: React.FC = () => {
                 onClick={() => navTo('/dashboard')}
               >
                 <FaChartBar /> Dashboard
+              </button>
+              <button
+                className={`nav-link-btn ${isActive('/portfolio/intelligence') ? 'active' : ''}`}
+                onClick={() => navTo('/portfolio/intelligence')}
+              >
+                <FaRobot /> ML Benchmark
               </button>
               <button
                 className={`nav-link-btn ${isActive('/settings') ? 'active' : ''}`}
