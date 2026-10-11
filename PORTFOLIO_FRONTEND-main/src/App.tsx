@@ -17,6 +17,7 @@ const PublicPortfolio    = React.lazy(() => import('./components/Portfolio/Publi
 const AnalyticsDashboard = React.lazy(() => import('./components/Dashboard/AnalyticsDashboard'));
 const ProfileSettings    = React.lazy(() => import('./components/Profile/ProfileSettings'));
 const AdminDashboard     = React.lazy(() => import('./components/Admin/AdminDashboard'));
+const MlPortfolioPage    = React.lazy(() => import('./components/Intelligence/MlPortfolioPage'));
 
 const App: React.FC = () => {
   return (
@@ -50,6 +51,14 @@ const MainApp: React.FC = () => {
           <Route
             path="/portfolio/edit"
             element={<PrivateRoute element={<EditPortfolio />} />}
+          />
+          <Route
+            path="/portfolio/intelligence"
+            element={<PrivateRoute element={<MlPortfolioPage />} />}
+          />
+          <Route
+            path="/ml-benchmark"
+            element={<PrivateRoute element={<MlPortfolioPage />} />}
           />
           <Route
             path="/dashboard"

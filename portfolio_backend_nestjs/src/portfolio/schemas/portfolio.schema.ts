@@ -191,6 +191,38 @@ export class Portfolio extends Document {
     suggestedAt?: Date;
   };
 
+  @Prop({ type: Object, default: null })
+  intelligenceEvaluation: {
+    atsScore?: number;
+    grade?: string;
+    readabilityIndex?: number;
+    metricDensity?: number;
+    actionVerbRatio?: number;
+    shapExplanations?: Array<{
+      feature: string;
+      impact: number;
+      direction: string;
+      advice: string;
+    }>;
+    skillRecommendations?: Array<{
+      skill: string;
+      relevanceScore: number;
+      category: string;
+    }>;
+    evaluatedAt?: Date;
+  };
+
+  @Prop({ type: Object, default: null })
+  drlPolicy: {
+    actionId?: string;
+    templateId?: string;
+    sectionOrder?: string[];
+    spotlightProjectIndex?: number;
+    actionDescription?: string;
+    predictedUcb?: number;
+    updatedAt?: Date;
+  };
+
   @Prop({ type: PdfDataSchema })
   pdf: PdfData;
 

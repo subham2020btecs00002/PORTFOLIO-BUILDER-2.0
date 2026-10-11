@@ -45,6 +45,16 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
   });
   const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
 
+  // Closed-loop DRL telemetry tracking state
+  const telemetryRef = React.useRef({
+    mountTime: Date.now(),
+    contactClicked: false,
+    resumeDownloaded: false,
+    githubClicked: false,
+    actionId: 'a_default',
+    contextVector: [] as number[],
+  });
+
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
@@ -53,6 +63,30 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
           ? `${baseUrl}/api/portfolio/public/by-username/${username}`
           : `${baseUrl}/api/portfolio/public/${userId}`;
         const { data } = await axios.get<Portfolio>(url);
+
+        // ── Dynamic DRL Layout Policy Optimization ────────────────────────
+        if (username) {
+          try {
+            const visitorContext = {
+              referrer: document.referrer || 'direct',
+              device: /mobile|android|iphone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+              hour: new Date().getUTCHours(),
+            };
+            const policyRes = await axios.post(`${baseUrl}/api/portfolio/public/layout-policy/${username}`, visitorContext);
+            if (policyRes.data && policyRes.data.action_id) {
+              telemetryRef.current.actionId = policyRes.data.action_id;
+              telemetryRef.current.contextVector = policyRes.data.context_vector || [];
+              if (policyRes.data.section_order && policyRes.data.section_order.length > 0) {
+                data.sectionOrder = policyRes.data.section_order;
+              }
+              if (policyRes.data.template_id) {
+                data.templateId = policyRes.data.template_id;
+              }
+            }
+          } catch (policyErr) {
+            console.debug('DRL policy optimization fallback to default:', policyErr);
+          }
+        }
 
         // Preload the specific template chunk while single loader is visible to eliminate double loader
         const activeTemplate = data.templateId || 'classic-green';
@@ -98,10 +132,62 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
         window.print();
       }, 800);
     }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [isResumeMode, loading, portfolio]);
+
+  // Telemetry event listeners & closed-loop beacon dispatch
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest('a');
+      if (anchor) {
+        const href = anchor.getAttribute('href') || '';
+        if (href.includes('github.com')) {
+          telemetryRef.current.githubClicked = true;
+        }
+        if (href.includes('/download/') || href.includes('.pdf') || href.includes('download')) {
+          telemetryRef.current.resumeDownloaded = true;
+        }
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+
+    const sendTelemetryBeacon = () => {
+      const dwellSeconds = Math.max(0.5, (Date.now() - telemetryRef.current.mountTime) / 1000);
+      const payload = {
+        action_id: telemetryRef.current.actionId,
+        context_vector: telemetryRef.current.contextVector,
+        dwell_seconds: dwellSeconds,
+        contact_clicked: telemetryRef.current.contactClicked,
+        resume_downloaded: telemetryRef.current.resumeDownloaded,
+        github_clicked: telemetryRef.current.githubClicked,
+        bounce: dwellSeconds < 5.0,
+      };
+
+      const telemetryUrl = `${baseUrl}/api/portfolio/telemetry`;
+      if (navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon(telemetryUrl, blob);
+      } else {
+        fetch(telemetryUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('beforeunload', sendTelemetryBeacon);
+
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('beforeunload', sendTelemetryBeacon);
+      sendTelemetryBeacon();
+    };
+  }, []);
 
   const handleScrollTo = (section: string) => {
     const element = document.getElementById(section);
@@ -129,6 +215,7 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
       });
       
       if (response.status === 200 || response.status === 201) {
+        telemetryRef.current.contactClicked = true;
         toast.update(toastId, {
           render: 'Message sent successfully! The portfolio owner has been notified.',
           type: 'success',

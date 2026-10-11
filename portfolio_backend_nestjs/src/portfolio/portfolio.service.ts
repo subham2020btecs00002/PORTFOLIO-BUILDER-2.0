@@ -12,6 +12,7 @@ import { User } from '../common/schemas/user.schema';
 import { AiUsage } from './schemas/ai-usage.schema';
 import { CreatePortfolioDto } from './dto/portfolio.dto';
 import { MlClientService } from './ml-client.service';
+import { IntelligenceClientService } from './intelligence-client.service';
 
 @Injectable()
 export class PortfolioService {
@@ -20,6 +21,7 @@ export class PortfolioService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(AiUsage.name) private aiUsageModel: Model<AiUsage>,
     private readonly mlClientService: MlClientService,
+    private readonly intelligenceClientService: IntelligenceClientService,
   ) {}
 
   private mapDtoFields(dto: CreatePortfolioDto) {
@@ -480,6 +482,139 @@ export class PortfolioService {
       { userId: userObjectId, date: today } as any,
       { $inc: { count: 1 } },
       { upsert: true },
+    );
+  }
+
+  // ── Portfolio Intelligence & DRL Engine ─────────────────────────────────
+
+  async getOrComputeIntelligenceEvaluation(
+    userId: string,
+    forceRefresh: boolean = false,
+    correlationId?: string,
+  ) {
+    const portfolio = await this.portfolioModel.findOne({ user: userId });
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+
+    // Return cached evaluation if fresh and not forcing refresh
+    if (!forceRefresh && portfolio.intelligenceEvaluation?.atsScore) {
+      return portfolio.intelligenceEvaluation;
+    }
+
+    const payload = {
+      title: portfolio.title || 'Software Engineer',
+      fullName: portfolio.fullName || '',
+      description: portfolio.description || '',
+      skills: portfolio.skills || [],
+      projects: portfolio.projects || [],
+      professionalHistory: portfolio.professionalHistory || [],
+      education: portfolio.education || [],
+    };
+
+    const evaluation =
+      await this.intelligenceClientService.evaluatePortfolio(
+        payload,
+        correlationId,
+      );
+
+    if (evaluation) {
+      portfolio.intelligenceEvaluation = {
+        atsScore: evaluation.ats_score,
+        grade: evaluation.grade,
+        readabilityIndex: evaluation.readability_index,
+        metricDensity: evaluation.metric_density,
+        actionVerbRatio: evaluation.action_verb_ratio,
+        shapExplanations: evaluation.shap_explanations,
+        skillRecommendations: (
+          evaluation.skill_gap_recommendations || []
+        ).map((s) => ({
+          skill: s.skill,
+          relevanceScore: s.relevance_score,
+          category: s.category,
+        })),
+        evaluatedAt: new Date(),
+      };
+      portfolio.markModified('intelligenceEvaluation');
+      await portfolio.save();
+      return portfolio.intelligenceEvaluation;
+    }
+
+    return portfolio.intelligenceEvaluation || null;
+  }
+
+  async getPublicLayoutPolicy(
+    username: string,
+    visitorContext: any,
+    correlationId?: string,
+  ) {
+    const user = await this.userModel.findOne({
+      username: username.toLowerCase().trim(),
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const portfolio = await this.portfolioModel.findOne({
+      user: user._id.toString(),
+    });
+    if (!portfolio) {
+      throw new NotFoundException('Portfolio not found');
+    }
+
+    const candidateProfile = {
+      yearsOfExperience: (portfolio.professionalHistory || []).length * 1.5,
+      primaryDomain: portfolio.title || 'Backend',
+      projectCount: (portfolio.projects || []).length,
+      skillCount: (portfolio.skills || []).length,
+    };
+
+    const policy = await this.intelligenceClientService.getLayoutPolicy(
+      candidateProfile,
+      visitorContext,
+      correlationId,
+    );
+
+    if (policy) {
+      // Non-blocking update of last recommended policy on portfolio
+      portfolio.drlPolicy = {
+        actionId: policy.action_id,
+        templateId: policy.template_id,
+        sectionOrder: policy.section_order,
+        spotlightProjectIndex: policy.spotlight_project_index,
+        actionDescription: policy.action_description,
+        predictedUcb: policy.predicted_ucb,
+        updatedAt: new Date(),
+      };
+      portfolio.markModified('drlPolicy');
+      portfolio.save().catch(() => {});
+      return policy;
+    }
+
+    // Safe fallback to user's saved static preferences if intelligence service unreachable
+    return {
+      action_id: 'a_default',
+      template_id: portfolio.templateId || 'classic-green',
+      section_order: portfolio.sectionOrder || [
+        'about',
+        'skills',
+        'experience',
+        'projects',
+        'contact',
+      ],
+      spotlight_project_index: 0,
+      action_description: 'User Default Configuration',
+      context_vector: [],
+      predicted_ucb: 0.0,
+      exploration_mode: false,
+      decided_at: new Date().toISOString(),
+    };
+  }
+
+  async recordTelemetryReward(telemetryData: any, correlationId?: string) {
+    return this.intelligenceClientService.submitTelemetryReward(
+      telemetryData,
+      correlationId,
     );
   }
 }

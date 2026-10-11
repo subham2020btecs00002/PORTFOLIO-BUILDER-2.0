@@ -123,6 +123,30 @@ export interface AnalyticsData {
   lastVisited: string | null;
 }
 
+export interface SHAPExplanation {
+  feature: string;
+  impact: number;
+  direction: 'positive' | 'negative';
+  advice: string;
+}
+
+export interface SkillRecommendation {
+  skill: string;
+  relevanceScore: number;
+  category: string;
+}
+
+export interface IntelligenceEvaluationData {
+  atsScore: number;
+  grade: string;
+  readabilityIndex: number;
+  metricDensity: number;
+  actionVerbRatio: number;
+  shapExplanations: SHAPExplanation[];
+  skillRecommendations: SkillRecommendation[];
+  evaluatedAt: string;
+}
+
 /** Full portfolio document as returned from the API. */
 export interface Portfolio {
   _id: string;
@@ -141,6 +165,8 @@ export interface Portfolio {
   fontFamily?: string;
   borderRadius?: string;
   aiRecommendations?: any;
+  intelligenceEvaluation?: IntelligenceEvaluationData;
+  drlPolicy?: any;
   analytics?: AnalyticsData;
   pdf?: { contentType: string } | null;
   avatar?: { contentType: string } | null;

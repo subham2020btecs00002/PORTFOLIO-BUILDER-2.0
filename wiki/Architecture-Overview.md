@@ -31,10 +31,12 @@ flowchart TB
         Backend["Portfolio Backend (Port 5000)<br/>NestJS REST Service<br/>Portfolio CRUD, Slugs, Analytics"]
         AIStream["AiStreamService (SSE)<br/>Real-Time Recommendation Emitter"]
         MLService["Python ML Service (Port 8000)<br/>FastAPI Microservice<br/>PyMuPDF Parser & LLM Fallback Engine"]
+        DRLService["Portfolio Intelligence Service (Port 8001)<br/>FastAPI Microservice<br/>XGBoost ATS, SHAP & LinUCB DRL Policy"]
     end
 
     subgraph Zone4["Zone 4: Databases & External Services Zone"]
         Mongo[("MongoDB Atlas<br/>Cloud Database Cluster")]
+        HFHub[("Hugging Face Model Hub<br/>sk22082001/portfolio-intelligence-engine")]
         LLMs["Multi-LLM Engine<br/>• Google Gemini 1.5 Pro/Flash<br/>• Groq (Llama 3.3)<br/>• OpenRouter (Llama 3.2)"]
         SMTP["Gmail SMTP Server<br/>(Verification, Resets, Inquiries)"]
         Cloud["Cloud PaaS Infrastructure<br/>Render (Backends) & Vercel (Frontend)"]
@@ -50,6 +52,8 @@ flowchart TB
     ProxyMgr -->|/api/contact/* + x-internal-secret| Backend
 
     Backend -->|Sync HTTP /api/ml/*| MLService
+    Backend -->|Sync HTTP /api/intelligence/*| DRLService
+    DRLService -->|Cached Artifacts| HFHub
     Backend --> AIStream
     AIStream -.->|SSE Stream Proxy| SSEClient
 

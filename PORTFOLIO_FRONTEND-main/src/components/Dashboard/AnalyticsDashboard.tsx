@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
-import { FaEye, FaEnvelope, FaClock, FaCopy, FaQrcode, FaEdit, FaExternalLinkAlt, FaTools } from 'react-icons/fa';
+import { FaEye, FaEnvelope, FaClock, FaCopy, FaQrcode, FaEdit, FaExternalLinkAlt, FaTools, FaRobot, FaSyncAlt, FaCheckCircle, FaExclamationTriangle, FaLightbulb, FaLayerGroup } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { toast } from 'react-toastify';
+import type { IntelligenceEvaluationData } from '../../types';
 import './AnalyticsDashboard.css';
 
 interface AnalyticsRes {
@@ -17,7 +18,9 @@ const AnalyticsDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState<AnalyticsRes | null>(null);
+  const [evaluation, setEvaluation] = useState<IntelligenceEvaluationData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [evaluating, setEvaluating] = useState<boolean>(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [displayViews, setDisplayViews] = useState(0);
   const [displayContacts, setDisplayContacts] = useState(0);
@@ -43,25 +46,48 @@ const AnalyticsDashboard: React.FC = () => {
     : '';
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const { data } = await api.get<AnalyticsRes>('/api/portfolio/analytics');
-        setAnalytics(data);
-        // Start count-up animations after data loads
-        animateCount(data.views, setDisplayViews);
-        animateCount(data.contactCount, setDisplayContacts);
-      } catch (err: any) {
-        console.error('Error fetching analytics:', err);
-        if (err.response?.status === 404) {
+        const [analyticsRes, evalRes] = await Promise.allSettled([
+          api.get<AnalyticsRes>('/api/portfolio/analytics'),
+          api.get<IntelligenceEvaluationData>('/api/portfolio/intelligence/evaluation'),
+        ]);
+
+        if (analyticsRes.status === 'fulfilled') {
+          setAnalytics(analyticsRes.value.data);
+          animateCount(analyticsRes.value.data.views, setDisplayViews);
+          animateCount(analyticsRes.value.data.contactCount, setDisplayContacts);
+        } else if ((analyticsRes.reason as any)?.response?.status === 404) {
           toast.info('Please create your portfolio first!');
           navigate('/portfolio');
+          return;
         }
+
+        if (evalRes.status === 'fulfilled' && evalRes.value.data) {
+          setEvaluation(evalRes.value.data);
+        }
+      } catch (err: any) {
+        console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
       }
     };
-    void fetchAnalytics();
+    void fetchDashboardData();
   }, [navigate, animateCount]);
+
+  const handleRefreshEvaluation = async () => {
+    try {
+      setEvaluating(true);
+      const { data } = await api.post<IntelligenceEvaluationData>('/api/portfolio/intelligence/evaluate');
+      setEvaluation(data);
+      toast.success('AI ATS Score & SHAP Insights updated!');
+    } catch (err) {
+      console.error('Failed to refresh evaluation:', err);
+      toast.error('Failed to re-evaluate portfolio intelligence.');
+    } finally {
+      setEvaluating(false);
+    }
+  };
 
   useEffect(() => {
     if (publicUrl) {
@@ -171,6 +197,134 @@ const AnalyticsDashboard: React.FC = () => {
             </h3>
           </div>
         </div>
+      </div>
+
+      {/* Portfolio Intelligence & Explainable AI (SHAP) Section */}
+      <div className="intelligence-section card-glass">
+        <div className="intelligence-header">
+          <div className="intelligence-title-group">
+            <div className="intelligence-badge">
+              <FaRobot className="sparkle-icon" /> AI ATS Intelligence
+            </div>
+            <h2>Machine Learning Portfolio Benchmark</h2>
+            <p className="intelligence-sub">
+              Trained on 470+ real developer profiles. Explains exact scoring drivers via Shapley additive feature attribution.
+            </p>
+          </div>
+          <div className="intelligence-header-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              className="btn-primary intelligence-open-full-btn"
+              onClick={() => navigate('/portfolio/intelligence')}
+              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+            >
+              <FaRobot /> Full ML Benchmark &amp; Validation →
+            </button>
+            <button 
+              className="btn-secondary intelligence-refresh-btn" 
+              onClick={handleRefreshEvaluation}
+              disabled={evaluating}
+            >
+              <FaSyncAlt className={evaluating ? 'spin-icon' : ''} /> 
+              {evaluating ? 'Re-evaluating...' : 'Recalculate AI Score'}
+            </button>
+          </div>
+        </div>
+
+        {evaluation ? (
+          <div className="intelligence-body-grid">
+            {/* Left Column: ATS Score Gauge & Quick Metrics */}
+            <div className="intelligence-score-card">
+              <div className="score-radial-wrapper">
+                <svg className="score-radial-svg" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" className="radial-bg" />
+                  <circle 
+                    cx="60" 
+                    cy="60" 
+                    r="50" 
+                    className="radial-progress" 
+                    strokeDasharray={314}
+                    strokeDashoffset={314 - (314 * Math.min(100, Math.max(0, evaluation.atsScore))) / 100}
+                  />
+                </svg>
+                <div className="radial-inner-content">
+                  <span className="score-number">{evaluation.atsScore}</span>
+                  <span className="score-max">/100</span>
+                </div>
+              </div>
+
+              <div className="score-grade-badge">
+                <span className="grade-label">ATS Readiness Tier:</span>
+                <span className={`grade-pill grade-${evaluation.grade.replace('+', '-plus').replace('-', '-minus').toLowerCase()}`}>
+                  {evaluation.grade} Tier
+                </span>
+              </div>
+
+              <div className="quick-metrics-row">
+                <div className="quick-metric-item">
+                  <span className="metric-label">Readability</span>
+                  <span className="metric-val">{evaluation.readabilityIndex}</span>
+                </div>
+                <div className="quick-metric-item">
+                  <span className="metric-label">Metric Density</span>
+                  <span className="metric-val">{Math.round(evaluation.metricDensity * 100)}%</span>
+                </div>
+                <div className="quick-metric-item">
+                  <span className="metric-label">Action Verbs</span>
+                  <span className="metric-val">{Math.round(evaluation.actionVerbRatio * 100)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: SHAP Waterfall Impact Factors & Recommendations */}
+            <div className="intelligence-insights-column">
+              <h3><FaLightbulb className="section-icon-gold" /> Key Scoring Drivers (SHAP Explainability)</h3>
+              <p className="insights-sub">How specific elements of your portfolio impacted your score:</p>
+
+              <div className="shap-factors-list">
+                {evaluation.shapExplanations.map((exp, idx) => (
+                  <div key={idx} className={`shap-factor-card factor-${exp.direction}`}>
+                    <div className="factor-header">
+                      <div className="factor-name-group">
+                        {exp.direction === 'positive' ? (
+                          <FaCheckCircle className="factor-icon-pos" />
+                        ) : (
+                          <FaExclamationTriangle className="factor-icon-neg" />
+                        )}
+                        <span className="factor-name">{exp.feature}</span>
+                      </div>
+                      <span className={`factor-points points-${exp.direction}`}>
+                        {exp.impact > 0 ? `+${exp.impact}` : `${exp.impact}`} pts
+                      </span>
+                    </div>
+                    <p className="factor-advice">{exp.advice}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Skill Gap Recommender Chips */}
+              {evaluation.skillRecommendations && evaluation.skillRecommendations.length > 0 && (
+                <div className="skill-gaps-container">
+                  <h4><FaLayerGroup className="section-icon-indigo" /> High-Leverage Tech Recommendations</h4>
+                  <p className="skill-gaps-sub">Top complementary technologies to level up your market fit:</p>
+                  <div className="skill-chips-row">
+                    {evaluation.skillRecommendations.map((rec, idx) => (
+                      <div key={idx} className="skill-recommendation-chip">
+                        <span className="chip-name">{rec.skill}</span>
+                        <span className="chip-match">{Math.round(rec.relevanceScore * 100)}% match</span>
+                        <span className="chip-cat">{rec.category}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="intelligence-loading-placeholder">
+            <FaRobot className="spin-icon placeholder-robot" />
+            <p>Analyzing portfolio text against 24 machine learning features...</p>
+          </div>
+        )}
       </div>
 
       {/* Share Section */}

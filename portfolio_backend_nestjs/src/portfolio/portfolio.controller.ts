@@ -194,4 +194,66 @@ export class PortfolioController {
   async clearRecommendations(@CurrentUser() user: { id: string }) {
     return this.portfolioService.clearRecommendations(user.id);
   }
+
+  // ── Portfolio Intelligence (ML/DRL) Endpoints ─────────────────────────
+
+  @Get('intelligence/evaluation')
+  async getIntelligenceEvaluation(
+    @CurrentUser() user: { id: string },
+    @Req() req: Request,
+  ) {
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    return this.portfolioService.getOrComputeIntelligenceEvaluation(
+      user.id,
+      false,
+      correlationId,
+    );
+  }
+
+  @Post('intelligence/evaluate')
+  async refreshIntelligenceEvaluation(
+    @CurrentUser() user: { id: string },
+    @Req() req: Request,
+  ) {
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    return this.portfolioService.getOrComputeIntelligenceEvaluation(
+      user.id,
+      true,
+      correlationId,
+    );
+  }
+
+  @Post('public/layout-policy/:username')
+  async getPublicLayoutPolicy(
+    @Param('username') username: string,
+    @Body() body: { referrer?: string; device?: string; hour?: number },
+    @Req() req: Request,
+  ) {
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    const referrer =
+      body?.referrer ||
+      (req.headers['referer'] as string) ||
+      'direct';
+    const userAgent = (req.headers['user-agent'] as string) || '';
+    const device =
+      body?.device ||
+      (/mobile|android|iphone/i.test(userAgent) ? 'mobile' : 'desktop');
+    const hour =
+      body?.hour !== undefined ? body.hour : new Date().getUTCHours();
+
+    return this.portfolioService.getPublicLayoutPolicy(
+      username,
+      { referrer, device, hour },
+      correlationId,
+    );
+  }
+
+  @Post('telemetry')
+  async recordVisitorTelemetry(@Body() body: any, @Req() req: Request) {
+    const correlationId = (req.headers['x-correlation-id'] as string) || '';
+    if (body?.action_id && body?.context_vector) {
+      await this.portfolioService.recordTelemetryReward(body, correlationId);
+    }
+    return { status: 'recorded' };
+  }
 }
