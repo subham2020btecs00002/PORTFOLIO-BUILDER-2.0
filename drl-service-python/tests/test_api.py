@@ -6,11 +6,12 @@ Verifies XGBoost scoring, SHAP explainability, k-NN recommendations, and LinUCB 
 import time
 import pytest
 from fastapi.testclient import TestClient
+from app.config import settings
 from app.main import app
 from app.core.model_loader import model_registry
 from app.services.bandit_engine import bandit_engine
 
-client = TestClient(app)
+client = TestClient(app, headers={"x-internal-secret": settings.INTERNAL_SECRET})
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -179,3 +180,29 @@ def test_sub_millisecond_inference_latency():
     avg_ms = sum(durations) / len(durations)
     print(f"\n[Latency Benchmark] Average Layout Policy Inference: {avg_ms:.2f} ms")
     assert avg_ms < 50.0  # Well within cloud SLA threshold
+
+
+def test_unauthorized_request_rejected():
+    """Verifies that requests with an invalid secret header return 403 Forbidden when secret is active."""
+    unauth_client = TestClient(app)
+    payload = {
+        "candidateProfile": {
+            "yearsOfExperience": 3.0,
+            "primaryDomain": "Backend",
+            "projectCount": 2,
+            "skillCount": 5
+        },
+        "visitorContext": {
+            "referrer": "google",
+            "device": "desktop",
+            "hour": 12
+        }
+    }
+    res = unauth_client.post(
+        "/api/intelligence/layout-policy",
+        json=payload,
+        headers={"x-internal-secret": "invalid-token-12345"}
+    )
+    if settings.INTERNAL_SECRET and settings.INTERNAL_SECRET != "dev-internal-secret-change-in-production":
+        assert res.status_code == 403
+
