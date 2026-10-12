@@ -15,6 +15,7 @@ flowchart TB
         Hook["usePortfolioForm Hook<br/>(State, Validation, Autosave)"]
         Shell["PortfolioFormShell<br/>(Wizard & Layout Engine)"]
         Templates["11 Dynamic Templates<br/>(Minimalist, Bento, DevTerminal...)"]
+        IntelPage["Intelligence Studio<br/>(/intelligence Dashboard)"]
         Multipart["Multipart File Handler<br/>(PDF Resume & Image Cropping)"]
         SSEClient["SSE Client Listener<br/>(/api/portfolio/ai/stream/:userId)"]
     end
@@ -60,7 +61,7 @@ flowchart TB
     Auth -->|Credentials & Verification| Mongo
     Backend -->|Portfolios, Analytics, Messages| Mongo
 
-    Auth -->|Email Verification & Resets| SMTP
+    Auth -->|Password Reset Emails| SMTP
     Backend -->|Contact Form Submissions| SMTP
     MLService -->|Prompt Inference & Structured JSON| LLMs
 ```
@@ -71,12 +72,13 @@ flowchart TB
 
 ### 1. Client Zone (Port 3000)
 - **Framework:** React 18, TypeScript, Vite.
-- **Role:** Handles presentation, responsive multi-step portfolio creation, real-time previewing, and public rendering.
+- **Role:** Handles presentation, responsive multi-step portfolio creation, real-time previewing, public rendering, and intelligent ATS optimization.
 - **Key Modules:**
   - `usePortfolioForm`: Custom React hook maintaining unified portfolio draft state, dirty-checking, and optimistic UI updates.
   - `PortfolioFormShell`: Multi-step navigation shell containing collapsible form sections for Personal Info, Work Experience, Projects, Skills, Education, and Theme configuration.
   - `ResumeParsingLoader`: Animated multi-phase visual indicator showing parsing progress when an uploaded resume PDF is processed.
   - `TemplateRenderer`: Dynamic component switching among **11 curated themes** (Minimalist, BentoGrid, DevTerminal, GamifiedRPG, AcademicLaTeX, etc.).
+  - `MlPortfolioPage`: Interactive AI / DRL intelligence studio (`/intelligence`) rendering XGBoost ATS scores, TreeSHAP feature attributions, k-NN skill suggestions, and LinUCB bandit simulations.
   - `SSE Client Listener`: EventSource listening to `/api/portfolio/ai/stream/:userId` to render live streaming recommendations.
 
 ---
@@ -87,7 +89,7 @@ flowchart TB
 - **Core Pipeline:**
   1. **Correlation Tracking (`CorrelationIdMiddleware`):** Assigns a unique `x-correlation-id` UUID to every incoming request for distributed logging.
   2. **Rate Limiting (`RateLimiterMiddleware`):** Prevents brute-force attacks and abuse by throttling requests per IP address.
-  3. **JWT Verification (`JwtVerifyMiddleware`):** Inspects incoming HttpOnly cookies or `Authorization: Bearer` headers. Validates signature with `JWT_SECRET`. Extracts `userId` and `role`, injecting `x-user-id` and `x-user-role` downstream.
+  3. **JWT Verification (`JwtVerifyMiddleware`):** Inspects incoming HttpOnly cookies (`access_token`) or `Authorization: Bearer` headers. Validates signature with `JWT_SECRET`. Extracts `userId` and `role`, injecting `x-user-id` and `x-user-role` downstream. Bypasses public routes and prefixes.
   4. **Internal Secret Injection (`Proxy Manager`):** Attaches `x-internal-secret` to every proxied request. This shared secret guarantees downstream services only accept requests arriving via the gateway.
 
 ---
@@ -95,22 +97,30 @@ flowchart TB
 ### 3. Internal Backend Services Zone
 - **Auth Service (Port 5001):**
   - Manages user accounts, bcrypt password hashing, and user authentication.
-  - Implements email verification workflows via Gmail SMTP.
-  - Issues access JWT tokens and refresh JWT tokens stored in HttpOnly cookies.
+  - Manages unique username claims and custom public portfolio URLs (`/p/:username`).
+  - Implements password recovery workflows via Gmail SMTP.
+  - Issues access JWT tokens (`access_token`, 15m) and refresh JWT tokens (`refresh_token`, 7d) in HttpOnly cookies.
 - **Portfolio Backend (Port 5000):**
-  - Core business logic engine managing portfolio schemas, templates, theme configurations, and custom public slugs (`/p/:slug`).
+  - Core business logic engine managing portfolio schemas, templates, theme configurations, and custom public slugs.
   - Processes contact form submissions from visitors and sends email notifications to portfolio owners.
   - Aggregates portfolio analytics: total views, project click-throughs, and resume downloads.
-  - Orchestrates AI resume parsing and content enhancement by calling the ML Service.
+  - Orchestrates AI resume parsing and content enhancement by calling the ML Service (Port 8000).
+  - Orchestrates predictive ATS scoring and dynamic layout policies by calling the Portfolio Intelligence DRL Service (Port 8001).
 - **Python ML Service (Port 8000):**
   - High-performance FastAPI service dedicated to CPU-bound PDF parsing and asynchronous LLM inferences.
   - Uses `PyMuPDF` (`fitz`) and `pdfminer` for layout-aware PDF text extraction.
   - Dispatches structured prompts to Gemini 1.5, Groq, or OpenRouter, returning strict Pydantic-validated JSON.
+- **Portfolio Intelligence DRL Service (Port 8001):**
+  - High-performance, pure ML/DRL microservice built with FastAPI, XGBoost, SHAP, and scikit-learn.
+  - Evaluates developer resumes using a regularized XGBoost ATS regressor trained on 470 real-world tech profiles ($R^2 = 0.9271$, $\text{RMSE} = 2.55$).
+  - Explains individual score impacts via TreeSHAP game-theoretic Shapley attributions in polynomial time.
+  - Generates real-time LinUCB Contextual Multi-Armed Bandit layout decisions and ingests visitor feedback rewards in sub-millisecond Sherman-Morrison rank-1 updates.
 
 ---
 
 ### 4. Databases & External Services Zone
 - **MongoDB Atlas:** Managed multi-tenant cloud database storing user documents, portfolio schemas, analytics events, and contact messages.
+- **Hugging Face Model Registry:** Remote model store (`sk22082001/portfolio-intelligence-engine`) hosting versioned XGBoost model binaries, TreeSHAP explainers, k-NN skill graphs, and 20,000-episode bandit priors cached locally on boot.
 - **Google Gemini & LLM Providers:** External AI models queried for resume text parsing and bullet-point enhancement (STAR method).
 - **Gmail SMTP Server:** Enterprise email relay using Google App Passwords for transactional emails.
 - **Render & Vercel:** Production hosting platforms with zero infrastructure maintenance.
@@ -123,12 +133,12 @@ flowchart TB
 Internet Request ──► [ API Gateway ] ──(x-internal-secret + x-user-id)──► [ Microservices ]
                          │
                          ▼
-        Direct Internet Request to Port 5000/5001/8000 ──► ❌ 403 Forbidden
+   Direct Internet Request to Port 5000/5001/8000/8001 ──► ❌ 403 Forbidden
 ```
 
-1. **Gateway Perimeter Defense:** Upstream services (`auth-service`, `portfolio_backend_nestjs`) employ `InternalAuthGuard`. Any request that lacks a valid `x-internal-secret` header is immediately rejected with `403 Forbidden`.
+1. **Gateway Perimeter Defense:** Upstream services (`auth-service`, `portfolio_backend_nestjs`, `ml-service-python`, `drl-service-python`) employ internal secret verification. Any request that lacks a valid `x-internal-secret` header is immediately rejected with `403 Forbidden`.
 2. **HttpOnly Cookie Security:** Access and refresh tokens are stored in secure, HttpOnly, SameSite cookies, making them inaccessible to client-side JavaScript and immune to XSS token theft.
-3. **Decentralized User Context:** The API Gateway decodes the JWT once and injects `x-user-id` into headers. Downstream services do not need to re-verify token signatures or maintain session state.
+3. **Decentralized User Context:** The API Gateway decodes the JWT once and injects `x-user-id` and `x-user-role` into headers. Downstream services do not need to re-verify token signatures or maintain session state.
 
 ---
 
@@ -143,4 +153,4 @@ In earlier design iterations (as represented in the original architecture diagra
 
 ---
 
-[View Visual Architecture Diagram ➔](Architecture-Daigram)
+[View Visual Architecture Diagram ➔](Architecture-Diagram)

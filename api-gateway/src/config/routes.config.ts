@@ -20,6 +20,7 @@ export const PUBLIC_ROUTES: RouteDefinition[] = [
   { path: '/api/auth/forgot-password', method: 'POST' },
   { path: '/api/auth/reset-password', method: 'POST' },
   { path: '/api/contact', method: 'POST' },
+  { path: '/api/portfolio/telemetry', method: 'POST' },
 ];
 
 /** Route prefixes where ALL methods are public (no JWT needed) */

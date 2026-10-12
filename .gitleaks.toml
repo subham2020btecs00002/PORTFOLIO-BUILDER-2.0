@@ -1,0 +1,10 @@
+# Gitleaks configuration file for Portfolio Builder 2.0
+title = "Portfolio Builder 2.0 Gitleaks Config"
+
+[allowlist]
+description = "Ignore documentation examples and environment templates"
+paths = [
+    '''(?i)^wiki/.*''',
+    '''(?i)\.env\.example$''',
+    '''(?i)README\.md$''',
+]
