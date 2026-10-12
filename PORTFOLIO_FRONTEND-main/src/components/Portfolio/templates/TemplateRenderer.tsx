@@ -6,11 +6,15 @@ export const templatePreloaders: Record<string, () => Promise<any>> = {
   'dark-pro': () => import('./DarkPro'),
   'creative': () => import('./Creative'),
   'minimalist': () => import('./Minimalist'),
+  'modern-minimalist': () => import('./Minimalist'),
   'cyberpunk': () => import('./Cyberpunk'),
   'neobrutalism': () => import('./Neobrutalism'),
   'cli': () => import('./DevTerminal'),
+  'dev-terminal': () => import('./DevTerminal'),
   'bento': () => import('./BentoGrid'),
+  'bento-grid': () => import('./BentoGrid'),
   'latex': () => import('./AcademicLaTeX'),
+  'academic-latex': () => import('./AcademicLaTeX'),
   'rpg': () => import('./GamifiedRPG'),
   'classic-green': () => import('./ClassicGreen'),
 };
@@ -59,17 +63,21 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ templateId, 
 
   const renderComponent = () => {
     switch (activeTemplateId) {
-      case 'dark-pro':      return <DarkPro {...props} />;
-      case 'creative':      return <Creative {...props} />;
-      case 'minimalist':    return <Minimalist {...props} />;
-      case 'cyberpunk':     return <Cyberpunk {...props} />;
-      case 'neobrutalism':  return <Neobrutalism {...props} />;
-      case 'cli':           return <DevTerminal {...props} />;
-      case 'bento':         return <BentoGrid {...props} />;
-      case 'latex':         return <AcademicLaTeX {...props} />;
-      case 'rpg':           return <GamifiedRPG {...props} />;
+      case 'dark-pro':          return <DarkPro {...props} />;
+      case 'creative':          return <Creative {...props} />;
+      case 'minimalist':
+      case 'modern-minimalist': return <Minimalist {...props} />;
+      case 'cyberpunk':         return <Cyberpunk {...props} />;
+      case 'neobrutalism':      return <Neobrutalism {...props} />;
+      case 'cli':
+      case 'dev-terminal':      return <DevTerminal {...props} />;
+      case 'bento':
+      case 'bento-grid':        return <BentoGrid {...props} />;
+      case 'latex':
+      case 'academic-latex':    return <AcademicLaTeX {...props} />;
+      case 'rpg':               return <GamifiedRPG {...props} />;
       case 'classic-green':
-      default:              return <ClassicGreen {...props} />;
+      default:                  return <ClassicGreen {...props} />;
     }
   };
 
