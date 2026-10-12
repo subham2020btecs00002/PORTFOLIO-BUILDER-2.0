@@ -88,6 +88,26 @@ const PublicPortfolio: React.FC<PublicPortfolioProps> = ({ isResumeMode = false 
           }
         }
 
+        // ── Developer / QA DRL Arm Testing Override (?arm=a_1 .. a_6 or ?template=...) ──
+        const searchParams = new URLSearchParams(window.location.search);
+        const forcedArm = searchParams.get('arm');
+        const forcedTemplate = searchParams.get('template');
+        const armConfigMap: Record<string, { template_id: string; section_order: string[] }> = {
+          a_1: { template_id: 'dev-terminal', section_order: ['projects', 'experience', 'skills', 'about', 'contact'] },
+          a_2: { template_id: 'bento-grid', section_order: ['experience', 'projects', 'skills', 'about', 'contact'] },
+          a_3: { template_id: 'neobrutalism', section_order: ['skills', 'projects', 'experience', 'about', 'contact'] },
+          a_4: { template_id: 'modern-minimalist', section_order: ['projects', 'skills', 'experience', 'about', 'contact'] },
+          a_5: { template_id: 'academic-latex', section_order: ['about', 'skills', 'experience', 'projects', 'contact'] },
+          a_6: { template_id: 'classic-green', section_order: ['about', 'projects', 'experience', 'skills', 'contact'] },
+        };
+        if (forcedArm && armConfigMap[forcedArm]) {
+          data.templateId = armConfigMap[forcedArm].template_id;
+          data.sectionOrder = armConfigMap[forcedArm].section_order;
+          telemetryRef.current.actionId = forcedArm;
+        } else if (forcedTemplate) {
+          data.templateId = forcedTemplate;
+        }
+
         // Preload the specific template chunk while single loader is visible to eliminate double loader
         const activeTemplate = data.templateId || 'classic-green';
         if (templatePreloaders[activeTemplate]) {
