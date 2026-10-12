@@ -230,10 +230,7 @@ export class PortfolioController {
     @Req() req: Request,
   ) {
     const correlationId = (req.headers['x-correlation-id'] as string) || '';
-    const referrer =
-      body?.referrer ||
-      (req.headers['referer'] as string) ||
-      'direct';
+    const referrer = body?.referrer || req.headers['referer'] || 'direct';
     const userAgent = (req.headers['user-agent'] as string) || '';
     const device =
       body?.device ||

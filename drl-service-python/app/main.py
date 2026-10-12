@@ -6,12 +6,10 @@ Production-grade microservice for ATS scoring, SHAP explainability, and DRL LinU
 import os
 import sys
 import logging
+import time
 from contextlib import asynccontextmanager
-from typing import Dict, Any
-
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.core.security import verify_internal_secret
@@ -75,7 +73,31 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Correlation-Id", "X-Process-Time"],
 )
+
+
+@app.middleware("http")
+async def add_process_time_and_tracing(request: Request, call_next):
+    correlation_id = (
+        request.headers.get("x-correlation-id")
+        or request.headers.get("x-request-id")
+        or ""
+    )
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = f"{process_time:.4f}s"
+    if correlation_id:
+        response.headers["X-Correlation-Id"] = correlation_id
+
+    if request.url.path not in ("/health", "/"):
+        cid = correlation_id or '-'
+        logger.info(
+            f"{request.method} {request.url.path} - completed in {process_time:.3f}s "
+            f"[status={response.status_code}] [correlationId={cid}]"
+        )
+    return response
 
 
 @app.get("/", tags=["Root"])
@@ -83,6 +105,7 @@ async def root():
     """Root entrypoint displaying service status and navigation links."""
     return {
         "service": "Portfolio Intelligence Service",
+        "version": "1.0.0",
         "status": "online",
         "docs_url": "/docs",
         "health_check": "/health",
@@ -107,6 +130,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "portfolio-intelligence",
+        "version": "1.0.0",
         "environment": settings.NODE_ENV,
         "models_loaded": {
             "ats_xgboost": model_registry.ats_model is not None,

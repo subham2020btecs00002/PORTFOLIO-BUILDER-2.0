@@ -41,6 +41,10 @@ The **Python ML Service** is a high-performance microservice built with **FastAP
 3. **STAR-Method Content Enhancement:** Transforms basic bullet points (e.g., *"worked on backend"*) into high-impact, metric-driven achievements (e.g., *"Architected high-throughput NestJS microservices reducing API latency by 35%"*).
 4. **Resilient Multi-Provider LLM Engine:** Automatically falls back across multiple AI providers to ensure 99.9% availability without paid API lock-in.
 
+> [!NOTE]
+> **Architecture Division of Labor:**
+> `ml-service-python` (Port 8000) focuses strictly on generative NLP and layout-aware PDF extraction (PyMuPDF + LLMs). Predictive scoring, game-theoretic explainability, and reinforcement learning decisions are handled by the dedicated **[Portfolio Intelligence DRL Service (Port 8001)](Service-Portfolio-Intelligence-DRL)** using XGBoost, TreeSHAP, and LinUCB bandits.
+
 ---
 
 ## 🧠 Multi-Provider LLM Fallback Engine
@@ -168,4 +172,4 @@ uvicorn app.main:app --port 8000 --reload
 
 ---
 
-[Explore Frontend Architecture & 11 Templates ➔](Frontend-Architecture-and-Templates)
+[Explore Portfolio Intelligence DRL Service ➔](Service-Portfolio-Intelligence-DRL)

@@ -4,7 +4,7 @@
 
 #### 🏛️ **System Architecture**
 - [System Overview](Architecture-Overview)
-- [Architecture Diagram (Visual)](Architecture-Daigram)
+- [Architecture Diagram (Visual)](Architecture-Diagram)
 
 #### 🧩 **Microservices Deep Dive**
 - [API Gateway (Port 3001)](Service-API-Gateway)
@@ -15,6 +15,7 @@
 
 #### 🎨 **Frontend & UI**
 - [React SPA & 11 Templates](Frontend-Architecture-and-Templates)
+- [AI Intelligence Dashboard](Frontend-Architecture-and-Templates#interactive-ai--drl-intelligence-dashboard)
 
 #### ⚙️ **DevOps & Infrastructure**
 - [CI/CD Pipeline Guide](CI-CD-Pipeline-and-DevOps)

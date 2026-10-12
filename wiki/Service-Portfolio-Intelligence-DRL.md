@@ -16,7 +16,7 @@ Unlike static rule engines or prompt-wrapped LLMs, this service runs genuine pre
                                                        │
                            ┌───────────────────────────┴───────────────────────────┐
               HTTP POST    │ x-internal-secret                        HTTP POST    │ x-internal-secret
-       /intelligence/evaluate │ Timeout: 4500ms                   /drl/layout-policy │ Real-time bandit
+       /intelligence/evaluate │ Timeout: 4500ms                   /api/intelligence/layout-policy │ Real-time bandit
                            ▼                                                       ▼
  ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
  │                  FastAPI Application Core (Port 8001) — drl-service-python                      │
@@ -320,65 +320,131 @@ Technologies with `Relevance >= 0.70` are returned as high-confidence complement
 All endpoints require internal service authentication via header:
 `x-internal-secret: <INTERNAL_SECRET>`
 
-### 1. Health Probe
-- **Endpoint:** `GET /health`
-- **Response:**
-```json
-{
-  "status": "healthy",
-  "models_loaded": true,
-  "service": "drl-service-python",
-  "version": "2.0.0"
-}
-```
+### 1. Root & Health Diagnostics Probes
+- **Root Endpoint:** `GET /` (Public)
+  - Returns service name, online status, docs url (`/docs`), and health check link (`/health`).
+- **Health & Diagnostics:** `GET /health` (Public)
+  - Returns loaded model status (`ats_xgboost`, `shap_explainer`, `skill_knn_graph`, `linucb_bandit`), memory footprint via `psutil`, environment, and Hugging Face repository ID:
+  ```json
+  {
+    "status": "healthy",
+    "service": "portfolio-intelligence",
+    "version": "1.0.0",
+    "environment": "production",
+    "models_loaded": {
+      "ats_xgboost": true,
+      "shap_explainer": true,
+      "skill_knn_graph": true,
+      "linucb_bandit": true
+    },
+    "memory_mb": 138.4,
+    "huggingface_repo": "sk22082001/portfolio-intelligence-engine"
+  }
+  ```
 
 ### 2. Comprehensive Portfolio Evaluation
 - **Endpoint:** `POST /api/intelligence/evaluate`
-- **Request Body:** Portfolio data model (Bio, Skills, Experience, Projects, Education, Contact).
+- **Request Body:** Complete candidate portfolio schema (Personal Info, Skills, Experiences, Projects, Education).
 - **Response:**
-```json
-{
-  "ats_score": 88.5,
-  "confidence": 0.94,
-  "grade": "A",
-  "shap_explanation": {
-    "base_value": 70.83,
-    "top_positive_features": [
-      {"feature": "quantifiable_metrics_count", "impact": 6.42, "description": "High density of measurable results (+6.42 pts)"}
+  ```json
+  {
+    "ats_score": 88.5,
+    "grade": "A",
+    "readability_index": 72.4,
+    "metric_density": 0.18,
+    "action_verb_ratio": 0.22,
+    "shap_explanations": [
+      {
+        "feature": "quantifiable_metrics_count",
+        "impact": 6.42,
+        "direction": "positive",
+        "human_readable": "High density of measurable results (+6.42 pts)"
+      }
     ],
-    "top_negative_features": [
-      {"feature": "live_demo_links", "impact": -2.15, "description": "Missing live deployment links (-2.15 pts)"}
+    "skill_gap_recommendations": [
+      {
+        "skill": "Docker",
+        "co_occurrence_score": 0.84,
+        "category": "DevOps",
+        "rationale": "Strongly correlated with TypeScript and Node.js in modern stacks"
+      }
     ]
-  },
-  "recommended_skills": [
-    {"name": "Docker", "confidence": 0.82, "reason": "Commonly paired with TypeScript and Node.js in modern stacks"}
-  ]
-}
-```
+  }
+  ```
 
 ### 3. Contextual Bandit Layout Policy
-- **Endpoint:** `POST /api/intelligence/policy/predict-layout`
-- **Request Body:** Candidate context (years of experience, project count, skill count, target role).
-- **Response:**
-```json
-{
-  "selected_arm": 0,
-  "layout_name": "Standard (Projects First)",
-  "section_order": ["projects", "experience", "skills", "education", "contact"],
-  "exploration": false
-}
-```
-
-### 4. Telemetry Reward Beacon
-- **Endpoint:** `POST /api/intelligence/policy/feedback`
+- **Endpoint:** `POST /api/intelligence/layout-policy`
 - **Request Body:**
-```json
-{
-  "arm": 0,
-  "context": [3.0, 5.0, 12.0, 1.0, 0.0, 0.0],
-  "reward": 1.0
-}
-```
+  ```json
+  {
+    "candidateProfile": {
+      "yearsExperience": 5.5,
+      "projectCount": 6,
+      "skillCount": 14,
+      "targetDomain": "backend"
+    },
+    "visitorContext": {
+      "referrer": "https://linkedin.com",
+      "device": "mobile",
+      "hour": 14
+    }
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "action_id": 2,
+    "template_id": "bento-grid",
+    "section_order": ["experience", "projects", "skills", "education", "contact"],
+    "spotlight_project_index": 0,
+    "action_description": "Experience-first priority for corporate mobile visitors",
+    "context_vector": [1.0, 1.0, 0.604, 0.60, 1.0, 0.40, 0.55, 1.0],
+    "predicted_ucb": 0.849,
+    "exploration_mode": false
+  }
+  ```
+
+### 4. Telemetry Reward Ingestion (Online Learning)
+- **Endpoint:** `POST /api/intelligence/reward`
+- **Request Body:**
+  ```json
+  {
+    "action_id": 2,
+    "context_vector": [1.0, 1.0, 0.604, 0.60, 1.0, 0.40, 0.55, 1.0],
+    "dwell_seconds": 28.5,
+    "contact_clicked": false,
+    "resume_downloaded": true,
+    "github_clicked": true,
+    "bounce": false
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "status": "success",
+    "action_id": 2,
+    "reward_value": 0.70,
+    "updates_count": 20042
+  }
+  ```
+
+---
+
+## 🛠️ Offline Ingestion, Training & Publishing Pipeline
+
+The service includes standalone automation scripts in `scripts/`:
+
+1. **`scripts/fetch_real_data.py` (Pipes & Filters Ingestion):**
+   - Ingests real-world resume datasets from Hugging Face (`Sachinkelenjaguri/Resume_dataset`).
+   - Executes the 7-stage filter pipeline (PII scrubber, normalizer, section segmenter, taxonomy matcher, ATS benchmarker) producing `artifacts/resume_corpus.json` (470 clean profiles).
+2. **`scripts/train_offline.py` (Model Training & Simulation):**
+   - Extracts 20-dimensional feature vectors and trains regularized XGBoost ATS regressor ($R^2 = 0.9271$, $\text{RMSE} = 2.55$).
+   - Computes TreeSHAP summary statistics and tree explainer.
+   - Builds 64-dimensional skill co-occurrence matrix and k-NN cosine graph.
+   - Simulates 20,000 synthetic contextual bandit episodes to generate calibrated initial LinUCB priors ($A_a^{-1}$ matrices and $b_a$ vectors).
+3. **`scripts/publish_to_hf.py` (Hugging Face Model Registry Publishing):**
+   - Packages `ats_xgboost.json`, `shap_explainer.pkl`, `skill_knn.pkl`, `bandit_priors.json`, and `feature_schema.json`.
+   - Uploads versioned model cards and artifacts to Hugging Face Model Hub (`sk22082001/portfolio-intelligence-engine`).
 
 ---
 

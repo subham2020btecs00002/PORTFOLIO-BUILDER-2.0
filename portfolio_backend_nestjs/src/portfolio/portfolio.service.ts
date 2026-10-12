@@ -512,11 +512,10 @@ export class PortfolioService {
       education: portfolio.education || [],
     };
 
-    const evaluation =
-      await this.intelligenceClientService.evaluatePortfolio(
-        payload,
-        correlationId,
-      );
+    const evaluation = await this.intelligenceClientService.evaluatePortfolio(
+      payload,
+      correlationId,
+    );
 
     if (evaluation) {
       portfolio.intelligenceEvaluation = {
@@ -526,13 +525,13 @@ export class PortfolioService {
         metricDensity: evaluation.metric_density,
         actionVerbRatio: evaluation.action_verb_ratio,
         shapExplanations: evaluation.shap_explanations,
-        skillRecommendations: (
-          evaluation.skill_gap_recommendations || []
-        ).map((s) => ({
-          skill: s.skill,
-          relevanceScore: s.relevance_score,
-          category: s.category,
-        })),
+        skillRecommendations: (evaluation.skill_gap_recommendations || []).map(
+          (s) => ({
+            skill: s.skill,
+            relevanceScore: s.relevance_score,
+            category: s.category,
+          }),
+        ),
         evaluatedAt: new Date(),
       };
       portfolio.markModified('intelligenceEvaluation');

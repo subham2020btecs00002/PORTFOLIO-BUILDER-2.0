@@ -15,6 +15,7 @@ export class AppController {
     return {
       status: 'ok',
       service: 'auth-service',
+      uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     };
   }

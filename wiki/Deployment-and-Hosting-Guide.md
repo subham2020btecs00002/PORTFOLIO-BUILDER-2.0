@@ -1,6 +1,6 @@
 # ☁️ Deployment & Hosting Guide
 
-Portfolio Builder 2.0 is designed for **100% free production hosting** by pairing **Render Blueprint Infrastructure-as-Code** (for backend microservices) with **Vercel** (for the React SPA) and **MongoDB Atlas** (for managed database storage).
+Portfolio Builder 2.0 is designed for **100% free production hosting** by pairing **Render Blueprint Infrastructure-as-Code** (for 5 backend microservices) with **Vercel** (for the React SPA), **Hugging Face Model Registry** (for ML model artifacts), and **MongoDB Atlas** (for managed database storage).
 
 ---
 
@@ -17,41 +17,44 @@ Portfolio Builder 2.0 is designed for **100% free production hosting** by pairin
  │  React 18 SPA (Vite)  │                        │  portfolio-api-gateway│
  └───────────────────────┘                        └──────────┬────────────┘
                                                              │ (Internal Routing)
-                                      ┌──────────────────────┼──────────────────────┐
-                                      ▼                      ▼                      ▼
-                           ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
-                           │portfolio-auth      │ │portfolio-backend   │ │portfolio-ml        │
-                           │(Port 10000 / Node) │ │(Port 10000 / Node) │ │(Port 10000/ Python)│
-                           └─────────┬──────────┘ └──────────┬──────────┘ └─────────┬──────────┘
-                                     │                       │                      │
-                                     └───────────┬───────────┘                      │
-                                                 ▼                                  ▼
-                                      ┌────────────────────┐             ┌────────────────────┐
-                                      │   MongoDB Atlas    │             │   Gemini / Groq    │
-                                      │   (Cloud Cluster)  │             │   (LLM Providers)  │
-                                      └────────────────────┘             └────────────────────┘
+                  ┌──────────────────────┬───────────────────┼───────────────────┬──────────────────────┐
+                  ▼                      ▼                   ▼                   ▼                      ▼
+       ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
+       │portfolio-auth      │ │portfolio-backend   │ │portfolio-ml        │ │portfolio-          │ │                    │
+       │(Port 10000 / Node) │ │(Port 10000 / Node) │ │(Port 10000/ Python)│ │intelligence        │ │                    │
+       │                    │ │                    │ │                    │ │(Port 10000/ Python)│ │                    │
+       └─────────┬──────────┘ └──────────┬──────────┘ └─────────┬──────────┘ └─────────┬──────────┘ └────────────────────┘
+                 │                       │                      │                      │
+                 └───────────┬───────────┘                      ▼                      ▼
+                             ▼                             ┌──────────┐           ┌──────────┐
+                  ┌────────────────────┐                   │Gemini/   │           │Hugging   │
+                  │   MongoDB Atlas    │                   │Groq LLMs │           │Face Hub  │
+                  │   (Cloud Cluster)  │                   └──────────┘           └──────────┘
+                  └────────────────────┘
 ```
 
 ---
 
 ## 1. Backend Microservices Deployment (Render)
 
-The repository provides an Infrastructure-as-Code Blueprint file ([`render.yaml`](file:///c:/Users/E1536912/Documents/PORTFOLIO/render.yaml)) defining all 4 backend services:
+The repository provides an Infrastructure-as-Code Blueprint file ([`render.yaml`](file:///c:/Users/E1536912/Documents/PORTFOLIO/render.yaml)) defining all 5 backend web services:
 
 ### Step-by-Step Render Setup:
 1. Log in to [Render Dashboard](https://dashboard.render.com).
 2. Click **Blueprints ➔ New Blueprint Instance**.
 3. Connect your repository: `subham2020btecs00002/PORTFOLIO-BUILDER-2.0`.
-4. Render will automatically parse `render.yaml` and provision:
+4. Render will automatically parse `render.yaml` and provision all 5 services:
    - `portfolio-api-gateway` (Node.js web service, root: `api-gateway`)
    - `portfolio-auth-service` (Node.js web service, root: `auth-service`)
    - `portfolio-backend` (Node.js web service, root: `portfolio_backend_nestjs`)
    - `portfolio-ml-service` (Python web service, root: `ml-service-python`)
+   - `portfolio-intelligence-service` (Python web service, root: `drl-service-python`)
 5. Populate required environment variables in the Render Dashboard for each service:
    - **Gateway:** `JWT_SECRET`, `INTERNAL_SECRET`, `AUTH_SERVICE_URL`, `BACKEND_URL`, `FRONTEND_URL`.
    - **Auth:** `MONGO_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `INTERNAL_SECRET`, `EMAIL`, `PASSWORD`.
-   - **Backend:** `MONGO_URI`, `INTERNAL_SECRET`, `ML_SERVICE_URL`, `EMAIL`, `PASSWORD`.
+   - **Backend:** `MONGO_URI`, `INTERNAL_SECRET`, `ML_SERVICE_URL`, `INTELLIGENCE_SERVICE_URL`, `EMAIL`, `PASSWORD`.
    - **ML:** `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY`.
+   - **Intelligence:** `INTERNAL_SECRET`, `HF_MODEL_REPO_ID` (`sk22082001/portfolio-intelligence-engine`), `HF_TOKEN`, `MONGO_URI`.
 
 ---
 
@@ -115,6 +118,7 @@ To enable the automated continuous deployment stage in GitHub Actions:
    - `RENDER_AUTH_DEPLOY_HOOK`
    - `RENDER_BACKEND_DEPLOY_HOOK`
    - `RENDER_ML_DEPLOY_HOOK`
+   - `RENDER_INTELLIGENCE_DEPLOY_HOOK`
 3. In the **Vercel Dashboard**, open project ➔ **Settings ➔ Git ➔ Deploy Hooks** ➔ Create Hook (`main` branch) and save as `VERCEL_DEPLOY_HOOK`.
 
 ---

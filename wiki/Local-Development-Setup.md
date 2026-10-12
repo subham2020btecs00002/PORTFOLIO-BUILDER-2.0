@@ -1,6 +1,6 @@
 # 💻 Local Development & Setup
 
-This guide provides instructions for setting up and running all Portfolio Builder 2.0 microservices and the frontend on your local development machine.
+This guide provides instructions for setting up and running all Portfolio Builder 2.0 microservices, machine learning engines, and the frontend on your local development machine.
 
 ---
 
@@ -9,7 +9,7 @@ This guide provides instructions for setting up and running all Portfolio Builde
 Ensure you have the following installed on your machine:
 - **Node.js:** v18.16.0 or higher (recommended: v20 LTS)
 - **npm:** v9.0.0 or higher
-- **Python:** v3.11 or higher
+- **Python:** v3.11 or v3.13
 - **MongoDB:** Local instance running on `localhost:27017` or a cloud MongoDB Atlas URI
 - **Git:** Standard CLI
 
@@ -24,6 +24,7 @@ Ensure you have the following installed on your machine:
 | **Auth Service** | NestJS | `auth-service` | `5001` | `npm run start:dev` |
 | **Portfolio Backend** | NestJS | `portfolio_backend_nestjs` | `5000` | `npm run start:dev` |
 | **Python ML Service** | FastAPI / Uvicorn | `ml-service-python` | `8000` | `uvicorn app.main:app --port 8000 --reload` |
+| **Portfolio Intelligence DRL** | FastAPI / Uvicorn | `drl-service-python` | `8001` | `uvicorn app.main:app --port 8001 --reload` |
 
 ---
 
@@ -70,6 +71,7 @@ NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/portfolio_builder
 INTERNAL_SECRET=super-secret-internal-gateway-token
 ML_SERVICE_URL=http://localhost:8000
+INTELLIGENCE_SERVICE_URL=http://localhost:8001
 EMAIL=your-email@gmail.com
 PASSWORD=your-google-app-password
 ```
@@ -80,6 +82,14 @@ PORT=8000
 GROQ_API_KEY=gsk_your_groq_key
 OPENROUTER_API_KEY=sk-or-your_openrouter_key
 GEMINI_API_KEY=AIzaSy_your_gemini_key
+```
+
+#### `drl-service-python/.env`
+```env
+PORT=8001
+INTERNAL_SECRET=super-secret-internal-gateway-token
+HF_MODEL_REPO_ID=sk22082001/portfolio-intelligence-engine
+HF_TOKEN=hf_your_huggingface_read_token
 ```
 
 #### `PORTFOLIO_FRONTEND-main/.env`
@@ -94,27 +104,32 @@ REACT_APP_API_BASE_URL=http://localhost:3001
 Open separate terminal windows for each service:
 
 ```bash
-# Terminal 1: Python ML Service
+# Terminal 1: Python ML Service (NLP / LLM)
 cd ml-service-python
 pip install -r requirements.txt
 uvicorn app.main:app --port 8000 --reload
 
-# Terminal 2: Auth Service
+# Terminal 2: Portfolio Intelligence DRL Service (XGBoost / LinUCB)
+cd drl-service-python
+pip install -r requirements.txt
+uvicorn app.main:app --port 8001 --reload
+
+# Terminal 3: Auth Service
 cd auth-service
 npm install
 npm run start:dev
 
-# Terminal 3: Portfolio Backend
+# Terminal 4: Portfolio Backend
 cd portfolio_backend_nestjs
 npm install
 npm run start:dev
 
-# Terminal 4: API Gateway
+# Terminal 5: API Gateway
 cd api-gateway
 npm install
 npm run start:dev
 
-# Terminal 5: Frontend React SPA
+# Terminal 6: Frontend React SPA
 cd PORTFOLIO_FRONTEND-main
 npm install
 npm start
@@ -141,7 +156,10 @@ cd ../portfolio_backend_nestjs && npm run lint && npm run test && npm run test:e
 # 4. ML Service (Python)
 cd ../ml-service-python && pytest tests/
 
-# 5. Frontend
+# 5. DRL Service (Python)
+cd ../drl-service-python && pytest tests/
+
+# 6. Frontend
 cd ../PORTFOLIO_FRONTEND-main && npm run typecheck && npm run build
 ```
 
