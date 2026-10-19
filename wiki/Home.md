@@ -15,7 +15,7 @@ Welcome to the official technical documentation for **Portfolio Builder 2.0** �
 | **Model Registry** | Hugging Face Model Hub (`sk22082001/portfolio-intelligence-engine`) |
 | **Database** | MongoDB Atlas (Multi-Tenant Document Store) |
 | **DevOps & CI/CD** | 5-Stage GitHub Actions Pipeline (Gitleaks, Aqua Trivy, Semgrep SAST, Bandit AST, Ephemeral Docker MongoDB, Supertest, Pytest, Multi-Cloud CD) |
-| **Hosting & Cloud** | Free-tier deployment on Render (5 Backend Services) and Vercel (Frontend SPA) |
+| **Hosting & Cloud** | 100% Free deployment on Google Cloud Run (5 Backend Container Services) and Vercel (Frontend SPA) |
 
 ---
 
@@ -42,11 +42,11 @@ Comprehensive breakdown of the production-grade, 100% free **5-stage GitHub Acti
 1. **Security & Vulnerability Scanning** (Gitleaks, Aqua Trivy, Semgrep SAST, Bandit for ML & DRL)
 2. **Linting & Code Quality** (ESLint Matrix, Flake8 Matrix for ML & DRL)
 3. **Build & Automated Testing** (Ephemeral Docker MongoDB 7, Jest unit tests, Supertest e2e, Pytest for ML & DRL with `HF_TOKEN`, Vite build)
-4. **Continuous Deployment** (Render Deploy Hooks for all 5 services & Vercel Deploy Hook)
+4. **Continuous Deployment** (Google Cloud Run automated path-filtered deployments & Vercel Edge)
 5. **Email Notifications** (Automated dark-themed HTML report via Gmail SMTP)
 
 ### 6. ☁️ [Deployment & Hosting Guide](Deployment-and-Hosting-Guide)
-Step-by-step instructions for deploying all 5 backend microservices using the Render Blueprint ([`render.yaml`](file:///c:/Users/E1536912/Documents/PORTFOLIO/render.yaml)), Vercel SPA deployment, MongoDB Atlas configuration, and production environment variables.
+Step-by-step instructions for deploying all 5 backend microservices using Google Cloud Run, Vercel SPA deployment, MongoDB Atlas configuration, and production environment variables.
 
 ### 7. 💻 [Local Development & Setup](Local-Development-Setup)
 Prerequisites, port mappings, command cheatsheets, and pre-commit verification workflows for running all 6 components concurrently on your development machine.

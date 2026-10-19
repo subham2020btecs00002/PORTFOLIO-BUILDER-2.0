@@ -39,9 +39,9 @@ flowchart TD
     BranchCheck -- Yes --> S4[Stage 4: Continuous Deployment]
     BranchCheck -- No --> SkipDeploy[Skip Deployment]
 
-    subgraph S4Details["Cloud Webhooks"]
-        Render["Render Deploy Hooks<br/>(Gateway, Auth, Backend, ML, Intelligence)"]
-        Vercel["Vercel Deploy Hook<br/>(React SPA)"]
+    subgraph S4Details["Cloud Deployment"]
+        CloudRun["Google Cloud Run<br/>(Path-Filtered: Gateway, Auth, Backend, ML, Intelligence)"]
+        Vercel["Vercel Edge<br/>(React SPA)"]
     end
     S4 --- S4Details
 
@@ -78,17 +78,18 @@ flowchart TD
 
 ### Stage 4: Continuous Deployment (`deploy`)
 - Executes **strictly on push to `main`** after Stages 1, 2, and 3 pass with 100% success.
-- **Render Zero-Downtime Deployment:** Dispatches parallel HTTP POST triggers to Render Deploy Hooks for all 5 backend services:
-  - `portfolio-api-gateway`
-  - `portfolio-auth-service`
-  - `portfolio-backend`
-  - `portfolio-ml-service`
-  - `portfolio-intelligence-service`
+- **Smart Path-Filtering:** Uses `dorny/paths-filter@v3` to only trigger container builds and deployments for services whose files were modified.
+- **Google Cloud Run Deployment:** Authenticates via Google Cloud Service Account (`GCP_SA_KEY`) and issues zero-downtime rolling container deploys via `gcloud run deploy`:
+  - `portfolio-api-gateway` (asia-south1, 512Mi)
+  - `portfolio-auth-service` (asia-south1, 512Mi)
+  - `portfolio-backend` (asia-south1, 512Mi)
+  - `portfolio-ml-service` (asia-south1, 512Mi)
+  - `portfolio-intelligence-service` (asia-south1, 2Gi RAM)
 - **Vercel Frontend Deployment:** Dispatches webhook trigger to `VERCEL_DEPLOY_HOOK` (or CLI prebuilt deployment via `VERCEL_TOKEN`) to deploy the React bundle to global edge CDNs.
 
 ### Stage 5: Email Notification (`notify`)
 - Runs unconditionally (`if: always()`) via the custom composite action `.github/actions/send-email-report`.
-- Evaluates the collective result of all 9 preceding jobs.
+- Evaluates the collective result of all preceding jobs.
 - Dispatches a dark-themed, responsive HTML status email with build metrics, author, commit hash, and direct links to GitHub Actions run logs.
 
 ---
@@ -99,13 +100,11 @@ Configure in GitHub: **Settings ➔ Secrets and variables ➔ Actions ➔ New re
 
 | Secret Name | Category | Description | Example / Format |
 |---|---|---|---|
-| `RENDER_GATEWAY_DEPLOY_HOOK` | Deploy | Render Webhook URL for API Gateway | `https://api.render.com/deploy/srv-c...` |
-| `RENDER_AUTH_DEPLOY_HOOK` | Deploy | Render Webhook URL for Auth Service | `https://api.render.com/deploy/srv-c...` |
-| `RENDER_BACKEND_DEPLOY_HOOK` | Deploy | Render Webhook URL for Portfolio Backend | `https://api.render.com/deploy/srv-c...` |
-| `RENDER_ML_DEPLOY_HOOK` | Deploy | Render Webhook URL for ML Service | `https://api.render.com/deploy/srv-c...` |
-| `RENDER_INTELLIGENCE_DEPLOY_HOOK` | Deploy | Render Webhook URL for Portfolio Intelligence DRL Service | `https://api.render.com/deploy/srv-c...` |
+| `GCP_SA_KEY` | Deploy | Google Cloud Service Account JSON Key for `github-deployer` | `{"type": "service_account", ...}` |
+| `GCP_PROJECT_ID` | Deploy | Google Cloud Project ID | `deft-shade-439004-e1` |
 | `VERCEL_DEPLOY_HOOK` | Deploy | Vercel Git Deploy Hook URL | `https://api.vercel.com/v1/integrations/deploy/prj_...` |
 | `VERCEL_TOKEN` | Deploy | Optional Vercel personal access token | `vcp_...` |
+| `WIKI_PAT` | Wiki | GitHub Personal Access Token for wiki auto-sync | `github_pat_...` |
 | `HF_TOKEN` | Testing | Hugging Face Hub token to read model registry in CI runner | `hf_...` |
 | `MAIL_USERNAME` | Notify | Gmail address used by Nodemailer | `your-email@gmail.com` |
 | `MAIL_PASSWORD` | Notify | 16-character Google App Password | `xxxx xxxx xxxx xxxx` |

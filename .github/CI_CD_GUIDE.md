@@ -25,8 +25,9 @@ This repository contains a production-grade, 100% free CI/CD pipeline built with
 
 4. **Continuous Deployment (`deploy`)**:
    - Runs **only on push to `main`** after all security, lint, build, and test steps succeed.
-   - Triggers rolling zero-downtime deploys on Render using **Render Deploy Hooks**.
-   - Triggers production deploy on Vercel.
+   - Uses **smart path-filtering** (`dorny/paths-filter@v3`): only rebuilds and deploys the specific microservice whose code changed.
+   - Deploys backend containers directly to **Google Cloud Run** using `gcloud run deploy`.
+   - Triggers production deploy on **Vercel** for the React SPA.
 
 5. **Email Notification (`notify`)**:
    - Always executes upon completion (success or failure).
@@ -39,18 +40,10 @@ This repository contains a production-grade, 100% free CI/CD pipeline built with
 Go to your repository on GitHub:  
 **Settings ➔ Secrets and variables ➔ Actions ➔ New repository secret**
 
-### 1. Render Deploy Hooks (Backends)
-Render provides free webhook URLs to trigger instant deployments without needing API keys.
-1. In the [Render Dashboard](https://dashboard.render.com), open each service:
-   - `portfolio-api-gateway` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
-   - `portfolio-auth-service` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
-   - `portfolio-backend` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
-   - `portfolio-ml-service` ➔ **Settings** ➔ Scroll to **Deploy Hook** ➔ Copy the Webhook URL.
-2. Add them as repository secrets in GitHub:
-   - `RENDER_GATEWAY_DEPLOY_HOOK`
-   - `RENDER_AUTH_DEPLOY_HOOK`
-   - `RENDER_BACKEND_DEPLOY_HOOK`
-   - `RENDER_ML_DEPLOY_HOOK` (Optional if ML service is deployed on Render)
+### 1. Google Cloud Run Deployment (Backends)
+Automated deployments authenticate using a dedicated GCP Service Account:
+1. `GCP_SA_KEY`: The JSON service account key for `github-deployer`.
+2. `GCP_PROJECT_ID`: Your GCP Project ID (`deft-shade-439004-e1`).
 
 ### 2. Vercel Deployment (Frontend)
 Choose **either** Method A (Deploy Hook) or Method B (Vercel CLI):

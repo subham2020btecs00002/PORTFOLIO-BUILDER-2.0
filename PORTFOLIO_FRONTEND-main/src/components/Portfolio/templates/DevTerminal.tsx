@@ -88,7 +88,24 @@ export const DevTerminal: React.FC<TemplateProps> = ({
     inputRef.current?.focus();
   };
 
-  // Run initial focus and focus on click anywhere in container
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('form') ||
+      target.closest('.cli-welcome-avatar-card') ||
+      target.closest('.cli-about-avatar-row') ||
+      target.closest('.cli-avatar-badge')
+    ) {
+      return;
+    }
+    inputRef.current?.focus();
+  };
+
+  // Run initial focus on mount
   useEffect(() => {
     focusInput();
   }, []);
@@ -278,10 +295,15 @@ export const DevTerminal: React.FC<TemplateProps> = ({
         output = (
           <div className="terminal-output">
             <h3 className="terminal-output-info">{"//"} CONTACT OPTIONS</h3>
-            <p>Email: <strong className="terminal-output-accent">{portfolio.user?.email || 'N/A'}</strong></p>
+            <p>Email: <strong className="terminal-output-accent">{portfolio.user?.email || 'Available via contact form below'}</strong></p>
             <p style={{ marginTop: '10px' }}>Fill out the message form below or submit using standard console commands.</p>
             
-            <form onSubmit={handleSubmit} style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+            <form 
+              onSubmit={handleSubmit} 
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}
+            >
               <div>
                 <label style={{ display: 'block', color: '#00cc52', fontSize: '0.85rem' }}>Name:</label>
                 <input 
@@ -289,6 +311,8 @@ export const DevTerminal: React.FC<TemplateProps> = ({
                   name="name" 
                   value={contactForm.name} 
                   onChange={handleInputChange} 
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                   style={{ width: '100%', background: '#0a0e14', border: '1px solid #003314', color: '#00ff66', padding: '6px', fontFamily: 'monospace', outline: 'none' }}
                   required
                 />
@@ -300,6 +324,8 @@ export const DevTerminal: React.FC<TemplateProps> = ({
                   name="email" 
                   value={contactForm.email} 
                   onChange={handleInputChange} 
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                   style={{ width: '100%', background: '#0a0e14', border: '1px solid #003314', color: '#00ff66', padding: '6px', fontFamily: 'monospace', outline: 'none' }}
                   required
                 />
@@ -311,6 +337,8 @@ export const DevTerminal: React.FC<TemplateProps> = ({
                   name="phone" 
                   value={contactForm.phone} 
                   onChange={handleInputChange} 
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                   style={{ width: '100%', background: '#0a0e14', border: '1px solid #003314', color: '#00ff66', padding: '6px', fontFamily: 'monospace', outline: 'none' }}
                   required
                 />
@@ -321,6 +349,8 @@ export const DevTerminal: React.FC<TemplateProps> = ({
                   name="reason" 
                   value={contactForm.reason} 
                   onChange={handleInputChange} 
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                   rows={4}
                   style={{ width: '100%', background: '#0a0e14', border: '1px solid #003314', color: '#00ff66', padding: '6px', fontFamily: 'monospace', outline: 'none', resize: 'vertical' }}
                   required
@@ -329,6 +359,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
               <button 
                 type="submit" 
                 disabled={isSendingEmail}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   background: 'rgba(0, 255, 102, 0.1)',
                   border: '1px solid #00ff66',
@@ -416,7 +447,7 @@ export const DevTerminal: React.FC<TemplateProps> = ({
   };
 
   return (
-    <div className="cli-theme cli-container" onClick={focusInput}>
+    <div className="cli-theme cli-container" onClick={handleContainerClick}>
       <header className="terminal-header">
         <div className="terminal-header-top">
           <div className="terminal-header-brand">

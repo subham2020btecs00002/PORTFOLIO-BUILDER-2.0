@@ -15,6 +15,7 @@ permissions:
   contents: read
   security-events: write
   actions: read
+  id-token: write
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -257,75 +258,130 @@ jobs:
         run: npm run build
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # STAGE 4: CONTINUOUS DEPLOYMENT (RENDER BACKENDS + VERCEL FRONTEND)
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STAGE 4: CONTINUOUS DEPLOYMENT (GOOGLE CLOUD RUN BACKENDS + VERCEL FRONTEND)
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to Render & Vercel
+    name: Deploy to Google Cloud Run & Vercel
     needs: [test-and-build-gateway, test-and-build-backends, test-ml-service, test-drl-service, test-and-build-frontend]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      # ── Deploy Backends via Render Deploy Hooks (100% Free) ──────────────────
-      - name: Deploy API Gateway to Render
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.RENDER_GATEWAY_DEPLOY_HOOK }}" ]; then
-            echo "🚀 Triggering Render deploy for API Gateway..."
-            curl -f -s -X POST "${{ secrets.RENDER_GATEWAY_DEPLOY_HOOK }}"
-            echo "✔ API Gateway deployment triggered successfully."
-          else
-            echo "::warning ::RENDER_GATEWAY_DEPLOY_HOOK is not set. Skipping gateway deploy."
-          fi
+      - name: Detect Changed Services
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            gateway:
+              - 'api-gateway/**'
+            auth:
+              - 'auth-service/**'
+            backend:
+              - 'portfolio_backend_nestjs/**'
+            ml:
+              - 'ml-service-python/**'
+            drl:
+              - 'drl-service-python/**'
+            frontend:
+              - 'PORTFOLIO_FRONTEND-main/**'
 
-      - name: Deploy Auth Service to Render
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.RENDER_AUTH_DEPLOY_HOOK }}" ]; then
-            echo "🚀 Triggering Render deploy for Auth Service..."
-            curl -f -s -X POST "${{ secrets.RENDER_AUTH_DEPLOY_HOOK }}"
-            echo "✔ Auth Service deployment triggered successfully."
-          else
-            echo "::warning ::RENDER_AUTH_DEPLOY_HOOK is not set. Skipping auth service deploy."
-          fi
+      # ── Google Cloud Authentication ─────────────────────────────────────────
+      - name: Authenticate to Google Cloud
+        if: env.GCP_SA_KEY != ''
+        uses: google-github-actions/auth@v2
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy Portfolio Monolith Backend to Render
-        shell: bash
-        run: |
-          if [ -n "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" ]; then
-            echo "🚀 Triggering Render deploy for Portfolio Monolith..."
-            curl -f -s -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
-            echo "✔ Portfolio Backend deployment triggered successfully."
-          else
-            echo "::warning ::RENDER_BACKEND_DEPLOY_HOOK is not set. Skipping backend deploy."
-          fi
+      - name: Set up Cloud SDK
+        if: env.GCP_SA_KEY != ''
+        uses: google-github-actions/setup-gcloud@v2
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy ML Service (FastAPI) to Render
-        shell: bash
+      # ── Deploy ML Service (FastAPI) ─────────────────────────────────────────
+      - name: Deploy ML Service to Cloud Run
+        if: (steps.filter.outputs.ml == 'true' || github.event_name == 'workflow_dispatch') && env.GCP_SA_KEY != ''
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          if [ -n "${{ secrets.RENDER_ML_DEPLOY_HOOK }}" ]; then
-            echo "🚀 Triggering Render deploy for ML Service..."
-            curl -f -s -X POST "${{ secrets.RENDER_ML_DEPLOY_HOOK }}"
-            echo "✔ ML Service deployment triggered successfully."
-          else
-            echo "::notice ::RENDER_ML_DEPLOY_HOOK is not set. Skipping ML service deploy."
-          fi
+          echo "🚀 Deploying portfolio-ml-service to Cloud Run..."
+          gcloud run deploy portfolio-ml-service \
+            --source ./ml-service-python \
+            --region asia-south1 \
+            --project ${{ secrets.GCP_PROJECT_ID || 'deft-shade-439004-e1' }} \
+            --quiet
+          echo "✔ ML Service deployed."
 
-      - name: Deploy Portfolio Intelligence Service (FastAPI) to Render
-        shell: bash
+      # ── Deploy DRL Intelligence Service (FastAPI / XGBoost / SHAP) ──────────
+      - name: Deploy DRL Intelligence Service to Cloud Run
+        if: (steps.filter.outputs.drl == 'true' || github.event_name == 'workflow_dispatch') && env.GCP_SA_KEY != ''
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          if [ -n "${{ secrets.RENDER_INTELLIGENCE_DEPLOY_HOOK }}" ]; then
-            echo "🚀 Triggering Render deploy for Portfolio Intelligence Service..."
-            curl -f -s -X POST "${{ secrets.RENDER_INTELLIGENCE_DEPLOY_HOOK }}"
-            echo "✔ Intelligence Service deployment triggered successfully."
-          else
-            echo "::notice ::RENDER_INTELLIGENCE_DEPLOY_HOOK is not set. Skipping Intelligence service deploy."
-          fi
+          echo "🚀 Deploying portfolio-intelligence-service to Cloud Run..."
+          gcloud run deploy portfolio-intelligence-service \
+            --source ./drl-service-python \
+            --region asia-south1 \
+            --project ${{ secrets.GCP_PROJECT_ID || 'deft-shade-439004-e1' }} \
+            --memory 2Gi \
+            --quiet
+          echo "✔ Intelligence Service deployed."
+
+      # ── Deploy Auth Service (NestJS) ────────────────────────────────────────
+      - name: Deploy Auth Service to Cloud Run
+        if: (steps.filter.outputs.auth == 'true' || github.event_name == 'workflow_dispatch') && env.GCP_SA_KEY != ''
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "🚀 Deploying portfolio-auth-service to Cloud Run..."
+          gcloud run deploy portfolio-auth-service \
+            --source ./auth-service \
+            --region asia-south1 \
+            --project ${{ secrets.GCP_PROJECT_ID || 'deft-shade-439004-e1' }} \
+            --memory 512Mi \
+            --quiet
+          echo "✔ Auth Service deployed."
+
+      # ── Deploy Portfolio Backend (NestJS) ───────────────────────────────────
+      - name: Deploy Portfolio Backend to Cloud Run
+        if: (steps.filter.outputs.backend == 'true' || github.event_name == 'workflow_dispatch') && env.GCP_SA_KEY != ''
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "🚀 Deploying portfolio-backend to Cloud Run..."
+          gcloud run deploy portfolio-backend \
+            --source ./portfolio_backend_nestjs \
+            --region asia-south1 \
+            --project ${{ secrets.GCP_PROJECT_ID || 'deft-shade-439004-e1' }} \
+            --memory 512Mi \
+            --quiet
+          echo "✔ Portfolio Backend deployed."
+
+      # ── Deploy API Gateway (NestJS) ─────────────────────────────────────────
+      - name: Deploy API Gateway to Cloud Run
+        if: (steps.filter.outputs.gateway == 'true' || github.event_name == 'workflow_dispatch') && env.GCP_SA_KEY != ''
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "🚀 Deploying portfolio-api-gateway to Cloud Run..."
+          gcloud run deploy portfolio-api-gateway \
+            --source ./api-gateway \
+            --region asia-south1 \
+            --project ${{ secrets.GCP_PROJECT_ID || 'deft-shade-439004-e1' }} \
+            --memory 512Mi \
+            --quiet
+          echo "✔ API Gateway deployed."
 
       # ── Deploy Frontend to Vercel (100% Free) ───────────────────────────────
       - name: Deploy Frontend to Vercel
+        if: steps.filter.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           if [ -n "${{ secrets.VERCEL_DEPLOY_HOOK }}" ]; then
@@ -341,7 +397,7 @@ jobs:
             vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
             echo "✔ Frontend deployed to Vercel."
           else
-            echo "::warning ::Neither VERCEL_DEPLOY_HOOK nor VERCEL_TOKEN is set. Skipping frontend deploy."
+            echo "::notice ::Frontend automatically managed by Vercel GitHub integration."
           fi
 
   # ─────────────────────────────────────────────────────────────────────────────
