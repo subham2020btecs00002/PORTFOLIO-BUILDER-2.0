@@ -1,10 +1,104 @@
-# Docker Compose is optional / disabled.
-# All services run locally on the host machine via node and python:
-# - API Gateway:        npm run start:dev (port 3001)
-# - Auth Service:       npm run start:dev (port 5001)
-# - Portfolio Monolith: npm run start:dev (port 5000)
-# - ML Service (LLM):   uvicorn app.main:app --port 8000 (port 8000)
-# - DRL Service (ML):   uvicorn app.main:app --port 8001 (port 8001)
-# - Frontend:           npm start (port 3000)
-#
-# RabbitMQ was removed to simplify architecture in favor of direct HTTP/REST.
+services:
+  # ── 1. API Gateway (Public Entry Point) ──────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: portfolio-api-gateway
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-e8e76f63a00018080c49feec4b9953686fd767fee9a1916682dfde5dde846829b9f7ffd19a209fb0b3dd80dc0e11a4b54764b1dd69f244e0348e63e072b8f65a}
+      - INTERNAL_SECRET=${INTERNAL_SECRET:-portfolio_internal_secret_key_2024_xK9mP2vL}
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - BACKEND_URL=http://portfolio-backend:5000
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      - auth-service
+      - portfolio-backend
+    networks:
+      - portfolio-network
+
+  # ── 2. Auth Service ───────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: portfolio-auth-service
+    restart: always
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET:-e8e76f63a00018080c49feec4b9953686fd767fee9a1916682dfde5dde846829b9f7ffd19a209fb0b3dd80dc0e11a4b54764b1dd69f244e0348e63e072b8f65a}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-vtlePKrCETG6faNyq7W8zA90cZVxhL14HQOpUnJDjIkw5sYgSu3RFoMdbmXB2i}
+      - INTERNAL_SECRET=${INTERNAL_SECRET:-portfolio_internal_secret_key_2024_xK9mP2vL}
+      - GATEWAY_URL=http://api-gateway:3001
+      - EMAIL=${EMAIL}
+      - PASSWORD=${PASSWORD}
+      - RECEIVER_EMAIL=${RECEIVER_EMAIL}
+    networks:
+      - portfolio-network
+
+  # ── 3. Core Portfolio Backend (NestJS) ────────────────────────────────────
+  portfolio-backend:
+    build:
+      context: ./portfolio_backend_nestjs
+      dockerfile: Dockerfile
+    container_name: portfolio-backend
+    restart: always
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - INTERNAL_SECRET=${INTERNAL_SECRET:-portfolio_internal_secret_key_2024_xK9mP2vL}
+      - GATEWAY_URL=http://api-gateway:3001
+      - ML_SERVICE_URL=http://ml-service:8000
+      - INTELLIGENCE_SERVICE_URL=http://drl-service:8001
+      - EMAIL=${EMAIL}
+      - PASSWORD=${PASSWORD}
+      - RECEIVER_EMAIL=${RECEIVER_EMAIL}
+    depends_on:
+      - ml-service
+      - drl-service
+    networks:
+      - portfolio-network
+
+  # ── 4. ML Service (FastAPI LLM) ───────────────────────────────────────────
+  ml-service:
+    build:
+      context: ./ml-service-python
+      dockerfile: Dockerfile
+    container_name: portfolio-ml-service
+    restart: always
+    environment:
+      - PORT=8000
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - portfolio-network
+
+  # ── 5. DRL Service (FastAPI XGBoost & SHAP) ───────────────────────────────
+  drl-service:
+    build:
+      context: ./drl-service-python
+      dockerfile: Dockerfile
+    container_name: portfolio-drl-service
+    restart: always
+    environment:
+      - PORT=8001
+      - HOST=0.0.0.0
+      - INTERNAL_SECRET=${INTERNAL_SECRET:-portfolio_internal_secret_key_2024_xK9mP2vL}
+      - HF_TOKEN=${HF_TOKEN}
+      - HF_MODEL_REPO_ID=${HF_MODEL_REPO_ID:-sk22082001/portfolio-intelligence-engine}
+      - MONGO_URI=${MONGO_URI}
+    networks:
+      - portfolio-network
+
+networks:
+  portfolio-network:
+    driver: bridge
