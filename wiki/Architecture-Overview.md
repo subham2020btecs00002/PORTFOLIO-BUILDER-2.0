@@ -40,7 +40,7 @@ flowchart TB
         HFHub[("Hugging Face Model Hub<br/>sk22082001/portfolio-intelligence-engine")]
         LLMs["Multi-LLM Engine<br/>• Google Gemini 1.5 Pro/Flash<br/>• Groq (Llama 3.3)<br/>• OpenRouter (Llama 3.2)"]
         SMTP["Gmail SMTP Server<br/>(Verification, Resets, Inquiries)"]
-        Cloud["Cloud PaaS Infrastructure<br/>Render (Backends) & Vercel (Frontend)"]
+        Cloud["Cloud Infrastructure<br/>Google Cloud Run (Backends) & Vercel (Frontend)"]
     end
 
     SPA -->|1. HTTP / SSE Requests| GW
